@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de ATF's</title>
+<link rel="icon" type="image/jpeg" href="Img/favicon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy-950:#0a1930;
+    --navy-900:#0f2544;
+    --navy-800:#16335f;
+    --navy-700:#1e4278;
+    --amber:#f2a93b;
+    --amber-soft:#fdf1dd;
+    --green:#2bad7d;
+    --green-soft:#e4f7ef;
+    --red:#e5484d;
+    --red-soft:#fde9ea;
+    --slate-900:#1b2433;
+    --slate-600:#5b6577;
+    --slate-400:#93a0b3;
+    --line:#e4e8f0;
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --radius:14px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--slate-900);font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+
+  /* ---------- topo / faixa de rodovia ---------- */
+  .road{
+    position:relative;
+    background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));
+    color:#fff;
+    padding:34px 40px 30px;
+    overflow:hidden;
+  }
+  .road::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:0;
+    height:6px;
+    background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px, transparent 34px 60px);
+    opacity:.9;
+  }
+  .road-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+  .road-title h1{font-family:var(--font-display);font-size:28px;margin:0 0 4px;letter-spacing:.2px;}
+  .road-title p{margin:0;color:var(--slate-400);font-size:14px;}
+  .road-title .eyebrow{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--amber);margin-bottom:8px;display:block;
+  }
+  .road-status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--slate-400);flex-wrap:wrap;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(43,173,125,.2);}
+  .dot.off{background:var(--slate-400);box-shadow:none;}
+  .dot.err{background:var(--red);box-shadow:0 0 0 4px rgba(229,72,77,.2);}
+
+  #filterUnidade, #filterStatus, #filterCliente{
+    background:var(--navy-800);
+    color:#fff;
+    border:1.5px solid rgba(255,255,255,.3);
+    border-radius:9px;
+    padding:8px 12px;
+    font-size:13px;
+    font-family:var(--font-body);
+    cursor:pointer;
+  }
+  #filterUnidade:hover, #filterStatus:hover, #filterCliente:hover{border-color:rgba(255,255,255,.55);}
+  #filterUnidade option, #filterStatus option, #filterCliente option{
+    background:#ffffff;
+    color:var(--slate-900);
+  }
+
+  /* ---------- skeleton loader ---------- */
+  @keyframes shimmer{
+    0%{background-position:-400px 0;}
+    100%{background-position:400px 0;}
+  }
+  .skel{
+    background:linear-gradient(90deg,#e9edf5 25%,#f5f7fb 37%,#e9edf5 63%);
+    background-size:800px 100%;
+    animation:shimmer 1.4s linear infinite;
+    border-radius:8px;
+  }
+  .skel-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px;}
+  .skel-stat{height:92px;border-radius:var(--radius);}
+  .skel-panels{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:26px;}
+  .skel-panel{height:260px;border-radius:var(--radius);}
+  .skel-row{height:42px;border-radius:8px;margin-bottom:8px;}
+  @media (max-width:1100px){ .skel-stats{grid-template-columns:repeat(2,1fr);} .skel-panels{grid-template-columns:1fr;} }
+
+  /* ---------- layout geral ---------- */
+  main{max-width:1320px;margin:0 auto;padding:28px 40px 60px;}
+  .state-msg{
+    text-align:center;padding:60px 20px;color:var(--slate-600);font-size:14px;
+  }
+  .state-msg strong{display:block;font-family:var(--font-display);font-size:18px;color:var(--slate-900);margin-bottom:8px;}
+  .hidden{display:none !important;}
+
+  /* ---------- cards de estatística ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:-18px auto 26px;max-width:1320px;position:relative;z-index:2;}
+  .stat{
+    background:var(--card);border-radius:var(--radius);padding:16px 16px 14px;
+    border:1px solid var(--line);position:relative;overflow:hidden;
+    box-shadow:0 12px 30px rgba(15,37,68,.10);
+  }
+  .stat .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--slate-600);}
+  .stat .v{font-family:var(--font-display);font-size:26px;font-weight:700;margin-top:6px;color:var(--slate-900);}
+  .stat .bar{height:4px;border-radius:2px;background:var(--line);margin-top:10px;overflow:hidden;}
+  .stat .bar i{display:block;height:100%;border-radius:2px;}
+  .stat.total .bar i{background:var(--navy-700);width:100%;}
+  .stat.green .v{color:var(--green);}
+  .stat.green .bar i{background:var(--green);}
+  .stat.red .v{color:var(--red);}
+  .stat.red .bar i{background:var(--red);}
+  .stat.amber .v{color:#c07f16;}
+  .stat.amber .bar i{background:var(--amber);}
+  
+  .stat{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;}
+  .stat:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,37,68,.1);}
+  .stat.active{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(30,66,120,.14);}
+  .stat.active .k{color:var(--navy-700);}
+
+  .pagination{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 0 4px;}
+  .pagination button{
+    border:1.5px solid var(--line);background:#fff;color:var(--slate-900);
+    border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .pagination button:disabled{opacity:.4;cursor:not-allowed;}
+  .pagination button:not(:disabled):hover{border-color:var(--navy-700);color:var(--navy-700);}
+  .pagination .p-info{font-family:var(--font-mono);font-size:12.5px;color:var(--slate-600);}
+
+  /* ---------- painel gráficos ---------- */
+  .panels{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:26px;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;flex-wrap:wrap;}
+  .panel h3{font-family:var(--font-display);font-size:15px;margin:0 0 4px;}
+  .panel .sub{font-size:12px;color:var(--slate-600);margin:0 0 14px;}
+  .panel canvas{max-height:230px;}
+  .btn{
+    border:none;border-radius:9px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer;
+    font-family:var(--font-body);transition:transform .1s, box-shadow .15s;white-space:nowrap;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-ghost{background:transparent;color:var(--slate-600);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--navy-700);color:var(--navy-900);}
+  .btn-chip{
+    flex:none;border:1.5px solid var(--line);background:#fff;color:var(--navy-700);
+    font-family:var(--font-body);font-size:11.5px;font-weight:600;border-radius:20px;
+    padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .12s, border-color .12s;
+  }
+  .btn-chip:hover{background:var(--amber-soft);border-color:var(--amber);}
+
+  /* ---------- filtros e tabela ---------- */
+  .toolbar{
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;
+  }
+  .search-wrap{position:relative;flex:1;min-width:220px;}
+  .search-wrap input[type="text"]{
+    width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 34px 10px 14px;
+    font-size:13px;font-family:var(--font-body);outline:none;box-sizing:border-box;
+  }
+  .search-wrap input[type="text"]:focus{border-color:var(--navy-700);}
+  .search-clear{
+    display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    border:none;background:var(--line);color:var(--slate-600);width:20px;height:20px;
+    border-radius:50%;font-size:13px;line-height:1;cursor:pointer;align-items:center;justify-content:center;
+  }
+  .search-clear:hover{background:var(--slate-400);color:#fff;}
+  select{
+    border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;
+    font-family:var(--font-body);background:#fff;color:var(--slate-900);outline:none;
+  }
+  .table-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;min-width:980px;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;padding:12px 14px;background:var(--navy-950);color:var(--slate-400);
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;
+    position:sticky;top:0;white-space:nowrap;
+  }
+  thead th[data-key]{cursor:pointer;user-select:none;}
+  thead th[data-key]:hover{color:#fff;}
+  thead th span.arrow{margin-left:4px;opacity:.35;display:inline-block;font-size:10px;}
+  thead th.sorted{color:#fff;}
+  thead th.sorted span.arrow{opacity:1;color:var(--amber);}
+  tbody tr{border-top:1px solid var(--line);cursor:pointer;}
+  tbody tr:hover{background:#f8faff;}
+  td{padding:11px 14px;color:var(--slate-900);white-space:nowrap;}
+  td.name{font-weight:600;}
+  td.name a{color:var(--navy-700);text-decoration:none;border-bottom:1.5px dashed var(--navy-700);}
+  td.name a:hover{color:var(--amber);border-color:var(--amber);}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
+    font-size:11.5px;font-weight:600;white-space:nowrap;
+  }
+  .badge.ok{background:var(--green-soft);color:var(--green);}
+  .badge.vencendo{background:var(--amber-soft);color:#c07f16;}
+  .badge.vencido{background:var(--red-soft);color:var(--red);}
+  .badge.outro{background:#eef1f7;color:var(--slate-600);}
+  tfoot td{padding:14px;text-align:center;color:var(--slate-400);font-size:12px;}
+
+  /* ---------- cards mobile (telas < 768px) ---------- */
+  .mobile-cards{display:none;flex-direction:column;gap:10px;}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .12s;}
+  .mcard:hover{border-color:var(--navy-700);}
+  .mcard-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;}
+  .mcard-name{font-weight:700;font-size:14px;color:var(--slate-900);}
+  .mcard-unidade{font-size:10.5px;color:var(--slate-600);font-family:var(--font-mono);white-space:nowrap;text-transform:uppercase;}
+  .mcard-sub{font-size:11.5px;color:var(--slate-600);margin:0 0 10px;}
+  .mcard-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  @media (max-width:768px){
+    .table-wrap{display:none;}
+    .mobile-cards{display:flex;}
+  }
+
+  /* ---------- modal de detalhes ---------- */
+  .val.copyable{cursor:pointer;border-bottom:1.5px dashed var(--slate-400);}
+  .val.copyable:hover{color:var(--navy-700);border-color:var(--navy-700);}
+
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(10,25,48,.55);display:none;
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal-card{
+    background:#fff;border-radius:var(--radius);max-width:600px;width:100%;
+    max-height:92vh;overflow:hidden;box-shadow:0 24px 60px rgba(10,25,48,.35);
+    display:flex;flex-direction:column;
+  }
+  .modal-head{
+    background:var(--navy-900);color:#fff;padding:16px 22px;border-radius:var(--radius) var(--radius) 0 0;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex:none;
+  }
+  .modal-head h2{font-family:var(--font-display);margin:0 0 3px;font-size:17px;}
+  .modal-head p{margin:0;color:var(--slate-400);font-size:12px;}
+  .modal-head-right{display:flex;align-items:center;gap:10px;}
+  .modal-close{
+    background:rgba(255,255,255,.12);border:none;color:#fff;width:26px;height:26px;
+    border-radius:50%;font-size:14px;cursor:pointer;flex:none;
+  }
+  .modal-close:hover{background:rgba(255,255,255,.24);}
+  .modal-body{padding:20px 22px;overflow-y:auto;}
+  .modal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 16px;}
+  .modal-field{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .modal-field .lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--slate-600);}
+  .modal-field .val{font-size:13px;color:var(--slate-900);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  
+  @media (max-width:600px){ .modal-grid{grid-template-columns:1fr;} }
+  .count-pill{font-family:var(--font-mono);font-size:12px;color:var(--slate-600);}
+
+  @media (max-width:1100px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .panels{grid-template-columns:1fr;}
+  }
+  @media (max-width:700px){
+    .road{padding:26px 20px 26px;}
+    main{padding:22px 16px 50px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="road">
+  <div class="road-top">
+    <div class="road-title">
+      <span class="eyebrow">Viação · Gestão de ATF's</span>
+      <h1>Painel de ATF's</h1>
+    </div>
+    <div class="road-status">
+      <span class="dot off" id="statusDot"></span>
+      <span id="statusText">Aguardando conexão…</span>
+      <select id="filterUnidade">
+        <option value="">Todas as unidades</option>
+      </select>
+      <select id="filterCliente">
+        <option value="">Todos os clientes</option>
+      </select>
+      <button class="btn btn-ghost" id="btnRefresh" style="border-color:rgba(255,255,255,.25);color:#fff;">Atualizar agora</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="emptyState" class="state-msg" style="text-align:left;padding:28px 0;">
+    <div class="skel-stats">
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+    </div>
+    <div class="skel-panels">
+      <div class="skel skel-panel"></div>
+      <div class="skel skel-panel"></div>
+    </div>
+    <div class="skel skel-row" style="width:100%;height:44px;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:70%;"></div>
+  </div>
+
+  <div id="errorState" class="state-msg hidden">
+    <strong>Não foi possível ler a planilha</strong>
+    <span id="errorDetail">Verifique se o link de compartilhamento está liberado e se a aba chama-se "ATF's".</span>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <section class="stats" id="statsSection">
+      <div class="stat total" data-flag="">
+        <div class="k">Total de ATF's</div>
+        <div class="v" id="stTotal">0</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="stat red" data-flag="vencido">
+        <div class="k">Vencidos</div>
+        <div class="v" id="stVencidos">0</div>
+        <div class="bar"><i id="barVencidos" style="width:0%"></i></div>
+      </div>
+      <div class="stat amber" data-flag="vencendo">
+        <div class="k">Vencendo (Próx. 15 dias)</div>
+        <div class="v" id="stVencendo">0</div>
+        <div class="bar"><i id="barVencendo" style="width:0%"></i></div>
+      </div>
+      <div class="stat green" data-flag="regular">
+        <div class="k">Regulares</div>
+        <div class="v" id="stRegular">0</div>
+        <div class="bar"><i id="barRegular" style="width:0%"></i></div>
+      </div>
+    </section>
+
+    <section class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>ATF's por Unidade</h3>
+            <p class="sub">Distribuição dos documentos filtrados</p>
+          </div>
+          <button type="button" class="btn-chip hidden" id="btnAllUnidades">Ver todas</button>
+        </div>
+        <canvas id="chartUnidade"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Situação dos ATF's</h3>
+        <p class="sub">Visão geral do status de validade</p>
+        <canvas id="chartStatus"></canvas>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="search" placeholder="Buscar por cliente, frota, placa, origem ou destino…">
+        <button type="button" class="search-clear" id="searchClear">×</button>
+      </div>
+      <select id="filterStatus">
+        <option value="">Status — todos</option>
+        <option value="vencido">Vencido</option>
+        <option value="vencendo">Vencendo</option>
+        <option value="regular">Regular</option>
+      </select>
+      <span class="count-pill" id="countPill">0 registros</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="cliente">Cliente <span class="arrow"></span></th>
+            <th data-key="frota">Frota <span class="arrow"></span></th>
+            <th data-key="placa">Placa <span class="arrow"></span></th>
+            <th data-key="unidade">Unidade <span class="arrow"></span></th>
+            <th data-key="origemDestino">Origem x Destino <span class="arrow"></span></th>
+            <th data-key="periodoValidade">Validade <span class="arrow"></span></th>
+            <th data-key="dias">Dias <span class="arrow"></span></th>
+            <th data-key="status">Status <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr><td colspan="8" id="tfootMsg"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="mobile-cards" id="mobileCards"></div>
+
+    <div class="pagination" id="pagination">
+      <button id="pgPrev">‹ Anterior</button>
+      <span class="p-info" id="pgInfo">Página 1 de 1</span>
+      <button id="pgNext">Próxima ›</button>
+    </div>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2 id="mdFrota">—</h2>
+        <p id="mdSub">—</p>
+      </div>
+      <div class="modal-head-right">
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field"><span class="lbl">Cliente</span><span class="val" id="mdFieldCliente">—</span></div>
+        <div class="modal-field"><span class="lbl">Unidade</span><span class="val" id="mdFieldUnidade">—</span></div>
+        <div class="modal-field"><span class="lbl">Frota</span><span class="val copyable" id="mdFieldFrota">—</span></div>
+        <div class="modal-field"><span class="lbl">Placa</span><span class="val copyable" id="mdFieldPlaca">—</span></div>
+        <div class="modal-field"><span class="lbl">Origem x Destino</span><span class="val" id="mdFieldOrigem">—</span></div>
+        <div class="modal-field"><span class="lbl">Status</span><span class="val" id="mdFieldStatus">—</span></div>
+        <div class="modal-field"><span class="lbl">Data Emissão</span><span class="val" id="mdFieldEmissao">—</span></div>
+        <div class="modal-field"><span class="lbl">Período Validade</span><span class="val" id="mdFieldValidade">—</span></div>
+        <div class="modal-field"><span class="lbl">Dias Restantes</span><span class="val" id="mdFieldDias">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Link da planilha mantido conforme solicitação
+  const SHEET_ID = '1Ifls95c7CWJujD16v-1Iq5y3lJtH7gC6o3JQmbM1TB4';
+  const SHEET_TAB = "ATF's";
+
+  const els = {
+    btnRefresh: document.getElementById('btnRefresh'),
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
+    empty: document.getElementById('emptyState'),
+    error: document.getElementById('errorState'),
+    errorDetail: document.getElementById('errorDetail'),
+    dash: document.getElementById('dashboard'),
+    search: document.getElementById('search'),
+    filterUnidade: document.getElementById('filterUnidade'),
+    filterCliente: document.getElementById('filterCliente'),
+    filterStatus: document.getElementById('filterStatus'),
+    tbody: document.getElementById('tbody'),
+    mobileCards: document.getElementById('mobileCards'),
+    countPill: document.getElementById('countPill'),
+    tfootMsg: document.getElementById('tfootMsg'),
+    pgPrev: document.getElementById('pgPrev'),
+    pgNext: document.getElementById('pgNext'),
+    pgInfo: document.getElementById('pgInfo'),
+    searchClear: document.getElementById('searchClear'),
+    modalBackdrop: document.getElementById('modalBackdrop'),
+    modalClose: document.getElementById('modalClose'),
+    btnAllUnidades: document.getElementById('btnAllUnidades'),
+  };
+
+  let rawRows = [];
+  let allUnidades = [];
+  let allClientes = [];
+  let currentPageRows = [];
+  let sortState = {key:'cliente', dir:1};
+  let charts = {unidade:null, status:null};
+  let refreshTimer = null;
+  const PAGE_SIZE = 100;
+  let currentPage = 1;
+  let activeFlag = ''; // '' | 'vencido' | 'vencendo' | 'regular'
+
+  els.btnRefresh.addEventListener('click', () => loadData());
+  els.search.addEventListener('input', () => {
+    els.searchClear.style.display = els.search.value ? 'flex' : 'none';
+    currentPage = 1;
+    render();
+  });
+  els.searchClear.addEventListener('click', () => {
+    els.search.value = '';
+    els.searchClear.style.display = 'none';
+    currentPage = 1;
+    els.search.focus();
+    render();
+  });
+  els.modalClose.addEventListener('click', closeModal);
+  els.modalBackdrop.addEventListener('click', (e) => { if(e.target === els.modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
+  
+  els.filterUnidade.addEventListener('change', () => { currentPage = 1; render(true); });
+  els.filterCliente.addEventListener('change', () => { currentPage = 1; render(true); });
+  
+  els.btnAllUnidades.addEventListener('click', () => {
+    els.filterUnidade.value = '';
+    currentPage = 1;
+    render(true);
+  });
+  els.filterStatus.addEventListener('change', () => {
+    activeFlag = els.filterStatus.value;
+    currentPage = 1;
+    syncActiveCards();
+    render(true);
+  });
+  els.pgPrev.addEventListener('click', () => { if(currentPage > 1){ currentPage--; render(); } });
+  els.pgNext.addEventListener('click', () => { currentPage++; render(); });
+  
+  document.querySelectorAll('.stat[data-flag]').forEach(card => {
+    card.addEventListener('click', () => {
+      const flag = card.dataset.flag;
+      activeFlag = (activeFlag === flag) ? '' : flag;
+      els.filterStatus.value = activeFlag;
+      currentPage = 1;
+      syncActiveCards();
+      render(true);
+    });
+  });
+
+  function syncActiveCards(){
+    document.querySelectorAll('.stat[data-flag]').forEach(card => {
+      card.classList.toggle('active', card.dataset.flag === activeFlag);
+    });
+  }
+
+  document.querySelectorAll('thead th[data-key]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      sortState.dir = (sortState.key === key) ? -sortState.dir : 1;
+      sortState.key = key;
+      currentPage = 1;
+      render();
+    });
+  });
+
+  function setStatus(state, text){
+    els.statusDot.className = 'dot' + (state==='ok' ? '' : state==='err' ? ' err' : ' off');
+    els.statusText.textContent = text;
+  }
+
+  function cellText(cell){
+    if(!cell) return '';
+    if(cell.v !== undefined && cell.v !== null && typeof cell.v === 'string' && cell.v.startsWith('Date(')){
+       const parts = cell.v.replace('Date(','').replace(')','').split(',').map(Number);
+       const d = new Date(parts[0], parts[1], parts[2]);
+       return d.toLocaleDateString('pt-BR');
+    }
+    return (cell.f !== undefined && cell.f !== null) ? String(cell.f) : (cell.v ?? '');
+  }
+
+  function normText(s){ return (s||'').toString().trim().toUpperCase(); }
+
+  // Função para inferir estado baseado em dias ou no texto do status
+  function getATFState(dias, statusText){
+    const txt = normText(statusText);
+    const numDias = parseInt(dias, 10);
+    
+    if(txt.includes('VENCID')) return 'vencido';
+    if(txt.includes('VENCENDO') || txt.includes('A VENCER')) return 'vencendo';
+    if(txt.includes('ATIVO') || txt.includes('OK') || txt.includes('REGULAR')) return 'regular';
+    
+    // Se o texto não for claro, avalia pelos dias
+    if(!isNaN(numDias)){
+        if(numDias < 0) return 'vencido';
+        if(numDias >= 0 && numDias <= 15) return 'vencendo';
+        return 'regular';
+    }
+    return 'regular'; // Padrão
+  }
+
+  function parseATFRows(data){
+    const cols = data.table.cols.map(c => (c.label || '').toString().trim().toUpperCase());
+    
+    const idx = (name) => {
+        let i = cols.findIndex(c => c === name);
+        if(i === -1) i = cols.findIndex(c => c.includes(name));
+        return i;
+    };
+
+    const iFrota = idx('FROTA');
+    const iPlaca = idx('PLACA');
+    const iUnidade = idx('UNIDADE');
+    const iEmissao = idx('EMISSÃO');
+    const iValidade = idx('VALIDADE');
+    const iDias = idx('DIAS');
+    const iStatus = idx('STATUS');
+    const iCliente = idx('CLIENTE');
+    const iOrigemDestino = idx('ORIGEM');
+
+    return data.table.rows
+      .map(r => r.c)
+      .filter(c => c && (iFrota > -1 && cellText(c[iFrota])) || (iPlaca > -1 && cellText(c[iPlaca]))) // Precisa ter Frota ou Placa
+      .map(c => {
+        const frota = iFrota > -1 ? cellText(c[iFrota]) : '';
+        const placa = iPlaca > -1 ? cellText(c[iPlaca]) : '';
+        const unidade = iUnidade > -1 ? cellText(c[iUnidade]) : '';
+        const dataEmissao = iEmissao > -1 ? cellText(c[iEmissao]) : '';
+        const dias = iDias > -1 ? cellText(c[iDias]) : '';
+        const status = iStatus > -1 ? cellText(c[iStatus]) : '';
+        const cliente = iCliente > -1 ? cellText(c[iCliente]) : '';
+        const origemDestino = iOrigemDestino > -1 ? cellText(c[iOrigemDestino]) : '';
+        
+        let periodoValidadeFull = iValidade > -1 ? cellText(c[iValidade]) : '';
+        let periodoValidadeCurto = periodoValidadeFull;
+        
+        // Expressão inteligente: separa o texto se encontrar " a ", " A ", " à " ou " À " envolto por espaços
+        const valParts = periodoValidadeFull.split(/\s+[aAàÀ]\s+/);
+        if(valParts.length > 1){
+            periodoValidadeCurto = valParts[valParts.length - 1].trim();
+        }
+
+        const situacao = getATFState(dias, status);
+
+        return {
+          frota, placa, unidade, dataEmissao, periodoValidadeFull, periodoValidadeCurto, dias, status, cliente, origemDestino, situacao,
+          flagVencido: situacao === 'vencido',
+          flagVencendo: situacao === 'vencendo',
+          flagRegular: situacao === 'regular'
+        };
+      });
+  }
+
+  async function loadData(){
+    setStatus('off','Carregando…');
+    try{
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&range=A3:Z10000&headers=1&_=${Date.now()}`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+      const data = JSON.parse(jsonStr);
+      if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha');
+
+      rawRows = parseATFRows(data);
+      if(rawRows.length === 0) throw new Error('Nenhum ATF encontrado na leitura.');
+      
+      // Carrega as listas mestras de Unidades e Clientes
+      allUnidades = [...new Set(rawRows.map(r=>r.unidade).filter(Boolean))].sort();
+      allClientes = [...new Set(rawRows.map(r=>r.cliente).filter(Boolean))].sort();
+
+      els.empty.classList.add('hidden');
+      els.error.classList.add('hidden');
+      els.dash.classList.remove('hidden');
+      const ts = new Date().toLocaleTimeString('pt-BR');
+      setStatus('ok', `Conectado · ${ts}`);
+
+      syncActiveCards();
+      render(true);
+
+      if(refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => loadData(), 5 * 60 * 1000);
+
+    }catch(err){
+      els.dash.classList.add('hidden');
+      els.empty.classList.add('hidden');
+      els.error.classList.remove('hidden');
+      els.errorDetail.textContent = 'Detalhe: ' + err.message + '. Confirme se a planilha compartilhada está liberada e se a aba realmente se chama "ATF\'s".';
+      setStatus('err','Falha ao carregar');
+    }
+  }
+
+  // Atualiza as opções dinamicamente baseada nas seleções cruzadas
+  function updateDropdowns(currU, currC) {
+    const validU = new Set(rawRows.filter(r => !currC || r.cliente === currC).map(r => r.unidade).filter(Boolean));
+    const validC = new Set(rawRows.filter(r => !currU || r.unidade === currU).map(r => r.cliente).filter(Boolean));
+
+    els.filterUnidade.innerHTML = '<option value="">Todas as unidades</option>' +
+      allUnidades.filter(u => validU.has(u)).map(u => `<option value="${u}" ${u===currU?'selected':''}>${u}</option>`).join('');
+
+    els.filterCliente.innerHTML = '<option value="">Todos os clientes</option>' +
+      allClientes.filter(c => validC.has(c)).map(c => `<option value="${c}" ${c===currC?'selected':''}>${c}</option>`).join('');
+  }
+
+  function badgeStatus(r){
+    if(r.situacao === 'regular') return `<span class="badge ok">${escapeHtml(r.status || 'OK')}</span>`;
+    if(r.situacao === 'vencendo') return `<span class="badge vencendo">${escapeHtml(r.status || 'Vencendo')}</span>`;
+    if(r.situacao === 'vencido') return `<span class="badge vencido">${escapeHtml(r.status || 'Vencido')}</span>`;
+    return `<span class="badge outro">${escapeHtml(r.status || '—')}</span>`;
+  }
+
+  function escapeHtml(s){
+    return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function render(updateCharts){
+    const q = els.search.value.trim().toLowerCase();
+    const fUnidade = els.filterUnidade.value;
+    const fCliente = els.filterCliente.value;
+    els.btnAllUnidades.classList.toggle('hidden', !fUnidade);
+    
+    // Atualiza os dropdowns para refletirem a ligação entre Unidade e Cliente
+    updateDropdowns(fUnidade, fCliente);
+
+    function matchesSearch(r){
+      if(!q) return true;
+      if(r.frota && r.frota.toLowerCase().includes(q)) return true;
+      if(r.placa && r.placa.toLowerCase().includes(q)) return true;
+      if(r.cliente && r.cliente.toLowerCase().includes(q)) return true;
+      if(r.origemDestino && r.origemDestino.toLowerCase().includes(q)) return true;
+      return false;
+    }
+    
+    function matchesFlag(r){
+      if(!activeFlag) return true;
+      if(activeFlag === 'vencido') return r.flagVencido;
+      if(activeFlag === 'vencendo') return r.flagVencendo;
+      if(activeFlag === 'regular') return r.flagRegular;
+      return true;
+    }
+
+    // `rows` contém as linhas completamente filtradas (usadas na lista e no gráfico de Unidades)
+    let rows = rawRows.filter(r=>{
+      if(fUnidade && r.unidade !== fUnidade) return false;
+      if(fCliente && r.cliente !== fCliente) return false;
+      if(!matchesFlag(r)) return false;
+      if(!matchesSearch(r)) return false;
+      return true;
+    });
+
+    // `statsBase` não é afetado pelo clique nos cartões de status, mantendo as contagens numéricas coerentes e o gráfico de rosca completo
+    let statsBase = rawRows.filter(r=>{
+      if(fUnidade && r.unidade !== fUnidade) return false;
+      if(fCliente && r.cliente !== fCliente) return false;
+      if(!matchesSearch(r)) return false;
+      return true;
+    });
+
+    rows.sort((a,b)=>{
+      let va = a[sortState.key], vb = b[sortState.key];
+      // Tratamento especial para números na coluna de dias
+      if(sortState.key === 'dias'){
+          va = parseFloat(va) || 0;
+          vb = parseFloat(vb) || 0;
+      } else {
+          if(va === null || va === undefined) va = '';
+          if(vb === null || vb === undefined) vb = '';
+          if(typeof va === 'string') va = va.toLowerCase();
+          if(typeof vb === 'string') vb = vb.toLowerCase();
+      }
+      if(va < vb) return -1*sortState.dir;
+      if(va > vb) return 1*sortState.dir;
+      return 0;
+    });
+    
+    updateSortIndicators();
+
+    const total = statsBase.length;
+    const cVencido = statsBase.filter(r=>r.flagVencido).length;
+    const cVencendo = statsBase.filter(r=>r.flagVencendo).length;
+    const cRegular = statsBase.filter(r=>r.flagRegular).length;
+
+    document.getElementById('stTotal').textContent = total;
+    document.getElementById('stVencidos').textContent = cVencido;
+    document.getElementById('stVencendo').textContent = cVencendo;
+    document.getElementById('stRegular').textContent = cRegular;
+
+    document.getElementById('barVencidos').style.width = total? (cVencido/total*100)+'%':'0%';
+    document.getElementById('barVencendo').style.width = total? (cVencendo/total*100)+'%':'0%';
+    document.getElementById('barRegular').style.width = total? (cRegular/total*100)+'%':'0%';
+
+    els.countPill.textContent = `${rows.length} registro${rows.length===1?'':'s'} (de ${total})`;
+
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    if(currentPage < 1) currentPage = 1;
+    const pageRows = rows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    currentPageRows = pageRows;
+    els.pgInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    els.pgPrev.disabled = currentPage <= 1;
+    els.pgNext.disabled = currentPage >= totalPages;
+    document.getElementById('pagination').style.display = rows.length > PAGE_SIZE ? 'flex' : 'none';
+
+    els.tbody.innerHTML = pageRows.map((r,i)=>{
+      return `<tr data-i="${i}">
+        <td class="name">${escapeHtml(r.cliente || '—')}</td>
+        <td>${escapeHtml(r.frota)}</td>
+        <td>${escapeHtml(r.placa)}</td>
+        <td>${escapeHtml(r.unidade)}</td>
+        <td>${escapeHtml(r.origemDestino)}</td>
+        <td>${escapeHtml(r.periodoValidadeCurto)}</td> <!-- Usando formato curto -->
+        <td>${escapeHtml(r.dias)}</td>
+        <td>${badgeStatus(r)}</td>
+      </tr>`;
+    }).join('');
+
+    document.querySelectorAll('#tbody tr').forEach(tr=>{
+      tr.addEventListener('click', () => openModal(currentPageRows[Number(tr.dataset.i)]));
+    });
+
+    els.mobileCards.innerHTML = pageRows.map((r,i)=>{
+      return `<div class="mcard" data-i="${i}">
+        <div class="mcard-top">
+          <span class="mcard-name">${escapeHtml(r.cliente || '—')}</span>
+          <span class="mcard-unidade">${escapeHtml(r.unidade)}</span>
+        </div>
+        <div class="mcard-sub">Frota: ${escapeHtml(r.frota)} · Placa: ${escapeHtml(r.placa)}</div>
+        <div class="mcard-chips">
+          ${badgeStatus(r)}
+        </div>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('#mobileCards .mcard').forEach(card=>{
+      card.addEventListener('click', () => openModal(currentPageRows[Number(card.dataset.i)]));
+    });
+    if(rows.length===0){
+      els.mobileCards.innerHTML = '<div class="state-msg">Nenhum registro encontrado com os filtros atuais.</div>';
+    }
+
+    els.tfootMsg.textContent = rows.length===0 ? 'Nenhum registro encontrado com os filtros atuais.' : '';
+
+    // Envia 'rows' (dados completamente filtrados) para o gráfico de Unidades para pular os que zeram.
+    if(updateCharts) renderCharts(rows, statsBase);
+  }
+
+  function updateSortIndicators(){
+    document.querySelectorAll('thead th[data-key]').forEach(th=>{
+      const span = th.querySelector('span.arrow');
+      const active = th.dataset.key === sortState.key;
+      th.classList.toggle('sorted', active);
+      if(span) span.textContent = active ? (sortState.dir === 1 ? '▲' : '▼') : '↕';
+    });
+  }
+
+  function copyToClipboard(text, el){
+    if(!text) return;
+    const restore = el.textContent;
+    const done = () => { el.textContent = 'Copiado ✓'; setTimeout(() => { el.textContent = restore; }, 1100); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(done);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+      done();
+    }
+  }
+
+  function openModal(r){
+    if(!r) return;
+    document.getElementById('mdFrota').textContent = r.frota ? ('Frota ' + r.frota) : '—';
+    document.getElementById('mdSub').textContent = [r.placa, r.unidade].filter(Boolean).join(' · ') || '—';
+
+    const frotaEl = document.getElementById('mdFieldFrota');
+    const placaEl = document.getElementById('mdFieldPlaca');
+    
+    frotaEl.textContent = r.frota || '—';
+    placaEl.textContent = r.placa || '—';
+    
+    frotaEl.onclick = () => copyToClipboard(r.frota, frotaEl);
+    placaEl.onclick = () => copyToClipboard(r.placa, placaEl);
+
+    document.getElementById('mdFieldUnidade').textContent = r.unidade || '—';
+    document.getElementById('mdFieldCliente').textContent = r.cliente || '—';
+    document.getElementById('mdFieldOrigem').textContent = r.origemDestino || '—';
+    document.getElementById('mdFieldEmissao').textContent = r.dataEmissao || '—';
+    document.getElementById('mdFieldValidade').textContent = r.periodoValidadeFull || '—'; // Retorna a Data Extensa Original
+    document.getElementById('mdFieldDias').textContent = r.dias || '—';
+    
+    const mStatus = document.getElementById('mdFieldStatus');
+    mStatus.innerHTML = badgeStatus(r);
+    
+    els.modalBackdrop.classList.add('open');
+  }
+
+  function closeModal(){
+    els.modalBackdrop.classList.remove('open');
+  }
+
+  function renderCharts(rowsForUnits, statsBase){
+    // Grafico de Unidades: processa apenas "rowsForUnits" que sofrem influência de TUDO (incluindo clicks nos cartões de status)
+    const byUnidade = {};
+    rowsForUnits.forEach(r=>{ if(r.unidade) byUnidade[r.unidade] = (byUnidade[r.unidade]||0)+1; });
+    
+    // Se a unidade tem 0 itens para os filtros atuais, ela nem sequer entra no objeto 'byUnidade'
+    const unidades = Object.keys(byUnidade).sort((a,b)=>byUnidade[b]-byUnidade[a]);
+    const unidadeVals = unidades.map(u=>byUnidade[u]);
+
+    if(charts.unidade) charts.unidade.destroy();
+    charts.unidade = new Chart(document.getElementById('chartUnidade'), {
+      type:'bar',
+      data:{ labels: unidades, datasets:[{ data: unidadeVals, backgroundColor: '#1e4278', borderRadius:6, maxBarThickness:34 }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        onClick:(evt, elements)=>{
+          if(!elements.length) return;
+          const clicked = unidades[elements[0].index];
+          if(els.filterUnidade.value === clicked) return;
+          els.filterUnidade.value = clicked;
+          currentPage = 1;
+          render(true);
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{font:{family:'Inter', size:10}}, grid:{display:false}},
+          y:{beginAtZero:true, ticks:{font:{family:'Inter', size:11}}, grid:{color:'#eef1f7'}}
+        }
+      }
+    });
+
+    // Gráfico de situação usa o "statsBase" mantendo a consistência geral
+    const labels = ['Regulares', 'Vencendo', 'Vencidos'];
+    const cReg = statsBase.filter(r=>r.flagRegular).length;
+    const cVencendo = statsBase.filter(r=>r.flagVencendo).length;
+    const cVenc = statsBase.filter(r=>r.flagVencido).length;
+    
+    const data = [cReg, cVencendo, cVenc];
+    const colors = ['#2bad7d', '#f2a93b', '#e5484d'];
+    const keys = ['regular', 'vencendo', 'vencido'];
+
+    if(charts.status) charts.status.destroy();
+    charts.status = new Chart(document.getElementById('chartStatus'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data, backgroundColor: colors, borderWidth:0 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'62%',
+        onClick:(evt, elements)=>{
+          if(!elements.length) return;
+          const flag = keys[elements[0].index];
+          activeFlag = (activeFlag === flag) ? '' : flag;
+          els.filterStatus.value = activeFlag;
+          currentPage = 1;
+          syncActiveCards();
+          render(true);
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        plugins:{legend:{position:'bottom', labels:{font:{family:'Inter', size:10}, boxWidth:10, padding:12}}}
+      }
+    });
+  }
+
+  loadData();
+})();
+</script>
+</body>
+</html>

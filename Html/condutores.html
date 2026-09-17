@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Condutores</title>
+<link rel="icon" type="image/jpeg" href="Img/favicon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --navy-950:#0a1930;
+    --navy-900:#0f2544;
+    --navy-800:#16335f;
+    --navy-700:#1e4278;
+    --amber:#f2a93b;
+    --amber-soft:#fdf1dd;
+    --green:#2bad7d;
+    --green-soft:#e4f7ef;
+    --red:#e5484d;
+    --red-soft:#fde9ea;
+    --slate-900:#1b2433;
+    --slate-600:#5b6577;
+    --slate-400:#93a0b3;
+    --line:#e4e8f0;
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --radius:14px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--slate-900);font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+
+  /* ---------- topo / faixa de rodovia ---------- */
+  .road{
+    position:relative;
+    background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));
+    color:#fff;
+    padding:34px 40px 30px;
+    overflow:hidden;
+  }
+  .road::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:0;
+    height:6px;
+    background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px, transparent 34px 60px);
+    opacity:.9;
+  }
+  .road-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+  .road-title h1{font-family:var(--font-display);font-size:28px;margin:0 0 4px;letter-spacing:.2px;}
+  .road-title p{margin:0;color:var(--slate-400);font-size:14px;}
+  .road-title .eyebrow{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--amber);margin-bottom:8px;display:block;
+  }
+  .road-status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--slate-400);}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(43,173,125,.2);}
+  .dot.off{background:var(--slate-400);box-shadow:none;}
+  .dot.err{background:var(--red);box-shadow:0 0 0 4px rgba(229,72,77,.2);}
+
+  #filterFilial{
+    background:var(--navy-800);
+    color:#fff;
+    border:1.5px solid rgba(255,255,255,.3);
+    border-radius:9px;
+    padding:8px 12px;
+    font-size:13px;
+    font-family:var(--font-body);
+    cursor:pointer;
+  }
+  #filterFilial:hover{border-color:rgba(255,255,255,.55);}
+  #filterFilial option{
+    background:#ffffff;
+    color:var(--slate-900);
+  }
+
+  /* ---------- skeleton loader ---------- */
+  @keyframes shimmer{
+    0%{background-position:-400px 0;}
+    100%{background-position:400px 0;}
+  }
+  .skel{
+    background:linear-gradient(90deg,#e9edf5 25%,#f5f7fb 37%,#e9edf5 63%);
+    background-size:800px 100%;
+    animation:shimmer 1.4s linear infinite;
+    border-radius:8px;
+  }
+  .skel-stats{display:grid;grid-template-columns:repeat(9,1fr);gap:16px;margin-bottom:26px;}
+  .skel-stat{height:92px;border-radius:var(--radius);}
+  .skel-panels{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:26px;}
+  .skel-panel{height:260px;border-radius:var(--radius);}
+  .skel-row{height:42px;border-radius:8px;margin-bottom:8px;}
+  @media (max-width:1100px){ .skel-stats{grid-template-columns:repeat(3,1fr);} .skel-panels{grid-template-columns:1fr;} }
+
+  /* ---------- config bar ---------- */
+  .config{
+    max-width:1320px;margin:-18px auto 0;padding:0 40px;position:relative;z-index:2;
+  }
+  .config-card{
+    background:var(--card);border-radius:var(--radius);
+    box-shadow:0 12px 30px rgba(15,37,68,.12);
+    padding:18px 22px;display:flex;gap:14px;flex-wrap:wrap;align-items:end;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px;}
+  .field label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--slate-600);font-weight:600;}
+  .field input{
+    border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;font-family:var(--font-mono);
+    font-size:13px;color:var(--slate-900);outline:none;transition:border-color .15s;
+  }
+  .field input:focus{border-color:var(--navy-700);}
+  .btn{
+    border:none;border-radius:9px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer;
+    font-family:var(--font-body);transition:transform .1s, box-shadow .15s;white-space:nowrap;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--navy-900);color:#fff;}
+  .btn-primary:hover{box-shadow:0 6px 16px rgba(15,37,68,.28);}
+  .btn-ghost{background:transparent;color:var(--slate-600);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--navy-700);color:var(--navy-900);}
+  .config-hint{width:100%;font-size:12px;color:var(--slate-400);margin-top:2px;}
+  .config-hint a{color:var(--navy-700);}
+
+  /* ---------- layout geral ---------- */
+  main{max-width:1320px;margin:0 auto;padding:28px 40px 60px;}
+  .state-msg{
+    text-align:center;padding:60px 20px;color:var(--slate-600);font-size:14px;
+  }
+  .state-msg strong{display:block;font-family:var(--font-display);font-size:18px;color:var(--slate-900);margin-bottom:8px;}
+  .hidden{display:none !important;}
+
+  /* ---------- cards de estatística ---------- */
+  .stats{display:grid;grid-template-columns:repeat(9,1fr);gap:16px;margin-bottom:26px;}
+  .stat{
+    background:var(--card);border-radius:var(--radius);padding:18px 18px 16px;
+    border:1px solid var(--line);position:relative;overflow:hidden;
+  }
+  .stat .k{font-family:var(--font-mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--slate-600);}
+  .stat .v{font-family:var(--font-display);font-size:30px;font-weight:700;margin-top:6px;color:var(--slate-900);}
+  .stat .bar{height:4px;border-radius:2px;background:var(--line);margin-top:12px;overflow:hidden;}
+  .stat .bar i{display:block;height:100%;border-radius:2px;}
+  .stat.total .bar i{background:var(--navy-700);width:100%;}
+  .stat.green .v{color:var(--green);}
+  .stat.green .bar i{background:var(--green);}
+  .stat.red .v{color:var(--red);}
+  .stat.red .bar i{background:var(--red);}
+  .stat.amber .v{color:#c07f16;}
+  .stat.amber .bar i{background:var(--amber);}
+  .stat.gray .v{color:var(--slate-600);}
+  .stat.gray .bar i{background:var(--slate-400);}
+  .stat.blue .v{color:var(--navy-700);}
+  .stat.blue .bar i{background:var(--navy-700);}
+  .stat{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;}
+  .stat:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,37,68,.1);}
+  .stat.active{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(30,66,120,.14);}
+  .stat.active .k{color:var(--navy-700);}
+
+  .pagination{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 0 4px;}
+  .pagination button{
+    border:1.5px solid var(--line);background:#fff;color:var(--slate-900);
+    border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .pagination button:disabled{opacity:.4;cursor:not-allowed;}
+  .pagination button:not(:disabled):hover{border-color:var(--navy-700);color:var(--navy-700);}
+  .pagination .p-info{font-family:var(--font-mono);font-size:12.5px;color:var(--slate-600);}
+
+  /* ---------- painel gráficos ---------- */
+  .panels{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:26px;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;flex-wrap:wrap;}
+  .panel h3{font-family:var(--font-display);font-size:15px;margin:0 0 4px;}
+  .panel .sub{font-size:12px;color:var(--slate-600);margin:0 0 14px;}
+  .panel canvas{max-height:230px;}
+  .btn-chip{
+    flex:none;border:1.5px solid var(--line);background:#fff;color:var(--navy-700);
+    font-family:var(--font-body);font-size:11.5px;font-weight:600;border-radius:20px;
+    padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .12s, border-color .12s;
+  }
+  .btn-chip:hover{background:var(--amber-soft);border-color:var(--amber);}
+
+  /* ---------- filtros e tabela ---------- */
+  .toolbar{
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;
+  }
+  .search-wrap{position:relative;flex:1;min-width:220px;}
+  .search-wrap input[type="text"]{
+    width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 34px 10px 14px;
+    font-size:13px;font-family:var(--font-body);outline:none;box-sizing:border-box;
+  }
+  .search-wrap input[type="text"]:focus{border-color:var(--navy-700);}
+  .search-clear{
+    display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    border:none;background:var(--line);color:var(--slate-600);width:20px;height:20px;
+    border-radius:50%;font-size:13px;line-height:1;cursor:pointer;align-items:center;justify-content:center;
+  }
+  .search-clear:hover{background:var(--slate-400);color:#fff;}
+  select{
+    border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;
+    font-family:var(--font-body);background:#fff;color:var(--slate-900);outline:none;
+  }
+  .table-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;min-width:820px;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;padding:12px 14px;background:var(--navy-950);color:var(--slate-400);
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;
+    position:sticky;top:0;cursor:pointer;user-select:none;white-space:nowrap;
+  }
+  thead th:hover{color:#fff;}
+  thead th span.arrow{margin-left:4px;opacity:.35;display:inline-block;font-size:10px;}
+  thead th.sorted{color:#fff;}
+  thead th.sorted span.arrow{opacity:1;color:var(--amber);}
+  tbody tr{border-top:1px solid var(--line);cursor:pointer;}
+  tbody tr:hover{background:#f8faff;}
+  td{padding:11px 14px;color:var(--slate-900);white-space:nowrap;}
+  td.name{font-weight:600;}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
+    font-size:11.5px;font-weight:600;
+  }
+  .badge.ativo{background:var(--green-soft);color:var(--green);}
+  .badge.vencendo{background:var(--amber-soft);color:#c07f16;}
+  .badge.vencido{background:var(--red-soft);color:var(--red);}
+  .badge.outro{background:#eef1f7;color:var(--slate-600);}
+  .conf-badge{
+    position:absolute;top:-7px;right:-7px;background:var(--red);color:#fff;
+    font-size:10px;font-weight:700;border-radius:50%;min-width:18px;height:18px;
+    display:flex;align-items:center;justify-content:center;padding:0 4px;
+    font-family:var(--font-mono);box-shadow:0 0 0 2px var(--navy-900);
+  }
+
+  /* ---------- modal de conferência (relCondutores.xlsx) ---------- */
+  #confModalBackdrop .modal-card{position:relative;overflow:visible;}
+  #confModalBackdrop .modal-head{
+    position:relative;overflow:hidden;
+    background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 60%,var(--navy-800));
+  }
+  #confModalBackdrop .modal-head::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:4px;
+    background-image:repeating-linear-gradient(90deg,var(--amber) 0 22px, transparent 22px 40px);
+    opacity:.85;
+  }
+  #confModalBackdrop .modal-head h2::before{content:"⚠ ";color:var(--amber);}
+  #confModalBackdrop .modal-body{padding-top:18px;position:relative;}
+  .conf-copy-toast{
+    position:absolute;top:-4px;right:0;background:var(--navy-900);color:#fff;
+    font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;
+    opacity:0;pointer-events:none;transition:opacity .2s ease, transform .2s ease;
+    transform:translateY(-6px);z-index:5;white-space:nowrap;
+  }
+  .conf-copy-toast.show{opacity:1;transform:translateY(0);}
+  .conf-summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .conf-summary-pill{
+    font-family:var(--font-mono);font-size:11.5px;font-weight:600;
+    padding:6px 13px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--slate-600);
+  }
+  .conf-summary-pill.total{background:var(--navy-900);border-color:var(--navy-900);color:#fff;}
+  .conf-summary-pill.cnh{background:#f1e9fb;border-color:rgba(124,58,237,.3);color:#7c3aed;}
+  .conf-summary-pill.validade{background:var(--red-soft);border-color:rgba(229,72,77,.3);color:var(--red);}
+  .conf-summary-pill.semcpf{background:var(--amber-soft);border-color:rgba(242,169,59,.4);color:#c07f16;}
+  #confModalBackdrop .table-wrap{border-radius:12px;max-height:min(58vh,520px);overflow-y:auto;overflow-x:hidden;}
+  #confModalBackdrop table{min-width:0;width:100%;table-layout:fixed;}
+  #confModalBackdrop td, #confModalBackdrop th{white-space:normal;word-break:break-word;}
+  #confModalBackdrop thead th{position:sticky;top:0;z-index:2;}
+  #confModalBackdrop tbody tr:nth-child(even){background:#fafbfd;}
+  #confModalBackdrop tbody tr:hover{background:var(--amber-soft);}
+  #confModalBackdrop tbody tr.conf-group-row:hover{background:var(--navy-950);}
+  #confModalBackdrop td.mono{font-family:var(--font-mono);font-size:12px;color:var(--slate-600);}
+  #confModalBackdrop tr.conf-group-row td{
+    background:var(--navy-950);color:#fff;padding:8px 14px;cursor:default;
+  }
+  .conf-group-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .conf-group-name{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:#fff;
+  }
+  .conf-group-count{
+    font-family:var(--font-mono);font-size:10.5px;color:var(--slate-400);flex:none;
+  }
+  .conf-chip{
+    display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
+    font-size:10.5px;font-weight:700;letter-spacing:.2px;margin:2px 4px 2px 0;cursor:default;white-space:nowrap;
+  }
+  .conf-chip.cnh{background:#f1e9fb;color:#7c3aed;border:1px solid rgba(124,58,237,.3);}
+  .conf-chip.validade{background:var(--red-soft);color:var(--red);border:1px solid rgba(229,72,77,.3);}
+  .conf-chip.semcpf{background:var(--amber-soft);color:#c07f16;border:1px solid rgba(242,169,59,.4);}
+
+  .badge-multa{
+    display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;
+    font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+    background:var(--red-soft);color:var(--red);border:1px solid rgba(229,72,77,.35);
+    vertical-align:middle;margin-left:8px;
+  }
+  td.name{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
+  .mcard-name-wrap{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+  .days{display:flex;align-items:center;gap:8px;min-width:120px;}
+  .days .track{width:60px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;flex:none;}
+  .days .track i{display:block;height:100%;border-radius:3px;}
+  .days span.n{font-family:var(--font-mono);font-size:12px;color:var(--slate-600);}
+  tfoot td{padding:14px;text-align:center;color:var(--slate-400);font-size:12px;}
+
+  /* ---------- cards mobile (telas < 768px) ---------- */
+  .mobile-cards{display:none;flex-direction:column;gap:10px;}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .12s;}
+  .mcard:hover{border-color:var(--navy-700);}
+  .mcard-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;}
+  .mcard-name{font-weight:700;font-size:14px;color:var(--slate-900);}
+  .mcard-filial{font-size:10.5px;color:var(--slate-600);font-family:var(--font-mono);white-space:nowrap;text-transform:uppercase;}
+  .mcard-func{font-size:11.5px;color:var(--slate-600);margin:-6px 0 10px;}
+  .mcard-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--slate-600);padding:5px 0;border-top:1px solid var(--line);}
+  .mcard-row:first-of-type{border-top:none;}
+  .mcard-pill{padding:3px 10px;border-radius:12px;font-size:11.5px;font-weight:700;}
+  @media (max-width:768px){
+    .table-wrap{display:none;}
+    .mobile-cards{display:flex;}
+  }
+
+  /* ---------- copiar no modal ---------- */
+  .est-badge{display:inline-block;font-size:11px;color:var(--amber, #c07f16);cursor:help;font-weight:700;}
+  .val.copyable{cursor:pointer;border-bottom:1.5px dashed var(--slate-400);}
+  .val.copyable:hover{color:var(--navy-700);border-color:var(--navy-700);}
+
+  /* ---------- modal de detalhes do condutor ---------- */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(10,25,48,.55);display:none;
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal-card{
+    background:#fff;border-radius:var(--radius);max-width:620px;width:100%;
+    max-height:92vh;overflow:hidden;box-shadow:0 24px 60px rgba(10,25,48,.35);
+    display:flex;flex-direction:column;
+  }
+  .modal-head{
+    background:var(--navy-900);color:#fff;padding:16px 22px;border-radius:var(--radius) var(--radius) 0 0;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex:none;
+  }
+  .modal-head h2{font-family:var(--font-display);margin:0 0 3px;font-size:17px;}
+  .modal-head p{margin:0;color:var(--slate-400);font-size:12px;}
+  .modal-close{
+    background:rgba(255,255,255,.12);border:none;color:#fff;width:26px;height:26px;
+    border-radius:50%;font-size:14px;cursor:pointer;flex:none;
+  }
+  .modal-close:hover{background:rgba(255,255,255,.24);}
+  .modal-body{padding:16px 22px 20px;overflow-y:auto;}
+
+  /* ---------- exportação ---------- */
+  .btn-icon{display:inline-block;margin-right:2px;}
+  .btn[disabled],.btn-chip[disabled]{opacity:.55;cursor:progress;pointer-events:none;}
+  .modal-foot{
+    padding:14px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;
+    gap:10px;flex:none;background:#fafbfd;border-radius:0 0 var(--radius) var(--radius);
+  }
+  .export-mode-opt{
+    display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;
+    padding:12px 14px;cursor:pointer;transition:border-color .12s, background .12s;margin-bottom:10px;
+  }
+  .export-mode-opt:hover{border-color:var(--navy-700);}
+  .export-mode-opt input[type="radio"],
+  .export-mode-opt input[type="checkbox"]{margin-top:3px;accent-color:var(--navy-900);flex:none;}
+  .export-mode-opt strong{display:block;font-size:13.5px;color:var(--slate-900);}
+  .export-mode-opt.active{border-color:var(--navy-900);background:var(--amber-soft);}
+  .export-mode-sub{display:block;font-size:12px;color:var(--slate-600);margin-top:2px;}
+  .export-picker-actions{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .export-pick-count{font-family:var(--font-mono);font-size:11.5px;color:var(--slate-600);margin-left:auto;}
+  .export-picker-list{
+    border:1.5px solid var(--line);border-radius:10px;max-height:260px;overflow-y:auto;
+  }
+  .export-picker-row{
+    display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);
+    font-size:13px;cursor:pointer;
+  }
+  .export-picker-row:last-child{border-bottom:none;}
+  .export-picker-row:hover{background:var(--bg);}
+  .export-picker-row input[type="checkbox"]{accent-color:var(--navy-900);flex:none;}
+  .export-picker-row .epr-name{font-weight:600;color:var(--slate-900);}
+  .export-picker-row .epr-meta{color:var(--slate-600);font-size:11.5px;margin-left:auto;text-align:right;white-space:nowrap;}
+  .export-empty-hint{padding:16px;text-align:center;color:var(--slate-400);font-size:12.5px;}
+  .modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;}
+  .modal-field{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .modal-field .lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--slate-600);}
+  .modal-field .val{font-size:12.5px;color:var(--slate-900);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .modal-section-title{
+    font-family:var(--font-display);font-size:11px;letter-spacing:.4px;text-transform:uppercase;color:var(--navy-800);
+    margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--line);
+  }
+  .modal-note{background:var(--bg);border-radius:9px;padding:10px 12px;font-size:12.5px;color:var(--slate-900);line-height:1.45;margin-top:8px;max-height:80px;overflow-y:auto;}
+  .multa-item{border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.4;border:1px solid var(--line);}
+  .multa-item:last-child{margin-bottom:0;}
+  .multa-item.pendente{background:var(--red-soft);border-color:rgba(229,72,77,.35);}
+  .multa-item.resolvida{background:var(--bg);opacity:.8;}
+  .multa-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;}
+  .multa-desc{font-weight:600;color:var(--slate-900);}
+  .multa-item.resolvida .multa-desc{color:var(--slate-600);font-weight:500;}
+  .multa-meta{font-family:var(--font-mono);font-size:11px;color:var(--slate-600);}
+  .multa-status{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:2px 8px;border-radius:20px;flex:none;}
+  .multa-status.pendente{background:var(--red);color:#fff;}
+  .multa-status.resolvida{background:var(--line);color:var(--slate-600);}
+  .modal-section-title.has-multas{color:var(--red);}
+  .modal-section-title.has-docs{color:#c07f16;}
+  .doc-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .badge-doc{
+    display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;
+    font-size:11px;font-weight:700;letter-spacing:.2px;
+    background:var(--amber-soft);color:#c07f16;border:1px solid rgba(192,127,22,.35);
+  }
+  @media (max-width:600px){ .modal-grid{grid-template-columns:1fr 1fr;} }
+  .count-pill{font-family:var(--font-mono);font-size:12px;color:var(--slate-600);}
+
+  @media (max-width:1100px){
+    .stats{grid-template-columns:repeat(3,1fr);}
+    .panels{grid-template-columns:1fr;}
+  }
+  @media (max-width:700px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .road{padding:26px 20px 26px;}
+    main{padding:22px 16px 50px;}
+    .config{padding:0 16px;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header class="road">
+  <div class="road-top">
+    <div class="road-title">
+      <span class="eyebrow">Viação · Gestão de Condutores</span>
+      <h1>Painel de Condutores</h1>
+    </div>
+    <div class="road-status">
+      <span class="dot off" id="statusDot"></span>
+      <span id="statusText">Aguardando conexão…</span>
+      <select id="filterFilial">
+        <option value="">Todas as filiais</option>
+      </select>
+      <button class="btn btn-ghost" id="btnConferencia" style="border-color:rgba(255,255,255,.25);color:#fff;position:relative;">
+        Conferência CNH/DER
+        <span id="confBadge" class="conf-badge hidden">0</span>
+      </button>
+      <button class="btn btn-ghost" id="btnRefresh" style="border-color:rgba(255,255,255,.25);color:#fff;">Atualizar agora</button>
+      <button class="btn btn-ghost" id="btnExportDash" style="border-color:rgba(255,255,255,.25);color:#fff;">
+        <span class="btn-icon">⇩</span> Exportar</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="emptyState" class="state-msg" style="text-align:left;padding:28px 0;">
+    <div class="skel-stats">
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+    </div>
+    <div class="skel-panels">
+      <div class="skel skel-panel"></div>
+      <div class="skel skel-panel"></div>
+    </div>
+    <div class="skel skel-row" style="width:100%;height:44px;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:70%;"></div>
+  </div>
+
+  <div id="errorState" class="state-msg hidden">
+    <strong>Não foi possível ler a planilha</strong>
+    <span id="errorDetail">Verifique se o link de compartilhamento está liberado e se o nome da aba está correto.</span>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <section class="stats" id="statsSection">
+      <div class="stat total" data-filter-type="" data-filter-value="">
+        <div class="k">Total de condutores</div>
+        <div class="v" id="stTotal">0</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="stat green" data-filter-type="der" data-filter-value="ATIVO">
+        <div class="k">DER ativo</div>
+        <div class="v" id="stDerAtivo">0</div>
+        <div class="bar"><i id="barDerAtivo" style="width:0%"></i></div>
+      </div>
+      <div class="stat amber" data-filter-type="der" data-filter-value="VENCENDO">
+        <div class="k">DER vencendo</div>
+        <div class="v" id="stDerVencendo">0</div>
+        <div class="bar"><i id="barDerVencendo" style="width:0%"></i></div>
+      </div>
+      <div class="stat red" data-filter-type="der" data-filter-value="VENCIDO">
+        <div class="k">DER vencido</div>
+        <div class="v" id="stDerVencido">0</div>
+        <div class="bar"><i id="barDerVencido" style="width:0%"></i></div>
+      </div>
+      <div class="stat green" data-filter-type="cnh" data-filter-value="ATIVO">
+        <div class="k">CNH ativa</div>
+        <div class="v" id="stCnhAtivo">0</div>
+        <div class="bar"><i id="barCnhAtivo" style="width:0%"></i></div>
+      </div>
+      <div class="stat red" data-filter-type="cnh" data-filter-value="VENCIDO">
+        <div class="k">CNH vencida</div>
+        <div class="v" id="stCnhVencido">0</div>
+        <div class="bar"><i id="barCnhVencido" style="width:0%"></i></div>
+      </div>
+      <div class="stat gray" data-filter-type="cadastro" data-filter-value="SEM_CADASTRO">
+        <div class="k">Sem cadastro</div>
+        <div class="v" id="stSemCadastro">0</div>
+        <div class="bar"><i id="barSemCadastro" style="width:0%"></i></div>
+      </div>
+      <div class="stat blue" data-filter-type="enviado" data-filter-value="AGUARDANDO">
+        <div class="k">Aguardando DER</div>
+        <div class="v" id="stEnviados">0</div>
+        <div class="bar"><i id="barEnviados" style="width:0%"></i></div>
+      </div>
+      <div class="stat red" data-filter-type="multas" data-filter-value="1">
+        <div class="k">Multas</div>
+        <div class="v" id="stMultas">0</div>
+        <div class="bar"><i id="barMultas" style="width:0%"></i></div>
+      </div>
+    </section>
+
+    <section class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>Condutores por filial</h3>
+            <p class="sub" id="chartFilialSub">Distribuição do quadro ativo em cada unidade</p>
+          </div>
+          <button type="button" class="btn-chip hidden" id="btnAllFiliais">Ver todas as filiais</button>
+        </div>
+        <canvas id="chartFilial"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Situação documental</h3>
+        <p class="sub" id="chartStatusSub">DER x CNH — visão geral</p>
+        <canvas id="chartStatus"></canvas>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="search" placeholder="Buscar por nome, CPF, matrícula ou nº CNH…">
+        <button type="button" class="search-clear" id="searchClear">×</button>
+      </div>
+      <select id="filterStatusDer">
+        <option value="">DER — todos</option>
+        <option value="ATIVO">DER ativo</option>
+        <option value="VENCENDO">DER vencendo (&lt;30d)</option>
+        <option value="VENCIDO">DER vencido</option>
+        <option value="SEM_CADASTRO">DER sem cadastro</option>
+      </select>
+      <select id="filterStatusCnh">
+        <option value="">CNH — todos</option>
+        <option value="ATIVO">CNH ativa</option>
+        <option value="VENCIDO">CNH vencida</option>
+        <option value="SEM_CADASTRO">CNH sem cadastro</option>
+      </select>
+      <span class="count-pill" id="countPill">0 registros</span>
+      <button type="button" class="btn-chip" id="btnExportList">⇩ Exportar lista</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="motorista">Motorista <span class="arrow"></span></th>
+            <th data-key="filial">Filial <span class="arrow"></span></th>
+            <th data-key="funcao">Função <span class="arrow"></span></th>
+            <th data-key="derVal">DER validade <span class="arrow"></span></th>
+            <th data-key="derDias">Dias rest. DER <span class="arrow"></span></th>
+            <th data-key="cnhVal">CNH validade <span class="arrow"></span></th>
+            <th data-key="cnhDias">Dias rest. CNH <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr><td colspan="7" id="tfootMsg"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="mobile-cards" id="mobileCards"></div>
+
+    <div class="pagination" id="pagination">
+      <button id="pgPrev">‹ Anterior</button>
+      <span class="p-info" id="pgInfo">Página 1 de 1</span>
+      <button id="pgNext">Próxima ›</button>
+    </div>
+  </div>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2 id="mdNome">—</h2>
+        <p id="mdSub">—</p>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field"><span class="lbl">Matrícula</span><span class="val copyable" id="mdMat">—</span></div>
+        <div class="modal-field"><span class="lbl">CPF</span><span class="val copyable" id="mdCpf">—</span></div>
+        <div class="modal-field"><span class="lbl">Sexo</span><span class="val" id="mdSexo">—</span></div>
+        <div class="modal-field"><span class="lbl">Admissão</span><span class="val" id="mdAdmissao">—</span></div>
+        <div class="modal-field"><span class="lbl">DER validade</span><span class="val" id="mdDerVal">—</span></div>
+        <div class="modal-field"><span class="lbl">Status DER</span><span class="val" id="mdDerStatus">—</span></div>
+        <div class="modal-field"><span class="lbl">CNH nº</span><span class="val" id="mdCnhNum">—</span></div>
+        <div class="modal-field"><span class="lbl">CNH validade</span><span class="val" id="mdCnhVal">—</span></div>
+        <div class="modal-field"><span class="lbl">Status CNH</span><span class="val" id="mdCnhStatus">—</span></div>
+        <div class="modal-field"><span class="lbl">Peticionado</span><span class="val" id="mdPeticionado">—</span></div>
+        <div class="modal-field"><span class="lbl">Data peticion.</span><span class="val" id="mdDataPet">—</span></div>
+        <div class="modal-field"><span class="lbl">Nº peticion.</span><span class="val" id="mdNumPet">—</span></div>
+      </div>
+      <div id="mdDocsSection" class="hidden">
+        <div class="modal-section-title has-docs">Documento pendente</div>
+        <div id="mdDocsList" class="doc-tags"></div>
+      </div>
+      <div id="mdDocsInfoSection" class="hidden">
+        <div class="modal-section-title has-docs">Observação</div>
+        <div class="modal-note" id="mdDocsInfo">—</div>
+      </div>
+      <div id="mdMultasSection" class="hidden">
+        <div class="modal-section-title" id="mdMultasTitle">Multas</div>
+        <div id="mdMultasList"></div>
+      </div>
+      <div id="mdObsSection">
+        <div class="modal-section-title">Problemas &amp; observações</div>
+        <div class="modal-note" id="mdObs">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confModalBackdrop">
+  <div class="modal-card" style="max-width:min(1180px,95vw);">
+    <div class="modal-head">
+      <div>
+        <h2>Conferência — relCondutores.xlsx</h2>
+        <p id="confSub">—</p>
+      </div>
+      <button class="modal-close" id="confModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="confCopyToast" class="conf-copy-toast"></div>
+      <div id="confSummary" class="conf-summary hidden"></div>
+      <div id="confEmpty" class="state-msg hidden" style="padding:30px 0;">
+        <strong>Tudo certo!</strong>
+        Nenhuma divergência encontrada entre o relatório e o painel.
+      </div>
+      <div class="table-wrap hidden" id="confTableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome completo</th>
+              <th>CPF</th>
+              <th>CNH</th>
+              <th>Validade cadastro</th>
+              <th>Divergência</th>
+            </tr>
+          </thead>
+          <tbody id="confTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="exportModalBackdrop">
+  <div class="modal-card" style="max-width:640px;">
+    <div class="modal-head">
+      <div>
+        <h2>Exportar relatório de condutores</h2>
+        <p>Gera um PDF pronto pra imprimir ou enviar</p>
+      </div>
+      <button class="modal-close" id="exportModalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="export-mode-opt active" id="exportOptFiltro">
+        <input type="radio" name="exportMode" id="exportModeFiltro" value="filtro" checked>
+        <div>
+          <strong>Usar os filtros atuais</strong>
+          <span class="export-mode-sub" id="exportFiltroResumo">—</span>
+        </div>
+      </label>
+      <label class="export-mode-opt" id="exportOptManual">
+        <input type="radio" name="exportMode" id="exportModeManual" value="manual">
+        <div>
+          <strong>Selecionar condutores manualmente</strong>
+          <span class="export-mode-sub">Escolha quem entra no relatório, independente de filial ou situação</span>
+        </div>
+      </label>
+
+      <div id="exportManualPicker" class="hidden" style="margin-top:6px;">
+        <div class="export-picker-filter-bar" id="exportPickerFilterBar" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding:8px 10px;background:var(--surface-2,#f3f5f9);border-radius:8px;font-size:12.5px;color:var(--text-2,#5c6b82);">
+          <span id="exportPickerFilterInfo"></span>
+          <button type="button" class="btn-chip" id="exportPickerClearFilters" style="flex:none;">Limpar filtros</button>
+        </div>
+        <div class="search-wrap" style="margin-bottom:10px;">
+          <input type="text" id="exportPickerSearch" placeholder="Buscar por nome, filial ou matrícula…">
+        </div>
+        <div class="export-picker-actions">
+          <button type="button" class="btn-chip" id="exportPickAllVisible">Selecionar visíveis</button>
+          <button type="button" class="btn-chip" id="exportPickClear">Limpar seleção</button>
+          <span class="export-pick-count" id="exportPickCount">0 selecionado(s)</span>
+        </div>
+        <div class="export-picker-list" id="exportPickerList"></div>
+      </div>
+
+      <label class="export-mode-opt" id="exportOptConfidencial" style="margin-top:6px;">
+        <input type="checkbox" id="exportModoConfidencial">
+        <div>
+          <strong>Modo confidencial</strong>
+          <span class="export-mode-sub">Oculta no PDF os documentos internos do setor (Certidão Criminal e Certidão de Bons Antecedentes)</span>
+        </div>
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="exportModalCancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="exportModalGenerate">Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Planilha fixa — Controle de Condutores
+  const SHEET_ID = '1V-yh0iUzolsuUw6s7GKIwo37Vdgpbn8qr7kB_CZ-hHE';
+  // Cada aba = uma filial. Para adicionar uma nova unidade, crie a aba na
+  // planilha com o nome da filial e inclua o mesmo nome nesta lista.
+  const SHEET_TABS = ['CONSELHEIRO LAFAIETE', 'BELEM','CANAA DOS CARAJAS', 'CATALAO', 'ARAXA', 'CONTAGEM', 'PARAUAPEBAS', 'SERRA DO SALITRE', 'SETE LAGOAS', 'TUCUMA'];
+
+  // Planilha de Multas (separada da planilha de condutores)
+  const SHEET_ID_MULTAS = '1KAlerqNKe29NMIg9Ym5x_5xyUiUD8rboIhecnEOE2fU';
+  const MULTAS_TAB = 'Página1';
+
+  // Planilha de Controle de Documentação (separada, também dividida por filial)
+  const SHEET_ID_DOCS = '1-pFdr863Az92E-PJbnIBKNfwDEuSlrbZARNB6KpgMRc';
+  const DOC_COLUMNS = [
+    { header: 'CTPS', tag: 'CTPS' },
+    { header: 'CNH', tag: 'CNH' },
+    { header: 'CURSO TRANSP. COLETIVO', tag: 'Curso' },
+    { header: 'CERTIDÃO CRIMINAL', tag: 'Criminal' },
+    { header: 'CERTIDÃO BONS ANTECEDENTES', tag: 'Antecedentes' },
+    { header: 'PRONTUARIO CONDUTOR', tag: 'Prontuario' },
+    { header: 'COMPROVANTE ENDEREÇO', tag: 'Comprovante Endereço' },
+  ];
+
+  const els = {
+    btnRefresh: document.getElementById('btnRefresh'),
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
+    empty: document.getElementById('emptyState'),
+    error: document.getElementById('errorState'),
+    errorDetail: document.getElementById('errorDetail'),
+    dash: document.getElementById('dashboard'),
+    search: document.getElementById('search'),
+    filterFilial: document.getElementById('filterFilial'),
+    filterStatusDer: document.getElementById('filterStatusDer'),
+    filterStatusCnh: document.getElementById('filterStatusCnh'),
+    tbody: document.getElementById('tbody'),
+    mobileCards: document.getElementById('mobileCards'),
+    countPill: document.getElementById('countPill'),
+    tfootMsg: document.getElementById('tfootMsg'),
+    pgPrev: document.getElementById('pgPrev'),
+    pgNext: document.getElementById('pgNext'),
+    pgInfo: document.getElementById('pgInfo'),
+    searchClear: document.getElementById('searchClear'),
+    modalBackdrop: document.getElementById('modalBackdrop'),
+    modalClose: document.getElementById('modalClose'),
+    btnAllFiliais: document.getElementById('btnAllFiliais'),
+    btnConferencia: document.getElementById('btnConferencia'),
+    confBadge: document.getElementById('confBadge'),
+    confModalBackdrop: document.getElementById('confModalBackdrop'),
+    confModalClose: document.getElementById('confModalClose'),
+    confSub: document.getElementById('confSub'),
+    confEmpty: document.getElementById('confEmpty'),
+    confSummary: document.getElementById('confSummary'),
+    confCopyToast: document.getElementById('confCopyToast'),
+    confTableWrap: document.getElementById('confTableWrap'),
+    confTbody: document.getElementById('confTbody'),
+    btnExportDash: document.getElementById('btnExportDash'),
+    btnExportList: document.getElementById('btnExportList'),
+    exportModalBackdrop: document.getElementById('exportModalBackdrop'),
+    exportModalClose: document.getElementById('exportModalClose'),
+    exportModalCancel: document.getElementById('exportModalCancel'),
+    exportModalGenerate: document.getElementById('exportModalGenerate'),
+    exportOptFiltro: document.getElementById('exportOptFiltro'),
+    exportOptManual: document.getElementById('exportOptManual'),
+    exportModoConfidencial: document.getElementById('exportModoConfidencial'),
+    exportModeFiltro: document.getElementById('exportModeFiltro'),
+    exportModeManual: document.getElementById('exportModeManual'),
+    exportFiltroResumo: document.getElementById('exportFiltroResumo'),
+    exportManualPicker: document.getElementById('exportManualPicker'),
+    exportPickerSearch: document.getElementById('exportPickerSearch'),
+    exportPickAllVisible: document.getElementById('exportPickAllVisible'),
+    exportPickClear: document.getElementById('exportPickClear'),
+    exportPickCount: document.getElementById('exportPickCount'),
+    exportPickerList: document.getElementById('exportPickerList'),
+    exportPickerFilterBar: document.getElementById('exportPickerFilterBar'),
+    exportPickerFilterInfo: document.getElementById('exportPickerFilterInfo'),
+    exportPickerClearFilters: document.getElementById('exportPickerClearFilters'),
+  };
+
+  // Caminho do relCondutores.xlsx a partir de Html/condutores.html.
+  // O arquivo fica na raiz do repositório (ao lado do index.html) — por isso o "../".
+  // Se você mover o .html ou o .xlsx de pasta, ajuste este caminho.
+  const XLSX_PATH = '../relCondutores.xlsx';
+  let ultimaConferencia = []; // Já existe no seu código
+let dataUltimoArquivo = null; // Crie esta variável
+
+// Adicione esta função para formatar o texto
+function tempoRelativo(data) {
+  if (!data) return '';
+  const diffSegundos = Math.floor((new Date() - data) / 1000);
+
+  if (diffSegundos < 60) return 'Agora';
+  if (diffSegundos < 3600) return `Há ${Math.floor(diffSegundos / 60)} min`;
+  if (diffSegundos < 86400) return `Há ${Math.floor(diffSegundos / 3600)}h`;
+  return `Há ${Math.floor(diffSegundos / 86400)} dia(s)`;
+}
+
+  let rawRows = [];      
+  let rawMultas = [];    
+  let currentPageRows = []; 
+  let sortState = {key:'motorista', dir:1};
+  let charts = {filial:null, status:null};
+  let refreshTimer = null;
+  const PAGE_SIZE = 100;
+  let currentPage = 1;
+  let cadastroFilterStatus = ''; 
+  let multasFilterActive = false; 
+  let lastFilteredRows = [];   // última lista (todos os registros que batem com os filtros atuais, sem paginação) — usada pela exportação
+  let exportPickedCpf = new Set(); // seleção manual do popup de exportação (chave: CPF, ou nome quando não há CPF)
+  let exportPickerSearchQ = '';
+  let exportPickerUseFilters = true; // true = picker começa mostrando só quem bate com os filtros atuais da tela
+
+  function isEnviadoAguardando(r){
+    return r.derStatus === 'AGUARDANDO';
+  }
+
+  els.btnRefresh.addEventListener('click', () => loadData());
+  els.search.addEventListener('input', () => {
+    els.searchClear.style.display = els.search.value ? 'flex' : 'none';
+    currentPage = 1;
+    render();
+  });
+  els.searchClear.addEventListener('click', () => {
+    els.search.value = '';
+    els.searchClear.style.display = 'none';
+    currentPage = 1;
+    els.search.focus();
+    render();
+  });
+  els.modalClose.addEventListener('click', closeModal);
+  els.modalBackdrop.addEventListener('click', (e) => { if(e.target === els.modalBackdrop) closeModal(); });
+  els.btnConferencia.addEventListener('click', () => openConferenciaModal());
+  els.confModalClose.addEventListener('click', closeConferenciaModal);
+  els.confModalBackdrop.addEventListener('click', (e) => { if(e.target === els.confModalBackdrop) closeConferenciaModal(); });
+  els.btnExportDash.addEventListener('click', () => exportDashboardPdf());
+  els.btnExportList.addEventListener('click', () => openExportModal());
+  els.exportModalClose.addEventListener('click', closeExportModal);
+  els.exportModalCancel.addEventListener('click', closeExportModal);
+  els.exportModalBackdrop.addEventListener('click', (e) => { if(e.target === els.exportModalBackdrop) closeExportModal(); });
+  els.exportModeFiltro.addEventListener('change', updateExportModeUI);
+  els.exportModeManual.addEventListener('change', updateExportModeUI);
+  els.exportPickerSearch.addEventListener('input', () => { exportPickerSearchQ = els.exportPickerSearch.value.trim().toLowerCase(); renderExportPickerList(); });
+  els.exportPickerClearFilters.addEventListener('click', () => {
+    exportPickerUseFilters = false;
+    renderExportPickerList();
+    els.exportPickerSearch.focus();
+  });
+  els.exportPickAllVisible.addEventListener('click', () => {
+    getExportPickerVisibleRows().forEach(r => exportPickedCpf.add(exportRowKey(r)));
+    renderExportPickerList();
+  });
+  els.exportPickClear.addEventListener('click', () => { exportPickedCpf.clear(); renderExportPickerList(); });
+  els.exportModalGenerate.addEventListener('click', () => generateListPdf());
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape'){ closeModal(); closeConferenciaModal(); closeExportModal(); } });
+  els.filterFilial.addEventListener('change', () => { currentPage = 1; syncActiveCards(); render(true); });
+  els.btnAllFiliais.addEventListener('click', () => {
+    els.filterFilial.value = '';
+    currentPage = 1;
+    syncActiveCards();
+    render(true);
+  });
+  els.filterStatusDer.addEventListener('change', () => { cadastroFilterStatus = ''; currentPage = 1; syncActiveCards(); render(true); });
+  els.filterStatusCnh.addEventListener('change', () => { cadastroFilterStatus = ''; currentPage = 1; syncActiveCards(); render(true); });
+  els.pgPrev.addEventListener('click', () => { if(currentPage > 1){ currentPage--; render(); } });
+  els.pgNext.addEventListener('click', () => { currentPage++; render(); });
+  
+  document.querySelectorAll('.stat[data-filter-type]').forEach(card => {
+    card.addEventListener('click', () => {
+      const type = card.dataset.filterType;
+      const value = card.dataset.filterValue;
+      if(!type){
+        els.filterStatusDer.value = '';
+        els.filterStatusCnh.value = '';
+        cadastroFilterStatus = '';
+        multasFilterActive = false;
+      } else if(type === 'der'){
+        els.filterStatusDer.value = (els.filterStatusDer.value === value) ? '' : value;
+        els.filterStatusCnh.value = '';
+        cadastroFilterStatus = '';
+        multasFilterActive = false;
+      } else if(type === 'cnh'){
+        els.filterStatusCnh.value = (els.filterStatusCnh.value === value) ? '' : value;
+        els.filterStatusDer.value = '';
+        cadastroFilterStatus = '';
+        multasFilterActive = false;
+      } else if(type === 'cadastro' || type === 'enviado'){
+        els.filterStatusDer.value = '';
+        els.filterStatusCnh.value = '';
+        cadastroFilterStatus = (cadastroFilterStatus === value) ? '' : value;
+        multasFilterActive = false;
+      } else if(type === 'multas'){
+        els.filterStatusDer.value = '';
+        els.filterStatusCnh.value = '';
+        cadastroFilterStatus = '';
+        multasFilterActive = !multasFilterActive;
+      }
+      currentPage = 1;
+      syncActiveCards();
+      render(true);
+    });
+  });
+
+  function syncActiveCards(){
+    document.querySelectorAll('.stat[data-filter-type]').forEach(card => {
+      const type = card.dataset.filterType;
+      const value = card.dataset.filterValue;
+      let isActive = false;
+      if(!type){
+        isActive = !els.filterStatusDer.value && !els.filterStatusCnh.value && !cadastroFilterStatus && !multasFilterActive;
+      } else if(type === 'der'){
+        isActive = els.filterStatusDer.value === value;
+      } else if(type === 'cnh'){
+        isActive = els.filterStatusCnh.value === value;
+      } else if(type === 'cadastro' || type === 'enviado'){
+        isActive = cadastroFilterStatus === value;
+      } else if(type === 'multas'){
+        isActive = multasFilterActive;
+      }
+      card.classList.toggle('active', isActive);
+    });
+  }
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      sortState.dir = (sortState.key === key) ? -sortState.dir : 1;
+      sortState.key = key;
+      currentPage = 1;
+      render();
+    });
+  });
+
+  function setStatus(state, text){
+    els.statusDot.className = 'dot' + (state==='ok' ? '' : state==='err' ? ' err' : ' off');
+    els.statusText.textContent = text;
+  }
+
+  function parseGvizDate(cell){
+    if(!cell) return null;
+    if(cell.v === null || cell.v === undefined || cell.v === '') return null;
+    // Formato padrão: célula com tipo "Data" de verdade no Google Sheets
+    if(typeof cell.v === 'string' && cell.v.startsWith('Date(')){
+      const parts = cell.v.replace('Date(','').replace(')','').split(',').map(Number);
+      if(parts[0] < 1950) return null;
+      return new Date(parts[0], parts[1], parts[2]);
+    }
+    // Célula é número "cru": pode ser o valor serial que o Sheets usa por baixo dos
+    // panos quando a coluna está formatada como Número/Texto em vez de Data.
+    // Dia 0 do Sheets = 30/12/1899.
+    if(typeof cell.v === 'number'){
+      const d = new Date(1899, 11, 30);
+      d.setDate(d.getDate() + cell.v);
+      if(d.getFullYear() < 1950 || d.getFullYear() > 2200) return null;
+      return d;
+    }
+    // Célula veio como texto puro (coluna formatada como Texto): tenta reconhecer
+    // o formato "dd/mm/aaaa" ou "aaaa-mm-dd" no valor formatado (f) ou no valor cru (v).
+    const raw = ((cell.f !== undefined && cell.f !== null) ? cell.f : cell.v).toString().trim();
+    if(raw){
+      let m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+      if(m){
+        let [, dd, mm, yy] = m;
+        if(yy.length === 2) yy = '20' + yy;
+        const d = new Date(Number(yy), Number(mm) - 1, Number(dd));
+        if(!isNaN(d.getTime())) return d;
+      }
+      m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if(m){
+        const [, yy, mm, dd] = m;
+        const d = new Date(Number(yy), Number(mm) - 1, Number(dd));
+        if(!isNaN(d.getTime())) return d;
+      }
+    }
+    return null;
+  }
+
+  function cellText(cell){
+    if(!cell) return '';
+    return (cell.f !== undefined && cell.f !== null) ? String(cell.f) : (cell.v ?? '');
+  }
+
+  function cellBool(cell){
+    if(!cell) return false;
+    if(cell.v === true) return true;
+    if(typeof cell.v === 'string'){
+      const t = cell.v.trim().toUpperCase();
+      return t === 'TRUE' || t === 'SIM' || t === 'VERDADEIRO';
+    }
+    return false;
+  }
+
+  function daysUntil(date){
+    if(!date) return null;
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const d = new Date(date); d.setHours(0,0,0,0);
+    return Math.round((d - now) / 86400000);
+  }
+
+  function parseNumOrNull(text){
+    const t = (text||'').toString().trim();
+    if(t === '') return null;
+    const n = Number(t);
+    return isNaN(n) ? null : n;
+  }
+
+  function sanitizeDays(v){
+    if(v === null || v === undefined || isNaN(v)) return null;
+    if(Math.abs(v) > 3650) return null; 
+    return v;
+  }
+
+  function normalizeStatus(text, days, vencendoThreshold){
+    const t = (text||'').toString().trim().toUpperCase();
+    let base;
+    if(days === null || isNaN(days)){
+      return 'SEM_CADASTRO';
+    }
+    if(t.includes('VENCID')) base = 'VENCIDO';
+    else if(t.includes('ATIV')) base = 'ATIVO';
+    else if(days < 0) base = 'VENCIDO';
+    else base = 'ATIVO';
+    if(base === 'ATIVO' && vencendoThreshold != null && days < vencendoThreshold){
+      return 'VENCENDO';
+    }
+    return base;
+  }
+
+  function parseTabRows(data, tabName){
+    const cols = data.table.cols.map(c => (c.label || '').toString().trim().toUpperCase());
+    const idx = (name) => cols.findIndex(c => c === name);
+    const idxAny = (...names) => { for(const n of names){ const i = idx(n); if(i>-1) return i; } return -1; };
+
+    const iNome = idx('MOTORISTAS');
+    const iCpf = idx('CPF');
+    const iMat = idxAny('MAT.', 'MATRÍCULA', 'MAT');
+    const iAdmissao = idx('ADMISSÃO');
+    const iFuncao = idx('FUNÇÃO');
+    const iFilial = idx('FILIAL');
+    const iSexo = idx('SEXO');
+    const iDerVal = idx('DER VALIDADE');
+    const iDerDias = idx('DIAS REST');
+    const iDerStatus = idx('STATUS DEER');
+    const iCnhNum = idxAny('Nº CNH', 'N° CNH', 'NUMERO CNH', 'NÚMERO CNH');
+    const iCnhVal = idx('CNH VALIDADE');
+    const iCnhDias = idx('DIAS REST2');
+    const iCnhStatus = idx('STATUS CNH');
+    const iPeticionado = idx('PETICIONADO');
+    const iDataPet = idx('DATA PETICIONAMENTO');
+    const iNumPet = idxAny('N. PETICIONAMENTO', 'Nº PETICIONAMENTO', 'NUMERO PETICIONAMENTO');
+    const iProblemas = idx('PROBLEMAS');
+    const iObs = idx('OBSERVAÇÃO');
+    const iEnviado = idx('ENVIADOS');
+
+    return data.table.rows
+      .map(r => r.c)
+      .filter(c => c && c[iNome] && cellText(c[iNome]))
+      .map(c => {
+        const derValDate = parseGvizDate(c[iDerVal]);
+        const cnhValDate = parseGvizDate(c[iCnhVal]);
+        const admissaoDate = iAdmissao>-1 ? parseGvizDate(c[iAdmissao]) : null;
+        const dataPetDate = iDataPet>-1 ? parseGvizDate(c[iDataPet]) : null;
+        const derDiasCalc = sanitizeDays(derValDate ? daysUntil(derValDate) : parseNumOrNull(iDerDias>-1 ? cellText(c[iDerDias]) : ''));
+        const cnhDiasCalc = sanitizeDays(cnhValDate ? daysUntil(cnhValDate) : parseNumOrNull(iCnhDias>-1 ? cellText(c[iCnhDias]) : ''));
+
+        // Às vezes a coluna "DER VALIDADE" (ou "CNH VALIDADE") vem vazia na planilha,
+        // mas a coluna "DIAS REST" já tem um número (calculado por fórmula na própria
+        // planilha, ou digitado manualmente). Nesse caso dá pra "reconstruir" a data
+        // de vencimento a partir de hoje + dias restantes, em vez de deixar em branco.
+        let derValFinal = derValDate;
+        let derValEstimado = false;
+        if(!derValFinal && derDiasCalc !== null && !isNaN(derDiasCalc)){
+          derValFinal = new Date();
+          derValFinal.setHours(0,0,0,0);
+          derValFinal.setDate(derValFinal.getDate() + derDiasCalc);
+          derValEstimado = true;
+        }
+        let cnhValFinal = cnhValDate;
+        let cnhValEstimado = false;
+        if(!cnhValFinal && cnhDiasCalc !== null && !isNaN(cnhDiasCalc)){
+          cnhValFinal = new Date();
+          cnhValFinal.setHours(0,0,0,0);
+          cnhValFinal.setDate(cnhValFinal.getDate() + cnhDiasCalc);
+          cnhValEstimado = true;
+        }
+
+        let rawDerStatus = normalizeStatus(iDerStatus>-1 ? cellText(c[iDerStatus]) : '', derDiasCalc, 30);
+        let enviadoFlag = iEnviado>-1 ? cellBool(c[iEnviado]) : false;
+
+        return {
+          motorista: cellText(c[iNome]),
+          cpf: iCpf>-1 ? cellText(c[iCpf]) : '',
+          matricula: iMat>-1 ? cellText(c[iMat]) : '',
+          admissao: admissaoDate,
+          funcao: iFuncao>-1 ? cellText(c[iFuncao]) : '',
+          filial: tabName,
+          sexo: iSexo>-1 ? cellText(c[iSexo]) : '',
+          derVal: derValFinal,
+          derValEstimado: derValEstimado,
+          derDias: isNaN(derDiasCalc) ? null : derDiasCalc,
+          // A MÁGICA ACONTECE AQUI: Substitui o status na raiz para ignorar lógicas futuras
+          derStatus: (enviadoFlag && rawDerStatus !== 'ATIVO') ? 'AGUARDANDO' : rawDerStatus,
+          cnhNumero: iCnhNum>-1 ? cellText(c[iCnhNum]) : '',
+          cnhVal: cnhValFinal,
+          cnhValEstimado: cnhValEstimado,
+          cnhDias: isNaN(cnhDiasCalc) ? null : cnhDiasCalc,
+          cnhStatus: normalizeStatus(iCnhStatus>-1 ? cellText(c[iCnhStatus]) : '', cnhDiasCalc),
+          peticionado: iPeticionado>-1 ? cellText(c[iPeticionado]) : '',
+          dataPeticionamento: dataPetDate,
+          numPeticionamento: iNumPet>-1 ? cellText(c[iNumPet]) : '',
+          problemas: iProblemas>-1 ? cellText(c[iProblemas]) : '',
+          observacao: iObs>-1 ? cellText(c[iObs]) : '',
+          enviado: enviadoFlag,
+        };
+      });
+  }
+
+  function normalizeCpf(text){
+    return (text||'').toString().replace(/\D/g,'');
+  }
+
+  function normalizeName(text){
+    return (text||'').toString()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'') 
+      .trim().toUpperCase().replace(/\s+/g,' ');
+  }
+
+  function parseMultasRows(data){
+    const cols = data.table.cols.map(c => (c.label || '').toString().trim().toUpperCase());
+    const idx = (name) => cols.findIndex(c => c === name);
+    const idxAny = (...names) => { for(const n of names){ const i = idx(n); if(i>-1) return i; } return -1; };
+
+    const iCondutor = idx('CONDUTOR');
+    const iCpf = idx('CPF');
+    const iData = idx('DATA');
+    const iDesc = idx('DESCRICAO') > -1 ? idx('DESCRICAO') : idx('DESCRIÇÃO');
+    const iPlaca = idxAny('PLACA', 'PLACA ');
+    const iChassi = idx('CHASSI');
+    const iRenavan = idx('RENAVAN');
+    const iFrota = idx('FROTA');
+    const iObs = idx('OBS');
+    const iResolvido = idx('RESOLVIDO');
+
+    return data.table.rows
+      .map(r => r.c)
+      .filter(c => c && iCondutor > -1 && cellText(c[iCondutor]))
+      .map(c => ({
+        condutor: cellText(c[iCondutor]),
+        cpf: iCpf>-1 ? cellText(c[iCpf]) : '',
+        data: parseGvizDate(c[iData]),
+        descricao: iDesc>-1 ? cellText(c[iDesc]) : '',
+        placa: iPlaca>-1 ? cellText(c[iPlaca]) : '',
+        chassi: iChassi>-1 ? cellText(c[iChassi]) : '',
+        renavan: iRenavan>-1 ? cellText(c[iRenavan]) : '',
+        frota: iFrota>-1 ? cellText(c[iFrota]) : '',
+        obs: iObs>-1 ? cellText(c[iObs]) : '',
+        resolvido: iResolvido>-1 ? cellBool(c[iResolvido]) : false,
+      }))
+      .filter(m => m.condutor && normalizeName(m.condutor) !== '-' && normalizeName(m.condutor) !== '');
+  }
+
+  async function fetchMultas(){
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID_MULTAS}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(MULTAS_TAB)}&_=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' na planilha de multas');
+    const text = await res.text();
+    const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    const data = JSON.parse(jsonStr);
+    if(!data.table || !data.table.rows) throw new Error('Formato inesperado na planilha de multas');
+    return parseMultasRows(data);
+  }
+
+  function attachMultas(condutorRows, multas){
+    const byCpf = {};
+    const byName = {};
+    multas.forEach(m => {
+      const cpfKey = normalizeCpf(m.cpf);
+      if(cpfKey){ (byCpf[cpfKey] = byCpf[cpfKey] || []).push(m); }
+      const nameKey = normalizeName(m.condutor);
+      if(nameKey){ (byName[nameKey] = byName[nameKey] || []).push(m); }
+    });
+    condutorRows.forEach(r => {
+      const cpfKey = normalizeCpf(r.cpf);
+      const nameKey = normalizeName(r.motorista);
+      let found = (cpfKey && byCpf[cpfKey]) ? byCpf[cpfKey] : (byName[nameKey] || []);
+      const seen = new Set();
+      found = found.filter(m => {
+        const k = (m.condutor+'|'+m.data+'|'+m.descricao+'|'+m.placa);
+        if(seen.has(k)) return false;
+        seen.add(k); return true;
+      });
+      found = found.slice().sort((a,b) => {
+        if(a.resolvido !== b.resolvido) return a.resolvido ? 1 : -1;
+        const ta = a.data ? a.data.getTime() : 0, tb = b.data ? b.data.getTime() : 0;
+        return tb - ta;
+      });
+      r.multas = found;
+      r.multasPendentes = found.filter(m => !m.resolvido).length;
+    });
+  }
+
+  function parseDocsRows(data){
+    const cols = data.table.cols.map(c => (c.label || '').toString().trim().toUpperCase());
+    const idx = (name) => cols.findIndex(c => c === name);
+    const iMotorista = idx('MOTORISTA');
+    if(iMotorista === -1) return [];
+    const colIdx = DOC_COLUMNS.map(dc => idx(dc.header));
+    const iInfo = idx('INFORMAÇÃO');
+
+    return data.table.rows
+      .map(r => r.c)
+      .filter(c => c && cellText(c[iMotorista]))
+      .map(c => {
+        const pendentes = [];
+        DOC_COLUMNS.forEach((dc, i) => {
+          const ci = colIdx[i];
+          if(ci === -1) return;
+          const val = cellText(c[ci]).trim();
+          if(val && val.toUpperCase() !== 'OK') pendentes.push(dc.tag);
+        });
+        let observacao = '';
+        if(iInfo > -1){
+          const infoVal = cellText(c[iInfo]).trim();
+          if(infoVal && infoVal.toUpperCase() !== 'TUDO OK') observacao = infoVal;
+        }
+        return { motorista: cellText(c[iMotorista]), pendentes, observacao };
+      });
+  }
+
+  async function fetchDocsTab(tabName){
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID_DOCS}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}&_=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' na planilha de documentação (' + tabName + ')');
+    const text = await res.text();
+    const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    const data = JSON.parse(jsonStr);
+    if(!data.table || !data.table.rows) throw new Error('Formato inesperado na planilha de documentação (' + tabName + ')');
+    return parseDocsRows(data);
+  }
+
+  async function fetchDocs(){
+    const results = await Promise.allSettled(SHEET_TABS.map(fetchDocsTab));
+    let merged = [];
+    results.forEach(r => { if(r.status === 'fulfilled') merged = merged.concat(r.value); });
+    return merged;
+  }
+
+  function attachDocs(condutorRows, docsRows){
+    const byName = {};
+    docsRows.forEach(d => {
+      const key = normalizeName(d.motorista);
+      if(key) byName[key] = d;
+    });
+    condutorRows.forEach(r => {
+      const found = byName[normalizeName(r.motorista)];
+      r.docsPendentes = found ? found.pendentes : [];
+      r.docsObservacao = found ? found.observacao : '';
+    });
+  }
+
+  async function fetchTab(tabName){
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}&_=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' em ' + tabName);
+    const text = await res.text();
+    const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+    const data = JSON.parse(jsonStr);
+    if(!data.table || !data.table.rows) throw new Error('Formato inesperado em ' + tabName);
+    return parseTabRows(data, tabName);
+  }
+
+  async function loadData(){
+    setStatus('off','Carregando…');
+    try{
+      const results = await Promise.allSettled(SHEET_TABS.map(fetchTab));
+      let merged = [];
+      let failed = [];
+      results.forEach((r, i) => {
+        if(r.status === 'fulfilled') merged = merged.concat(r.value);
+        else failed.push(SHEET_TABS[i]);
+      });
+      if(merged.length === 0) throw new Error('Nenhuma aba pôde ser lida (' + (failed.join(', ') || 'verifique os nomes das abas') + ')');
+
+      const seen = new Set();
+      const deduped = [];
+      merged.forEach(r => {
+        const key = (r.cpf && r.cpf.trim())
+          ? r.cpf.trim().toUpperCase()
+          : (r.motorista.trim().toUpperCase() + '|' + (r.cpf||''));
+        if(!seen.has(key)){
+          seen.add(key);
+          deduped.push(r);
+        }
+      });
+      merged = deduped;
+
+      try{
+        rawMultas = await fetchMultas();
+      }catch(errMultas){
+        console.warn('Não foi possível carregar a planilha de multas:', errMultas);
+        rawMultas = [];
+      }
+      attachMultas(merged, rawMultas);
+
+      try{
+        const rawDocs = await fetchDocs();
+        attachDocs(merged, rawDocs);
+      }catch(errDocs){
+        console.warn('Não foi possível carregar a planilha de documentação:', errDocs);
+      }
+
+      rawRows = merged;
+      els.empty.classList.add('hidden');
+      els.error.classList.add('hidden');
+      els.dash.classList.remove('hidden');
+      const ts = new Date().toLocaleTimeString('pt-BR');
+      setStatus('ok', failed.length
+        ? `Conectado (${SHEET_TABS.length - failed.length}/${SHEET_TABS.length} filiais) · ${ts}`
+        : `Conectado · ${ts}`);
+
+      buildFilialOptions();
+      syncActiveCards();
+      render(true);
+      runConferencia(merged);
+
+      if(refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => loadData(), 5 * 60 * 1000);
+
+    }catch(err){
+      els.dash.classList.add('hidden');
+      els.empty.classList.add('hidden');
+      els.error.classList.remove('hidden');
+      els.errorDetail.textContent = 'Detalhe técnico: ' + err.message + '. Se você abriu este arquivo dando duplo clique nele (endereço começando com "file://"), o navegador bloqueia esse tipo de requisição por segurança — hospede o arquivo em um servidor (GitHub Pages, Netlify, ou o servidor da empresa). Confira também se a planilha está com o link liberado e se os nomes das abas em SHEET_TABS batem exatamente com os nomes reais.';
+      setStatus('err','Falha ao carregar');
+    }
+  }
+
+  function buildFilialOptions(){
+    const atual = els.filterFilial.value;
+    const filiais = [...new Set(rawRows.map(r=>r.filial))].sort();
+    els.filterFilial.innerHTML = '<option value="">Todas as filiais</option>' +
+      filiais.map(f=>`<option value="${f}">${f}</option>`).join('');
+    if(filiais.includes(atual)) els.filterFilial.value = atual;
+  }
+
+  function fmtDate(d){
+    if(!d) return '—';
+    return d.toLocaleDateString('pt-BR');
+  }
+
+  // Versão para uso em innerHTML: se a data foi "reconstruída" a partir dos dias
+  // restantes (porque a coluna de validade estava vazia na planilha), mostra um
+  // indicador "≈" com tooltip explicando.
+  function fmtDateEstHtml(d, estimado){
+    if(!d) return '—';
+    const base = d.toLocaleDateString('pt-BR');
+    if(!estimado) return base;
+    return `${base} <span class="est-badge" title="Data estimada a partir dos dias restantes da planilha — a coluna de validade estava vazia para este motorista">≈</span>`;
+  }
+
+  // ---------- Conferência com relCondutores.xlsx ----------
+
+  function parseBrDateStr(str){
+    const t = (str||'').toString().trim();
+    const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if(!m) return null;
+    const d = new Date(+m[3], +m[2]-1, +m[1]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function sameDate(a, b){
+    if(!a || !b) return false;
+    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }
+
+  async function fetchRelatorioXlsx(){
+  const res = await fetch(XLSX_PATH + '?_=' + Date.now()); // Essa linha já existe
+  if(!res.ok) throw new Error('Arquivo relCondutores.xlsx não encontrado em ' + XLSX_PATH); // Já existe
+  
+  // ADICIONE ESTAS TRÊS LINHAS:
+  const lastModified = res.headers.get('Last-Modified');
+  if (lastModified) {
+    dataUltimoArquivo = new Date(lastModified);
+  }
+
+  const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+
+    const headerIdx = rows.findIndex(r => r.some(c => (c||'').toString().trim().toUpperCase() === 'NOME COMPLETO'));
+    if(headerIdx === -1) throw new Error('Não encontrei a coluna "NOME COMPLETO" no relCondutores.xlsx.');
+    const header = rows[headerIdx].map(c => (c||'').toString().trim().toUpperCase());
+    const iNome = header.indexOf('NOME COMPLETO');
+    const iCpf = header.indexOf('CPF');
+    const iCnh = header.indexOf('CNH');
+    const iValidade = header.indexOf('VALIDADE CADASTRO');
+    const iSituacao = header.indexOf('SITUAÇÃO CADASTRO');
+
+    const out = [];
+    for(let i = headerIdx + 1; i < rows.length; i++){
+      const r = rows[i];
+      if(!r) continue;
+      const nome = (r[iNome] || '').toString().trim();
+      if(!nome) continue;
+      out.push({
+        nome,
+        cpf: ((iCpf > -1 ? r[iCpf] : '') || '').toString().trim(),
+        cnh: ((iCnh > -1 ? r[iCnh] : '') || '').toString().trim(),
+        validade: ((iValidade > -1 ? r[iValidade] : '') || '').toString().trim(),
+        situacao: ((iSituacao > -1 ? r[iSituacao] : '') || '').toString().trim(),
+      });
+    }
+    return out;
+  }
+
+  function compararRelatorio(relatorioRows, condutorRows){
+    // Quando o mesmo CPF (ou o mesmo nome, ver abaixo) aparece mais de uma vez
+    // no painel (ex.: motorista com cadastro em mais de uma filial, ou CPF
+    // gravado com pontuação diferente em alguma aba), priorizamos sempre a
+    // versão que já tem DER validade preenchida — evita marcar "ausente" só
+    // porque um registro duplicado/sem dados venceu a disputa no mapa.
+    const byCpf = {};
+    const byName = {};
+    condutorRows.forEach(r => {
+      const k = normalizeCpf(r.cpf);
+      if(k){
+        const atual = byCpf[k];
+        if(!atual || (!atual.derVal && r.derVal)) byCpf[k] = r;
+      }
+      // Índice auxiliar por nome — cobre condutores sem CPF cadastrado no
+      // painel (por algum motivo o campo ficou vazio) ou CPF divergente entre
+      // o painel e o relCondutores.xlsx.
+      const nameKey = normalizeName(r.motorista);
+      if(nameKey){
+        const atualN = byName[nameKey];
+        if(!atualN || (!atualN.derVal && r.derVal)) byName[nameKey] = r;
+      }
+    });
+
+    const divergencias = [];
+    relatorioRows.forEach(rel => {
+      const cpfKey = normalizeCpf(rel.cpf);
+      let condutor = cpfKey ? byCpf[cpfKey] : null;
+      let matchedByName = false;
+      if(!condutor){
+        const nameKey = normalizeName(rel.nome);
+        condutor = nameKey ? byName[nameKey] : null;
+        matchedByName = !!condutor;
+      }
+      if(!condutor) return; // motorista não localizado no painel (nem por CPF, nem por nome) — fora do escopo da conferência
+
+      const motivos = [];
+
+      // Avisa quando a ligação só foi possível pelo nome — geralmente sinal de
+      // CPF ausente ou digitado errado no cadastro do painel.
+      if(matchedByName || !condutor.cpf){
+        motivos.push({tipo:'semCpf', label:'Sem CPF no painel', detalhe:'Vínculo feito pelo nome — CPF ausente ou divergente no cadastro do sistema'});
+      }
+
+      const cnhRel = (rel.cnh || '').replace(/\D/g,'');
+      const cnhPainel = (condutor.cnhNumero || '').replace(/\D/g,'');
+      if(cnhRel && cnhPainel && cnhRel !== cnhPainel){
+        motivos.push({tipo:'cnh', label:'CNH divergente', detalhe:`relatório ${rel.cnh} · painel ${condutor.cnhNumero}`});
+      }
+
+     const dtRel = parseBrDateStr(rel.validade);
+if(dtRel){
+  if(condutor.derVal){
+    if(condutor.derStatus === 'AGUARDANDO'){
+      if(condutor.derVal.getTime() < dtRel.getTime()){
+        motivos.push({tipo:'validade', label:'Validade desatualizada (aguardando DER)', detalhe:`relatório ${rel.validade} · painel ${fmtDate(condutor.derVal)}`});
+      }
+    } else if(dtRel.getTime() > condutor.derVal.getTime()){
+      motivos.push({tipo:'validade', label:'Validade divergente', detalhe:`relatório ${rel.validade} · painel ${fmtDate(condutor.derVal)}`});
+    }
+  } else {
+    // Painel sem nenhuma data cadastrada pra esse condutor — seja porque
+    // está aguardando confirmação do DER, seja por qualquer outro motivo.
+    // Só sinaliza quando o relatório já traz uma validade em dia (hoje ou
+    // no futuro): isso indica que o processo no DER já foi concluído (ou
+    // nunca esteve pendente de verdade) e o painel é que ficou desatualizado.
+    // Uma validade já vencida no relatório não gera aviso, porque nesse caso
+    // ainda faz sentido estar sem data enquanto se aguarda o novo documento.
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    if(dtRel.getTime() >= hoje.getTime()){
+      const label = condutor.derStatus === 'AGUARDANDO'
+        ? 'Aguardando DER, mas relatório já tem validade'
+        : 'Validade ausente no painel';
+      motivos.push({tipo:'validade', label, detalhe:`relatório ${rel.validade} · painel sem data cadastrada`});
+    }
+  }
+}
+
+      if(motivos.length){
+        divergencias.push({
+          nome: rel.nome,
+          cpf: rel.cpf || condutor.cpf,
+          cnh: rel.cnh,
+          validade: rel.validade,
+          situacao: rel.situacao,
+          filial: condutor.filial,
+          motivos,
+        });
+      }
+    });
+
+    divergencias.sort((a,b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    return divergencias;
+  }
+
+  function motivoChip(m){
+    const cls = m.tipo === 'cnh' ? 'conf-chip cnh' : (m.tipo === 'semCpf' ? 'conf-chip semcpf' : 'conf-chip validade');
+    const title = m.detalhe ? ` title="${escapeHtml(m.detalhe)}"` : '';
+    return `<span class="${cls}"${title}>${escapeHtml(m.label)}</span>`;
+  }
+
+  function renderConferenciaModal(){
+    const total = ultimaConferencia.length;
+    const countCnh = ultimaConferencia.filter(d => d.motivos.some(m=>m.tipo==='cnh')).length;
+    const countValidade = ultimaConferencia.filter(d => d.motivos.some(m=>m.tipo==='validade')).length;
+    const countSemCpf = ultimaConferencia.filter(d => d.motivos.some(m=>m.tipo==='semCpf')).length;
+
+   const textoRelativo = dataUltimoArquivo ? tempoRelativo(dataUltimoArquivo) : 'agora';
+els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
+
+    if(!total){
+      els.confSummary.classList.add('hidden');
+      els.confEmpty.classList.remove('hidden');
+      els.confTableWrap.classList.add('hidden');
+      return;
+    }
+    els.confEmpty.classList.add('hidden');
+    els.confSummary.classList.remove('hidden');
+    els.confSummary.innerHTML = `
+      <span class="conf-summary-pill total">${total} motorista${total>1?'s':''} com pendência</span>
+      ${countCnh ? `<span class="conf-summary-pill cnh">${countCnh} com CNH</span>` : ''}
+      ${countValidade ? `<span class="conf-summary-pill validade">${countValidade} com validade</span>` : ''}
+      ${countSemCpf ? `<span class="conf-summary-pill semcpf">${countSemCpf} sem CPF (vínculo por nome)</span>` : ''}
+    `;
+    els.confTableWrap.classList.remove('hidden');
+
+    const grupos = {};
+    ultimaConferencia.forEach(d => {
+      const key = d.filial || 'Sem filial';
+      (grupos[key] = grupos[key] || []).push(d);
+    });
+    const filiais = Object.keys(grupos).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+
+    els.confTbody.innerHTML = filiais.map(filial => {
+      const linhas = grupos[filial];
+      const head = `<tr class="conf-group-row"><td colspan="5">
+        <div class="conf-group-bar">
+          <span class="conf-group-name">${escapeHtml(filial)}</span>
+          <span class="conf-group-count">${linhas.length} motorista${linhas.length>1?'s':''}</span>
+        </div>
+      </td></tr>`;
+      const corpo = linhas.map(d => `
+        <tr data-nome="${escapeHtml(d.nome)}">
+          <td class="name">${escapeHtml(d.nome)}</td>
+          <td class="mono">${escapeHtml(d.cpf)}</td>
+          <td class="mono">${escapeHtml(d.cnh)}</td>
+          <td class="mono">${escapeHtml(d.validade)}</td>
+          <td>${d.motivos.map(motivoChip).join('')}</td>
+        </tr>
+      `).join('');
+      return head + corpo;
+    }).join('');
+  }
+
+  function openConferenciaModal(){
+    renderConferenciaModal();
+    els.confModalBackdrop.classList.add('open');
+  }
+  function closeConferenciaModal(){
+    els.confModalBackdrop.classList.remove('open');
+  }
+
+  // ============================================================
+  // EXPORTAÇÃO — PDF do painel (cards + gráficos) e PDF da lista
+  // ============================================================
+
+  function exportRowKey(r){
+    return (r.cpf && r.cpf.replace(/\D/g,'')) || ('n:' + normalizeName(r.motorista||''));
+  }
+
+  function currentFilterSummaryText(){
+    const parts = [];
+    parts.push(els.filterFilial.value ? els.filterFilial.value : 'Todas as filiais');
+    if(cadastroFilterStatus === 'SEM_CADASTRO') parts.push('Sem cadastro');
+    else if(cadastroFilterStatus === 'AGUARDANDO') parts.push('Aguardando DER');
+    else {
+      if(els.filterStatusDer.value) parts.push('DER: ' + statusLabel(els.filterStatusDer.value));
+      if(els.filterStatusCnh.value) parts.push('CNH: ' + statusLabel(els.filterStatusCnh.value));
+    }
+    if(multasFilterActive) parts.push('Com multas');
+    if(els.search.value.trim()) parts.push(`Busca: "${els.search.value.trim()}"`);
+    return parts.join(' · ');
+  }
+
+  function setBtnLoading(btn, loading, loadingLabel, normalLabel){
+    if(loading){
+      btn.dataset.originalHtml = btn.innerHTML;
+      btn.innerHTML = loadingLabel;
+      btn.disabled = true;
+    } else {
+      btn.innerHTML = btn.dataset.originalHtml || normalLabel;
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- Popup de exportação da lista ----------
+
+  function openExportModal(){
+    els.exportModeFiltro.checked = true;
+    exportPickedCpf.clear();
+    exportPickerSearchQ = '';
+    exportPickerUseFilters = true;
+    els.exportPickerSearch.value = '';
+    els.exportFiltroResumo.textContent = `${lastFilteredRows.length} condutor${lastFilteredRows.length===1?'':'es'} com os filtros de agora — ${currentFilterSummaryText()}`;
+    updateExportModeUI();
+    els.exportModalBackdrop.classList.add('open');
+  }
+  function closeExportModal(){
+    els.exportModalBackdrop.classList.remove('open');
+  }
+  function updateExportModeUI(){
+    const manual = els.exportModeManual.checked;
+    els.exportOptFiltro.classList.toggle('active', !manual);
+    els.exportOptManual.classList.toggle('active', manual);
+    els.exportManualPicker.classList.toggle('hidden', !manual);
+    if(manual) renderExportPickerList();
+  }
+  function getExportPickerVisibleRows(){
+    const q = exportPickerSearchQ;
+    // Enquanto exportPickerUseFilters estiver ativo, a base é a lista já filtrada pelos
+    // filtros atuais da tela (filial, status DER/CNH, multas, busca); "Limpar filtros"
+    // troca a base para todos os condutores (rawRows), permitindo buscar qualquer um.
+    const base = exportPickerUseFilters ? lastFilteredRows : rawRows;
+    let list = base.slice().sort((a,b)=> (a.motorista||'').localeCompare(b.motorista||'', 'pt-BR'));
+    if(q){
+      list = list.filter(r =>
+        (r.motorista||'').toLowerCase().includes(q) ||
+        (r.filial||'').toLowerCase().includes(q) ||
+        (r.matricula||'').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }
+  function renderExportPickerList(){
+    const list = getExportPickerVisibleRows();
+    els.exportPickCount.textContent = `${exportPickedCpf.size} selecionado${exportPickedCpf.size===1?'':'s'}`;
+    if(els.exportPickerFilterBar){
+      els.exportPickerFilterBar.style.display = exportPickerUseFilters ? 'flex' : 'none';
+      if(exportPickerUseFilters){
+        els.exportPickerFilterInfo.textContent = `Mostrando ${lastFilteredRows.length} condutor${lastFilteredRows.length===1?'':'es'} com os filtros atuais — ${currentFilterSummaryText()}`;
+      }
+    }
+    if(!list.length){
+      els.exportPickerList.innerHTML = '<div class="export-empty-hint">Nenhum condutor encontrado.</div>';
+      return;
+    }
+    els.exportPickerList.innerHTML = list.map(r => {
+      const key = exportRowKey(r);
+      const checked = exportPickedCpf.has(key) ? 'checked' : '';
+      return `<label class="export-picker-row">
+        <input type="checkbox" data-key="${escapeHtml(key)}" ${checked}>
+        <span class="epr-name">${escapeHtml(r.motorista)}</span>
+        <span class="epr-meta">${escapeHtml(r.filial||'—')}</span>
+      </label>`;
+    }).join('');
+    els.exportPickerList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const key = cb.dataset.key;
+        if(cb.checked) exportPickedCpf.add(key); else exportPickedCpf.delete(key);
+        els.exportPickCount.textContent = `${exportPickedCpf.size} selecionado${exportPickedCpf.size===1?'':'s'}`;
+      });
+    });
+  }
+
+  // ---------- Geração dos PDFs ----------
+
+  function pdfHeader(doc, pageW, titulo, subtitulo){
+    doc.setFillColor(15,37,68); // navy-900
+    doc.rect(0, 0, pageW, 26, 'F');
+    doc.setFillColor(242,169,59); // amber (faixa "estrada")
+    doc.rect(0, 26, pageW, 1.4, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(14);
+    doc.text(titulo, 14, 12);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.setTextColor(220,225,235);
+    doc.text(subtitulo, 14, 19);
+    const agora = new Date().toLocaleString('pt-BR');
+    doc.setFontSize(8.5);
+    doc.text('Gerado em ' + agora, pageW - 14, 19, {align:'right'});
+    doc.setTextColor(30,36,51);
+  }
+
+  function pdfFooter(doc, pageW, pageH){
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i=1;i<=pageCount;i++){
+      doc.setPage(i);
+      doc.setDrawColor(228,232,240);
+      doc.line(14, pageH-12, pageW-14, pageH-12);
+      doc.setFontSize(8);
+      doc.setTextColor(140,150,165);
+      doc.text('Viação · Gestão de Condutores', 14, pageH-7);
+      doc.text(`Página ${i} de ${pageCount}`, pageW-14, pageH-7, {align:'right'});
+    }
+  }
+
+  // Botão "Exportar" ao lado de "Atualizar agora": cards (KPIs) + gráficos, respeitando os filtros atuais na tela.
+  function exportDashboardPdf(){
+    if(!rawRows.length) return;
+    setBtnLoading(els.btnExportDash, true, '⏳ Gerando…');
+    // pequeno delay pra o navegador pintar o estado "Gerando…" antes do trabalho síncrono pesado
+    setTimeout(() => {
+      try{
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p','mm','a4');
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+
+        pdfHeader(doc, pageW, 'Relatório do Painel de Condutores', currentFilterSummaryText());
+
+        // ---- Cards (KPIs) ----
+        const cards = [
+          {label:'Total de condutores', id:'stTotal', color:[15,37,68]},
+          {label:'DER ativo', id:'stDerAtivo', color:[43,173,125]},
+          {label:'DER vencendo', id:'stDerVencendo', color:[242,169,59]},
+          {label:'DER vencido', id:'stDerVencido', color:[229,72,77]},
+          {label:'CNH ativa', id:'stCnhAtivo', color:[43,173,125]},
+          {label:'CNH vencida', id:'stCnhVencido', color:[229,72,77]},
+          {label:'Sem cadastro', id:'stSemCadastro', color:[147,160,179]},
+          {label:'Aguardando DER', id:'stEnviados', color:[30,66,120]},
+          {label:'Multas', id:'stMultas', color:[229,72,77]},
+        ];
+        const cols = 3;
+        const gap = 5;
+        const cardW = (pageW - 28 - gap*(cols-1)) / cols;
+        const cardH = 20;
+        let cx = 14, cy = 33;
+        cards.forEach((c, i) => {
+          const val = document.getElementById(c.id) ? document.getElementById(c.id).textContent : '0';
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const x = 14 + col * (cardW + gap);
+          const y = 33 + row * (cardH + gap);
+          doc.setFillColor(250,251,253);
+          doc.setDrawColor(228,232,240);
+          doc.roundedRect(x, y, cardW, cardH, 2, 2, 'FD');
+          doc.setFillColor(c.color[0], c.color[1], c.color[2]);
+          doc.roundedRect(x, y, 1.6, cardH, 0.8, 0.8, 'F');
+          doc.setTextColor(91,101,119);
+          doc.setFont('helvetica','normal');
+          doc.setFontSize(8);
+          doc.text(c.label, x+5, y+7);
+          doc.setTextColor(27,36,51);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(15);
+          doc.text(String(val), x+5, y+15.5);
+        });
+        const rowsUsed = Math.ceil(cards.length/cols);
+        let y = 33 + rowsUsed*(cardH+gap) + 4;
+
+        // ---- Gráficos (capturados direto dos canvases do Chart.js) ----
+        // Empilhados em largura cheia (em vez de lado a lado) e redimensionados
+        // preservando a proporção original do canvas — evita esticar/distorcer
+        // a imagem, que é o que acontecia ao forçar um box com proporção diferente.
+        function fitImageInBox(imgW, imgH, boxW, boxH){
+          const boxRatio = boxW/boxH, imgRatio = imgW/imgH;
+          let w, h;
+          if(imgRatio > boxRatio){ w = boxW; h = boxW/imgRatio; }
+          else { h = boxH; w = boxH*imgRatio; }
+          return { w, h, x:(boxW-w)/2, y:(boxH-h)/2 };
+        }
+        function drawChartBox(canvasId, title, x, boxW, boxH, titleY){
+          doc.setTextColor(27,36,51);
+          doc.setFont('helvetica','bold');
+          doc.setFontSize(11);
+          doc.text(title, x, titleY);
+          const boxY = titleY + 4;
+          doc.setDrawColor(228,232,240);
+          doc.setFillColor(255,255,255);
+          doc.roundedRect(x, boxY, boxW, boxH, 2, 2, 'FD');
+          const canvas = document.getElementById(canvasId);
+          if(canvas && canvas.width > 0){
+            try{
+              const imgData = canvas.toDataURL('image/png', 1.0);
+              const pad = 5;
+              const fit = fitImageInBox(canvas.width, canvas.height, boxW-pad*2, boxH-pad*2);
+              doc.addImage(imgData, 'PNG', x+pad+fit.x, boxY+pad+fit.y, fit.w, fit.h, undefined, 'FAST');
+            }catch(e){ /* canvas ainda não desenhado — ignora silenciosamente */ }
+          }
+          return boxY + boxH;
+        }
+
+        const fullW = pageW - 28;
+        const bottomLimit = pageH - 16;
+        // divide o espaço restante da página entre os dois gráficos — o de rosca
+        // ganha um pouco mais de altura porque a legenda embaixo consome espaço.
+        const spaceLeft = bottomLimit - y - 2*9 - 12; // títulos (9mm cada) + respiro entre os dois blocos de gráfico (12mm)
+        const barH = Math.max(50, spaceLeft * 0.43);
+        const doughnutH = Math.max(60, spaceLeft * 0.57);
+
+        let afterBar = drawChartBox('chartFilial', 'Condutores por filial', 14, fullW, barH, y + 5);
+        drawChartBox('chartStatus', 'Situação documental', 14, fullW, doughnutH, afterBar + 12);
+
+        pdfFooter(doc, pageW, pageH);
+
+        const filialSlug = (els.filterFilial.value || 'todas-filiais').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+        const ts = new Date().toISOString().slice(0,16).replace(/[-T:]/g,'').replace(/(\d{8})(\d{4})/,'$1-$2');
+        doc.save(`painel-condutores_${filialSlug}_${ts}.pdf`);
+      } finally {
+        setBtnLoading(els.btnExportDash, false, '', '<span class="btn-icon">⇩</span> Exportar');
+      }
+    }, 30);
+  }
+
+  // Popup "Exportar lista" (ao lado do filtro CNH): PDF com a tabela de condutores.
+  function generateListPdf(){
+    const manual = els.exportModeManual.checked;
+    const modoConfidencial = els.exportModoConfidencial.checked;
+    let rowsToExport;
+    let subtitulo;
+    if(manual){
+      if(!exportPickedCpf.size){
+        alert('Selecione pelo menos um condutor para gerar o relatório.');
+        return;
+      }
+      rowsToExport = rawRows.filter(r => exportPickedCpf.has(exportRowKey(r)))
+        .sort((a,b)=> (a.motorista||'').localeCompare(b.motorista||'', 'pt-BR'));
+      subtitulo = `Seleção manual — ${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'}`;
+    } else {
+      rowsToExport = lastFilteredRows;
+      subtitulo = `${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'} — ${currentFilterSummaryText()}`;
+    }
+    if(!rowsToExport.length){
+      alert('Não há condutores para exportar com esses critérios.');
+      return;
+    }
+    if(modoConfidencial) subtitulo += ' · modo confidencial';
+
+    setBtnLoading(els.exportModalGenerate, true, '⏳ Gerando…');
+    setTimeout(() => {
+      try{
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l','mm','a4'); // paisagem
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+
+        // Mesma lógica de cor/rótulo da barrinha "Dias rest." que aparece na tela
+        // (função daysBar), só que com as cores já em RGB pro jsPDF.
+        function pdfDaysInfo(days, status){
+          if(status === 'AGUARDANDO') return {pct:100, color:[30,66,120], label:'Aguard. DER'};
+          if(status === 'SEM_CADASTRO' || days===null || days===undefined || isNaN(days)) return {pct:0, color:[147,160,179], label:'—'};
+          let color = [43,173,125];
+          if(days < 0) color = [229,72,77];
+          else if(days <= 30) color = [242,169,59];
+          const pct = days < 0 ? 100 : Math.max(4, Math.min(100, (Math.min(days,180)/180)*100));
+          return {pct, color, label: days < 0 ? 'Vencido' : `${days}d`};
+        }
+
+        // (o cabeçalho é desenhado dentro do didDrawPage abaixo — cobre a página 1 e as seguintes)
+
+        // Mapeia cada linha do corpo (pela referência do array) até o condutor de origem.
+        // Usar a referência da linha em vez de "rowsToExport[data.row.index]" evita o crash
+        // "Cannot read properties of undefined (reading 'derDias')": o autoTable pode invocar
+        // os hooks de célula com um índice de linha que não bate 1:1 com rowsToExport (ex.
+        // quando uma linha quebra entre páginas), então indexar por posição é frágil.
+        const pdfRowMeta = new Map();
+
+        // Documentos que são controle interno do setor. Por padrão continuam aparecendo
+        // no relatório normalmente (igual à tela); só somem quando "Modo confidencial"
+        // estiver marcado no popup de exportação.
+        const TAGS_OCULTAS_NO_RELATORIO = ['Criminal', 'Antecedentes'];
+        function docsPendentesRelatorio(r){
+          const pendentes = r.docsPendentes || [];
+          return modoConfidencial ? pendentes.filter(tag => !TAGS_OCULTAS_NO_RELATORIO.includes(tag)) : pendentes;
+        }
+
+        // "Tem pendência documental" = checklist de documentos pendentes (planilha de
+        // documentação) OU DER/CNH vencido/sem cadastro — ou seja, não está "tudo certo".
+        function temPendenciaDocumental(r){
+          return (docsPendentesRelatorio(r).length > 0)
+            || r.derStatus === 'VENCIDO' || r.derStatus === 'SEM_CADASTRO'
+            || r.cnhStatus === 'VENCIDO' || r.cnhStatus === 'SEM_CADASTRO';
+        }
+        // Lista de "tags" de pendência de um condutor: documentos do checklist + DER/CNH
+        // vencido ou sem cadastro (rotulados igual ao badge que aparece na tela).
+        // Obs: "DER vencido" não entra na lista — é informação redundante, já dá pra ver
+        // que o DER tá vencido pela validade/coloração; só "DER sem cadastro" entra, pois
+        // esse sim é uma pendência de fato (não dá pra saber se venceu sem o cadastro).
+        function pendenciaTags(r){
+          const tags = docsPendentesRelatorio(r);
+          if(r.derStatus === 'SEM_CADASTRO') tags.push('DER sem cadastro');
+          if(r.cnhStatus === 'SEM_CADASTRO') tags.push('CNH sem cadastro');
+          else if(r.cnhStatus === 'VENCIDO') tags.push('CNH vencida');
+          return tags;
+        }
+        // Relatório "de pendências": só entra nesse modo (2 colunas em vez de 4) quando
+        // TODOS os condutores exportados têm alguma pendência documental — trocado
+        // automaticamente, sem precisar de nenhuma opção extra no popup de exportação.
+        const modoPendencias = rowsToExport.length > 0 && rowsToExport.every(temPendenciaDocumental);
+
+        const body = rowsToExport.map(r => {
+          let row;
+          if(modoPendencias){
+            const tags = pendenciaTags(r);
+            // Se não sobrou nenhuma tag mas o condutor só está aqui por causa do DER
+            // vencido (tag omitida de propósito), não é "tudo certo" — só não tem mais
+            // nada pra listar na coluna de documentos.
+            const derVencidoSemOutraPendencia = !tags.length && r.derStatus === 'VENCIDO';
+            if(!tags.length && !derVencidoSemOutraPendencia){
+              // Salvaguarda: se por algum motivo esse condutor não tiver nenhuma pendência
+              // (mesmo o relatório sendo "de pendências"), avisa que está tudo certo em vez
+              // de deixar a linha em branco.
+              row = [
+                r.motorista || '—',
+                r.filial || '—',
+                r.funcao || '—',
+                { content: 'TUDO CERTO', colSpan: 2, styles: { halign:'center', fontStyle:'bold', textColor:[43,173,125] } },
+              ];
+            } else {
+              const docsTxt = tags.length ? tags.join(', ') : '—';
+              const obsTxt = (r.docsObservacao || '').trim() || '—';
+              row = [
+                r.motorista || '—',
+                r.filial || '—',
+                r.funcao || '—',
+                docsTxt,
+                obsTxt,
+              ];
+            }
+          } else {
+            // Motorista sem cadastro no DER (sem validade lançada) E com documentos pendentes:
+            // troca as 4 colunas de DER/CNH por "Documentos pendentes" + "Observações" só
+            // nessa linha (o relatório como um todo continua no formato de 7 colunas).
+            const semDerComPendencia = r.derStatus === 'SEM_CADASTRO' && docsPendentesRelatorio(r).length;
+            if(semDerComPendencia){
+              const docsTxt = docsPendentesRelatorio(r).join(', ');
+              const obsTxt = (r.docsObservacao || '').trim() || '—';
+              row = [
+                r.motorista || '—',
+                r.filial || '—',
+                r.funcao || '—',
+                { content: docsTxt, colSpan: 2 },
+                { content: obsTxt, colSpan: 2 },
+              ];
+            } else {
+              row = [
+                r.motorista || '—',
+                r.filial || '—',
+                r.funcao || '—',
+                r.derValEstimado ? fmtDate(r.derVal) + ' ≈' : fmtDate(r.derVal),
+                pdfDaysInfo(r.derDias, r.derStatus).label,
+                r.cnhValEstimado ? fmtDate(r.cnhVal) + ' ≈' : fmtDate(r.cnhVal),
+                pdfDaysInfo(r.cnhDias, r.cnhStatus).label,
+              ];
+            }
+          }
+          pdfRowMeta.set(row, r);
+          return row;
+        });
+
+        const DER_DIAS_COL = 4, CNH_DIAS_COL = 6;
+        const BAR_MAX_W = 15; // mm — largura máxima da trilha da barrinha, igual pros dois
+
+        const head = modoPendencias
+          ? [['Motorista','Filial','Função','Documentação pendente','Informação']]
+          : [['Motorista','Filial','Função','DER validade','Dias rest. DER','CNH validade','Dias rest. CNH']];
+
+        doc.autoTable({
+          startY: 32,
+          head,
+          body,
+          styles: { font:'helvetica', fontSize:8.5, cellPadding:{top:2.6,bottom:2.6,left:3,right:3}, textColor:[27,36,51], lineColor:[228,232,240], lineWidth:.15, valign:'middle' },
+          headStyles: { fillColor:[15,37,68], textColor:255, fontStyle:'bold', fontSize:8.5 },
+          alternateRowStyles: { fillColor:[250,251,253] },
+          columnStyles: modoPendencias ? {} : {
+            [DER_DIAS_COL]: { halign:'right', cellPadding:{top:2.6,bottom:2.6,left:BAR_MAX_W+5,right:3} },
+            [CNH_DIAS_COL]: { halign:'right', cellPadding:{top:2.6,bottom:2.6,left:BAR_MAX_W+5,right:3} },
+          },
+          margin: { left:14, right:14, top:32, bottom:16 },
+          didDrawPage: function(){
+            // Redesenha o cabeçalho em toda página nova que o autoTable criar,
+            // pra manter o relatório consistente mesmo com listas grandes.
+            pdfHeader(doc, pageW, modoPendencias ? 'Relatório de Condutores — Pendências' : 'Relatório de Condutores', modoPendencias ? `${subtitulo} · só documentação pendente` : subtitulo);
+          },
+          didParseCell: function(data){
+            if(modoPendencias) return;
+            if(data.section === 'body' && (data.column.index === DER_DIAS_COL || data.column.index === CNH_DIAS_COL)){
+              const v = (data.cell.raw||'').toString();
+              if(v === 'Vencido') data.cell.styles.textColor = [229,72,77];
+              else if(v === 'Aguard. DER') data.cell.styles.textColor = [30,66,120];
+              else if(v === '—') data.cell.styles.textColor = [147,160,179];
+              else data.cell.styles.textColor = [27,36,51];
+            }
+          },
+          willDrawCell: function(data){
+            // Desenha a trilha + preenchimento colorido (a "barrinha de dias
+            // restantes"), igual à que aparece na tela, à esquerda do número.
+            if(modoPendencias) return;
+            if(data.section !== 'body') return;
+            if(data.column.index !== DER_DIAS_COL && data.column.index !== CNH_DIAS_COL) return;
+            const r = pdfRowMeta.get(data.row.raw);
+            if(!r) return; // linha mesclada (Documentos pendentes) ou não localizada: sem barrinha
+            const info = data.column.index === DER_DIAS_COL
+              ? pdfDaysInfo(r.derDias, r.derStatus)
+              : pdfDaysInfo(r.cnhDias, r.cnhStatus);
+            const trackH = 2.1;
+            const trackX = data.cell.x + 3;
+            const trackY = data.cell.y + data.cell.height/2 - trackH/2;
+            doc.setFillColor(233,236,242);
+            doc.roundedRect(trackX, trackY, BAR_MAX_W, trackH, 1, 1, 'F');
+            const fillW = Math.max(1.4, BAR_MAX_W * (info.pct/100));
+            doc.setFillColor(info.color[0], info.color[1], info.color[2]);
+            doc.roundedRect(trackX, trackY, fillW, trackH, 1, 1, 'F');
+          },
+        });
+
+        pdfFooter(doc, pageW, pageH);
+
+        const ts = new Date().toISOString().slice(0,16).replace(/[-T:]/g,'').replace(/(\d{8})(\d{4})/,'$1-$2');
+        doc.save(`lista-condutores_${ts}.pdf`);
+        closeExportModal();
+      } finally {
+        setBtnLoading(els.exportModalGenerate, false, '', 'Gerar PDF');
+      }
+    }, 30);
+  }
+
+  function showCopyToast(text){
+    const el = els.confCopyToast;
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(showCopyToast._t);
+    showCopyToast._t = setTimeout(() => el.classList.remove('show'), 1600);
+  }
+
+  els.confTbody.addEventListener('click', (e) => {
+    const tr = e.target.closest('tr[data-nome]');
+    if(!tr) return;
+    const nome = tr.dataset.nome;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(nome)
+        .then(() => showCopyToast('Copiado: ' + nome))
+        .catch(() => showCopyToast('Não foi possível copiar'));
+    } else {
+      showCopyToast('Cópia não suportada neste navegador');
+    }
+  });
+
+  async function runConferencia(condutorRows){
+    try{
+      const relatorio = await fetchRelatorioXlsx();
+      const divergencias = compararRelatorio(relatorio, condutorRows);
+      ultimaConferencia = divergencias;
+
+      els.confBadge.textContent = divergencias.length;
+      els.confBadge.classList.toggle('hidden', divergencias.length === 0);
+    }catch(err){
+      console.warn('Conferência do relCondutores.xlsx não realizada:', err);
+    }
+  }
+
+  function daysBar(days, status){
+    if(status === 'AGUARDANDO') return {pct:100, color:'var(--navy-700)', label:'Aguard. DER'};
+    if(status === 'SEM_CADASTRO' || days === null || isNaN(days)) return {pct:0, color:'var(--slate-400)', label:'—'};
+    let color = 'var(--green)';
+    if(days < 0) color = 'var(--red)';
+    else if(days <= 30) color = 'var(--amber)';
+    const pct = days < 0 ? 100 : Math.max(4, Math.min(100, (Math.min(days,180)/180)*100));
+    return {pct, color, label: days < 0 ? 'Vencido' : `${days}d`};
+  }
+
+  function render(updateCharts){
+    const q = els.search.value.trim().toLowerCase();
+    const qDigits = q.replace(/\D/g,'');
+    const fFilial = els.filterFilial.value;
+    const fDer = els.filterStatusDer.value;
+    const fCnh = els.filterStatusCnh.value;
+    const fMultas = multasFilterActive;
+    els.btnAllFiliais.classList.toggle('hidden', !fFilial);
+
+    function matchesSearch(r){
+      if(!q) return true;
+      if(r.motorista.toLowerCase().includes(q)) return true;
+      if(r.matricula && r.matricula.toLowerCase().includes(q)) return true;
+      if(qDigits.length >= 3){
+        if(r.cpf && r.cpf.replace(/\D/g,'').includes(qDigits)) return true;
+        if(r.cnhNumero && r.cnhNumero.replace(/\D/g,'').includes(qDigits)) return true;
+      }
+      return false;
+    }
+
+    let rows = rawRows.filter(r=>{
+      if(fFilial && r.filial !== fFilial) return false;
+      if(cadastroFilterStatus === 'SEM_CADASTRO'){
+        if(!(r.derStatus === 'SEM_CADASTRO' || r.cnhStatus === 'SEM_CADASTRO')) return false;
+        if(r.derStatus === 'AGUARDANDO') return false; // Proteção extra: bloqueia quem está aguardando
+      } else if(cadastroFilterStatus === 'AGUARDANDO'){
+        if(r.derStatus !== 'AGUARDANDO') return false;
+      } else {
+        if(fDer && r.derStatus !== fDer) return false;
+        if(fCnh && r.cnhStatus !== fCnh) return false;
+      }
+      if(fMultas && !(r.multasPendentes > 0)) return false;
+      if(!matchesSearch(r)) return false;
+      return true;
+    });
+
+    let chartRows = rawRows.filter(r=>{
+      if(fFilial && r.filial !== fFilial) return false;
+      if(cadastroFilterStatus === 'SEM_CADASTRO'){
+        if(!(r.derStatus === 'SEM_CADASTRO' || r.cnhStatus === 'SEM_CADASTRO')) return false;
+        if(r.derStatus === 'AGUARDANDO') return false;
+      } else if(cadastroFilterStatus === 'AGUARDANDO'){
+        if(r.derStatus !== 'AGUARDANDO') return false;
+      } else {
+        if(fDer && r.derStatus !== fDer) return false;
+        if(fCnh && r.cnhStatus !== fCnh) return false;
+      }
+      if(fMultas && !(r.multasPendentes > 0)) return false;
+      return true;
+    });
+
+    rows.sort((a,b)=>{
+      let va = a[sortState.key], vb = b[sortState.key];
+      if(va instanceof Date || vb instanceof Date){ va = va?va.getTime():-Infinity; vb = vb?vb.getTime():-Infinity; }
+      if(va === null || va === undefined) va = '';
+      if(vb === null || vb === undefined) vb = '';
+      if(typeof va === 'string') va = va.toLowerCase();
+      if(typeof vb === 'string') vb = vb.toLowerCase();
+      if(va < vb) return -1*sortState.dir;
+      if(va > vb) return 1*sortState.dir;
+      return 0;
+    });
+    updateSortIndicators();
+    lastFilteredRows = rows;
+
+    const statsBase = fFilial ? rawRows.filter(r => r.filial === fFilial) : rawRows;
+    const total = statsBase.length;
+    const derAtivo = statsBase.filter(r=>r.derStatus==='ATIVO').length;
+    const derVencendo = statsBase.filter(r=>r.derStatus==='VENCENDO').length;
+    const derVencido = statsBase.filter(r=>r.derStatus==='VENCIDO').length;
+    const cnhAtivo = statsBase.filter(r=>r.cnhStatus==='ATIVO').length;
+    const cnhVencido = statsBase.filter(r=>r.cnhStatus==='VENCIDO').length;
+    const semCadastro = statsBase.filter(r=>(r.derStatus==='SEM_CADASTRO' || r.cnhStatus==='SEM_CADASTRO') && r.derStatus !== 'AGUARDANDO').length;
+    const enviados = statsBase.filter(r=>r.derStatus==='AGUARDANDO').length;
+    const comMultas = statsBase.filter(r=>r.multasPendentes > 0).length;
+
+    document.getElementById('stTotal').textContent = total;
+    document.getElementById('stDerAtivo').textContent = derAtivo;
+    document.getElementById('stDerVencendo').textContent = derVencendo;
+    document.getElementById('stDerVencido').textContent = derVencido;
+    document.getElementById('stCnhAtivo').textContent = cnhAtivo;
+    document.getElementById('stCnhVencido').textContent = cnhVencido;
+    document.getElementById('stSemCadastro').textContent = semCadastro;
+    document.getElementById('stEnviados').textContent = enviados;
+    document.getElementById('stMultas').textContent = comMultas;
+    document.getElementById('barDerAtivo').style.width = total? (derAtivo/total*100)+'%':'0%';
+    document.getElementById('barDerVencendo').style.width = total? (derVencendo/total*100)+'%':'0%';
+    document.getElementById('barDerVencido').style.width = total? (derVencido/total*100)+'%':'0%';
+    document.getElementById('barCnhAtivo').style.width = total? (cnhAtivo/total*100)+'%':'0%';
+    document.getElementById('barCnhVencido').style.width = total? (cnhVencido/total*100)+'%':'0%';
+    document.getElementById('barSemCadastro').style.width = total? (semCadastro/total*100)+'%':'0%';
+    document.getElementById('barEnviados').style.width = total? (enviados/total*100)+'%':'0%';
+    document.getElementById('barMultas').style.width = total? (comMultas/total*100)+'%':'0%';
+
+    els.countPill.textContent = `${rows.length} registro${rows.length===1?'':'s'} (de ${total})`;
+
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    if(currentPage < 1) currentPage = 1;
+    const pageRows = rows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    currentPageRows = pageRows;
+    els.pgInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    els.pgPrev.disabled = currentPage <= 1;
+    els.pgNext.disabled = currentPage >= totalPages;
+    document.getElementById('pagination').style.display = rows.length > PAGE_SIZE ? 'flex' : 'none';
+
+    els.tbody.innerHTML = pageRows.map((r,i)=>{
+      const der = daysBar(r.derDias, r.derStatus);
+      const cnh = daysBar(r.cnhDias, r.cnhStatus);
+      const multaTag = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
+      return `<tr data-i="${i}">
+        <td class="name">${escapeHtml(r.motorista)}${multaTag}</td>
+        <td>${escapeHtml(r.filial)}</td>
+        <td>${escapeHtml(r.funcao)}</td>
+        <td>${fmtDateEstHtml(r.derVal, r.derValEstimado)}</td>
+        <td><div class="days"><div class="track"><i style="width:${der.pct}%;background:${der.color}"></i></div><span class="n">${der.label}</span></div></td>
+        <td>${fmtDateEstHtml(r.cnhVal, r.cnhValEstimado)}</td>
+        <td><div class="days"><div class="track"><i style="width:${cnh.pct}%;background:${cnh.color}"></i></div><span class="n">${cnh.label}</span></div></td>
+      </tr>`;
+    }).join('');
+
+    document.querySelectorAll('#tbody tr').forEach(tr=>{
+      tr.addEventListener('click', () => openModal(currentPageRows[Number(tr.dataset.i)]));
+    });
+
+    els.mobileCards.innerHTML = pageRows.map((r,i)=>{
+      const der = daysBar(r.derDias, r.derStatus);
+      const cnh = daysBar(r.cnhDias, r.cnhStatus);
+      const multaTagM = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
+      return `<div class="mcard" data-i="${i}">
+        <div class="mcard-top">
+          <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${multaTagM}</span>
+          <span class="mcard-filial">${escapeHtml(r.filial)}</span>
+        </div>
+        <div class="mcard-func">${escapeHtml(r.funcao || '—')}</div>
+        <div class="mcard-row"><span>DER · ${fmtDateEstHtml(r.derVal, r.derValEstimado)}</span><span class="mcard-pill" style="background:${der.color}22;color:${der.color}">${der.label}</span></div>
+        <div class="mcard-row"><span>CNH · ${fmtDateEstHtml(r.cnhVal, r.cnhValEstimado)}</span><span class="mcard-pill" style="background:${cnh.color}22;color:${cnh.color}">${cnh.label}</span></div>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('#mobileCards .mcard').forEach(card=>{
+      card.addEventListener('click', () => openModal(currentPageRows[Number(card.dataset.i)]));
+    });
+    if(rows.length===0){
+      els.mobileCards.innerHTML = '<div class="state-msg">Nenhum condutor encontrado com os filtros atuais.</div>';
+    }
+
+    els.tfootMsg.textContent = rows.length===0 ? 'Nenhum condutor encontrado com os filtros atuais.' : '';
+
+    if(updateCharts){
+      const mode = fDer ? 'der' : (fCnh ? 'cnh' : (cadastroFilterStatus ? 'cadastro' : 'total'));
+      renderCharts(chartRows, statsBase, mode, fMultas);
+    }
+  }
+
+  function updateSortIndicators(){
+    document.querySelectorAll('thead th[data-key]').forEach(th=>{
+      const span = th.querySelector('span.arrow');
+      const active = th.dataset.key === sortState.key;
+      th.classList.toggle('sorted', active);
+      if(span) span.textContent = active ? (sortState.dir === 1 ? '▲' : '▼') : '↕';
+    });
+  }
+
+  function fmtDateTime(d){
+    if(!d) return '—';
+    return d.toLocaleDateString('pt-BR');
+  }
+
+  function statusLabel(status){
+    if(status === 'ATIVO') return 'Ativo';
+    if(status === 'VENCENDO') return 'Vencendo (< 30 dias)';
+    if(status === 'VENCIDO') return 'Vencido';
+    if(status === 'SEM_CADASTRO') return 'Sem cadastro';
+    if(status === 'AGUARDANDO') return 'Aguardando DER';
+    return '—';
+  }
+
+  function copyToClipboard(text, el){
+    if(!text) return;
+    const restore = el.textContent;
+    const done = () => { el.textContent = 'Copiado ✓'; setTimeout(() => { el.textContent = restore; }, 1100); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(done);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+      done();
+    }
+  }
+
+  function openModal(r){
+    if(!r) return;
+    document.getElementById('mdNome').textContent = r.motorista || '—';
+    document.getElementById('mdSub').textContent = [r.funcao, r.filial].filter(Boolean).join(' · ') || '—';
+    const matEl = document.getElementById('mdMat');
+    const cpfEl = document.getElementById('mdCpf');
+    matEl.textContent = r.matricula || '—';
+    cpfEl.textContent = r.cpf || '—';
+    matEl.onclick = () => copyToClipboard(r.matricula, matEl);
+    cpfEl.onclick = () => copyToClipboard(r.cpf, cpfEl);
+    document.getElementById('mdSexo').textContent = r.sexo || '—';
+    document.getElementById('mdAdmissao').textContent = fmtDateTime(r.admissao);
+    const mdDerValEl = document.getElementById('mdDerVal');
+    mdDerValEl.textContent = fmtDateTime(r.derVal) + (r.derValEstimado ? ' ≈' : '');
+    mdDerValEl.title = r.derValEstimado ? 'Data estimada a partir dos dias restantes da planilha — a coluna de validade do DER estava vazia' : '';
+    document.getElementById('mdDerStatus').textContent = statusLabel(r.derStatus);
+    document.getElementById('mdCnhNum').textContent = r.cnhNumero || '—';
+    const mdCnhValEl = document.getElementById('mdCnhVal');
+    mdCnhValEl.textContent = fmtDateTime(r.cnhVal) + (r.cnhValEstimado ? ' ≈' : '');
+    mdCnhValEl.title = r.cnhValEstimado ? 'Data estimada a partir dos dias restantes da planilha — a coluna de validade da CNH estava vazia' : '';
+    document.getElementById('mdCnhStatus').textContent = statusLabel(r.cnhStatus);
+    document.getElementById('mdPeticionado').textContent = r.peticionado || '—';
+    document.getElementById('mdDataPet').textContent = fmtDateTime(r.dataPeticionamento);
+    document.getElementById('mdNumPet').textContent = r.numPeticionamento || '—';
+    const obsParts = [];
+    if(r.problemas) obsParts.push(r.problemas);
+    if(r.observacao) obsParts.push(r.observacao);
+    const obsSection = document.getElementById('mdObsSection');
+    if(obsParts.length){
+      obsSection.classList.remove('hidden');
+      document.getElementById('mdObs').textContent = obsParts.join(' — ');
+    } else {
+      obsSection.classList.add('hidden');
+    }
+    renderDocsModal(r);
+    renderMultasModal(r);
+    els.modalBackdrop.classList.add('open');
+  }
+
+  function renderDocsModal(r){
+    const section = document.getElementById('mdDocsSection');
+    const list = document.getElementById('mdDocsList');
+    const pendentes = r.docsPendentes || [];
+    if(!pendentes.length){
+      section.classList.add('hidden');
+      list.innerHTML = '';
+    } else {
+      section.classList.remove('hidden');
+      list.innerHTML = pendentes.map(tag => `<span class="badge-doc">${escapeHtml(tag)}</span>`).join('');
+    }
+
+    const infoSection = document.getElementById('mdDocsInfoSection');
+    const infoEl = document.getElementById('mdDocsInfo');
+    const observacao = (r.docsObservacao || '').trim();
+    if(observacao){
+      infoSection.classList.remove('hidden');
+      infoEl.textContent = observacao;
+    } else {
+      infoSection.classList.add('hidden');
+    }
+  }
+
+  function renderMultasModal(r){
+    const section = document.getElementById('mdMultasSection');
+    const list = document.getElementById('mdMultasList');
+    const title = document.getElementById('mdMultasTitle');
+    const multas = r.multas || [];
+    if(!multas.length){
+      section.classList.add('hidden');
+      list.innerHTML = '';
+      return;
+    }
+    section.classList.remove('hidden');
+    const pendentes = multas.filter(m=>!m.resolvido).length;
+    title.textContent = pendentes>0 ? `Multas (${pendentes} pendente${pendentes===1?'':'s'})` : 'Multas (histórico)';
+    title.classList.toggle('has-multas', pendentes>0);
+    list.innerHTML = multas.map(m => {
+      const cls = m.resolvido ? 'resolvida' : 'pendente';
+      const meta = [
+        m.data ? fmtDate(m.data) : null,
+        m.placa ? ('Placa ' + m.placa) : null,
+        m.frota ? ('Frota ' + m.frota) : null,
+      ].filter(Boolean).join(' · ');
+      return `<div class="multa-item ${cls}">
+        <div class="multa-top">
+          <span class="multa-desc">${escapeHtml(m.descricao || 'Multa sem descrição')}</span>
+          <span class="multa-status ${cls}">${m.resolvido ? 'Resolvida' : 'Pendente'}</span>
+        </div>
+        <div class="multa-meta">${escapeHtml(meta || '—')}</div>
+        ${m.obs ? `<div class="multa-meta" style="margin-top:3px;">${escapeHtml(m.obs)}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function closeModal(){
+    els.modalBackdrop.classList.remove('open');
+  }
+
+  function badge(problemas){
+    const p = (problemas||'').toString().trim();
+    if(!p || p.toUpperCase()==='NÃO' || p.toUpperCase()==='NAO') return '<span class="badge outro">Sem pendência</span>';
+    return `<span class="badge vencido">${escapeHtml(p)}</span>`;
+  }
+
+  function escapeHtml(s){
+    return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function applyChartStatusFilter(type, value){
+    if(type === 'der'){
+      if(els.filterStatusDer.value === value) return false;
+      els.filterStatusDer.value = value;
+      els.filterStatusCnh.value = '';
+      cadastroFilterStatus = '';
+    } else if(type === 'cnh'){
+      if(els.filterStatusCnh.value === value) return false;
+      els.filterStatusCnh.value = value;
+      els.filterStatusDer.value = '';
+      cadastroFilterStatus = '';
+    } else if(type === 'cadastro' || type === 'enviado'){
+      if(cadastroFilterStatus === value) return false;
+      cadastroFilterStatus = value;
+      els.filterStatusDer.value = '';
+      els.filterStatusCnh.value = '';
+    }
+    return true;
+  }
+
+  function renderCharts(filialRows, statusRows, mode, isMultas){
+    document.getElementById('chartFilialSub').textContent = isMultas
+      ? 'Motoristas com multas pendentes, por filial'
+      : 'Distribuição do quadro ativo em cada unidade';
+
+    if(charts.filial) charts.filial.destroy();
+
+    if(!filialRows.length){
+      document.getElementById('chartFilial').getContext('2d').clearRect(0,0,9999,9999);
+      charts.filial = null;
+      document.getElementById('chartFilialSub').textContent = 'Nenhum resultado para os filtros atuais';
+    } else {
+    const byFilial = {};
+    filialRows.forEach(r=>{ byFilial[r.filial] = (byFilial[r.filial]||0)+1; });
+    const filiais = Object.keys(byFilial).sort((a,b)=>byFilial[b]-byFilial[a]);
+    const filialVals = filiais.map(f=>byFilial[f]);
+
+    charts.filial = new Chart(document.getElementById('chartFilial'), {
+      type:'bar',
+      data:{ labels: filiais, datasets:[{ data: filialVals, backgroundColor: isMultas ? '#e5484d' : '#1e4278', borderRadius:6, maxBarThickness:34 }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        onClick:(evt, elements)=>{
+          if(!elements.length) return;
+          const clickedFilial = filiais[elements[0].index];
+          if(els.filterFilial.value === clickedFilial) return;
+          els.filterFilial.value = clickedFilial;
+          currentPage = 1;
+          syncActiveCards();
+          render(true);
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{font:{family:'Inter', size:11}}, grid:{display:false}},
+          y:{beginAtZero:true, ticks:{font:{family:'Inter', size:11}}, grid:{color:'#eef1f7'}}
+        }
+      }
+    });
+    }
+
+    const COL = {
+      derAtivo:    '#1a9c5c',
+      derVencendo: '#e2790a',
+      derVencido:  '#d21f2d',
+      cnhAtiva:    '#4f7cd6',
+      cnhVencida:  '#9457d1',
+      semCadastro: '#98a3b3',
+      aguardando:  '#0e9490',
+    };
+    let labels, data, colors, subtitle, targets;
+    if(mode === 'der'){
+      labels = ['DER ativo','DER vencendo','DER vencido', 'Aguardando'];
+      data = [
+        statusRows.filter(r=>r.derStatus==='ATIVO').length,
+        statusRows.filter(r=>r.derStatus==='VENCENDO').length,
+        statusRows.filter(r=>r.derStatus==='VENCIDO').length,
+        statusRows.filter(r=>r.derStatus==='AGUARDANDO').length
+      ];
+      colors = [COL.derAtivo, COL.derVencendo, COL.derVencido, COL.aguardando];
+      targets = [{type:'der',value:'ATIVO'},{type:'der',value:'VENCENDO'},{type:'der',value:'VENCIDO'},{type:'enviado',value:'AGUARDANDO'}];
+      subtitle = 'DER — ativos, vencendo, vencidos e aguardando';
+    } else if(mode === 'cnh'){
+      labels = ['CNH ativa','CNH vencida'];
+      data = [
+        statusRows.filter(r=>r.cnhStatus==='ATIVO').length,
+        statusRows.filter(r=>r.cnhStatus==='VENCIDO').length
+      ];
+      colors = [COL.cnhAtiva, COL.cnhVencida];
+      targets = [{type:'cnh',value:'ATIVO'},{type:'cnh',value:'VENCIDO'}];
+      subtitle = 'CNH — ativas e vencidas';
+    } else if(mode === 'cadastro'){
+      labels = ['Sem cadastro','Aguardando DER'];
+      data = [
+        statusRows.filter(r=>(r.derStatus==='SEM_CADASTRO' || r.cnhStatus==='SEM_CADASTRO') && r.derStatus !== 'AGUARDANDO').length,
+        statusRows.filter(r=>r.derStatus === 'AGUARDANDO').length
+      ];
+      colors = [COL.semCadastro, COL.aguardando];
+      targets = [{type:'cadastro',value:'SEM_CADASTRO'},{type:'enviado',value:'AGUARDANDO'}];
+      subtitle = 'Sem cadastro x Enviados aguardando confirmação do DER';
+    } else {
+      labels = ['DER ativo','DER vencendo','DER vencido','CNH ativa','CNH vencida','Sem cadastro', 'Aguardando'];
+      data = [
+        statusRows.filter(r=>r.derStatus==='ATIVO').length,
+        statusRows.filter(r=>r.derStatus==='VENCENDO').length,
+        statusRows.filter(r=>r.derStatus==='VENCIDO').length,
+        statusRows.filter(r=>r.cnhStatus==='ATIVO').length,
+        statusRows.filter(r=>r.cnhStatus==='VENCIDO').length,
+        statusRows.filter(r=>(r.derStatus==='SEM_CADASTRO' || r.cnhStatus==='SEM_CADASTRO') && r.derStatus !== 'AGUARDANDO').length,
+        statusRows.filter(r=>r.derStatus==='AGUARDANDO').length
+      ];
+      colors = [COL.derAtivo, COL.derVencendo, COL.derVencido, COL.cnhAtiva, COL.cnhVencida, COL.semCadastro, COL.aguardando];
+      targets = [{type:'der',value:'ATIVO'},{type:'der',value:'VENCENDO'},{type:'der',value:'VENCIDO'},{type:'cnh',value:'ATIVO'},{type:'cnh',value:'VENCIDO'},{type:'cadastro',value:'SEM_CADASTRO'},{type:'enviado',value:'AGUARDANDO'}];
+      subtitle = 'DER x CNH — visão geral completa (inclui sem cadastro)';
+    }
+    document.getElementById('chartStatusSub').textContent = subtitle;
+
+    if(charts.status) charts.status.destroy();
+    charts.status = new Chart(document.getElementById('chartStatus'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data, backgroundColor: colors, borderWidth:0 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'62%',
+        onClick:(evt, elements)=>{
+          if(!elements.length) return;
+          const target = targets[elements[0].index];
+          if(!target) return;
+          const changed = applyChartStatusFilter(target.type, target.value);
+          if(!changed) return;
+          currentPage = 1;
+          syncActiveCards();
+          render(true);
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        plugins:{legend:{position:'bottom', labels:{font:{family:'Inter', size:11}, boxWidth:10, padding:14}}}
+      }
+    });
+  }
+
+  loadData();
+})();
+</script>
+</body>
+</html>
