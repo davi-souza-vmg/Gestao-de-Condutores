@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMG · Gestão</title>
+<link rel="icon" type="image/jpeg" href="Img/favicon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-950:#0a1930;
+    --navy-900:#0f2544;
+    --navy-800:#16335f;
+    --navy-700:#1e4278;
+    --amber:#f2a93b;
+    --amber-soft:#fdf1dd;
+    --green:#2bad7d;
+    --slate-900:#1b2433;
+    --slate-600:#5b6577;
+    --slate-400:#93a0b3;
+    --line:#e4e8f0;
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --radius:16px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--slate-900);font-family:var(--font-body);-webkit-font-smoothing:antialiased;min-height:100vh;}
+
+  .road{
+    position:relative;
+    background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));
+    color:#fff;
+    padding:56px 40px 90px;
+    overflow:hidden;
+  }
+  .road::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:0;
+    height:6px;
+    background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px, transparent 34px 60px);
+    opacity:.9;
+  }
+  .road-title{max-width:900px;margin:0 auto;text-align:center;}
+  .road-title .eyebrow{
+    font-family:var(--font-mono);font-size:12px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--amber);margin-bottom:12px;display:block;
+  }
+  .road-title h1{font-family:var(--font-display);font-size:36px;margin:0 0 10px;letter-spacing:.2px;}
+  .road-title p{margin:0;color:var(--slate-400);font-size:15px;}
+
+  main{max-width:960px;margin:-56px auto 0;padding:0 40px 60px;position:relative;z-index:2;}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .card{
+    background:var(--card);border-radius:var(--radius);border:1px solid var(--line);
+    box-shadow:0 16px 40px rgba(15,37,68,.14);
+    padding:30px 28px;text-decoration:none;color:inherit;
+    display:flex;flex-direction:column;gap:14px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 22px 50px rgba(15,37,68,.2);border-color:var(--navy-700);}
+  .card .icon{
+    width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:24px;background:var(--amber-soft);
+  }
+  .card.frota .icon{background:#e4f7ef;}
+  .card.clientes .icon{background:#e2f0fb;}
+  .card h2{font-family:var(--font-display);font-size:20px;margin:0;}
+  .card p{margin:0;color:var(--slate-600);font-size:13.5px;line-height:1.5;flex:1;}
+  .card .go{
+    font-family:var(--font-mono);font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--navy-700);display:flex;align-items:center;gap:6px;
+  }
+  .card:hover .go{color:var(--amber);}
+
+  .foot{max-width:960px;margin:36px auto 0;padding:0 40px;text-align:center;color:var(--slate-400);font-size:12.5px;}
+
+  @media (max-width:700px){
+    .road{padding:40px 20px 70px;}
+    .road-title h1{font-size:26px;}
+    main{padding:0 18px 50px;}
+    .cards{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="road">
+  <div class="road-title">
+    <span class="eyebrow">Viação Minas Gerais</span>
+    <h1>Painéis de Gestão</h1>
+    <p>Escolha o painel que você quer acessar</p>
+  </div>
+</header>
+
+<main>
+  <div class="cards">
+    <a class="card condutores" href="Html/condutores.html">
+      <div class="icon">🪪</div>
+      <h2>Painel de Condutores</h2>
+      <p>Consulte a situação cadastral dos motoristas no DER, acompanhe o status por filial, monitore pendências de documentos e verifique infrações por condutor.</p>
+      <span class="go">Acessar →</span>
+    </a>
+    <a class="card frota" href="Html/frota.html">
+      <div class="icon">🚌</div>
+      <h2>Painel da Frota (ATFs)</h2>
+      <p>Acompanhe a situação de todas as Autorizações de Tráfego (ATFs) emitidas, verifique os períodos de validade e monitore pendências da frota.</p>
+      <span class="go">Acessar →</span>
+    </a>
+    
+    <!-- Novo Botão para o Painel de Clientes das ATF's -->
+    <a class="card clientes" href="Html/atfs_clientes.html">
+      <div class="icon">🏢</div>
+      <h2>Painel de Clientes das ATF's</h2>
+      <p>Consulte e gerencie os clientes vinculados a cada frota/ATF, acompanhe divergências e filtre informações por filial e cliente.</p>
+      <span class="go">Acessar →</span>
+    </a>
+  </div>
+</main>
+
+<div class="foot">Gestão de Frota VMG</div>
+
+</body>
+</html>
