@@ -305,7 +305,7 @@
 
   <div id="errorState" class="state-msg hidden">
     <strong>Não foi possível ler a planilha</strong>
-    <span id="errorDetail">Verifique se o link de compartilhamento está liberado e se a aba chama-se "ATF's".</span>
+    <span id="errorDetail">Verifique se o link de compartilhamento está liberado e se a aba chama-se "ATFs".</span>
   </div>
 
   <div id="dashboard" class="hidden">
@@ -426,7 +426,7 @@
 (function(){
   // Link da planilha mantido conforme solicitação
   const SHEET_ID = '1Ifls95c7CWJujD16v-1Iq5y3lJtH7gC6o3JQmbM1TB4';
-  const SHEET_TAB = "ATF's";
+  const SHEET_TAB = "ATFs";
 
   const els = {
     btnRefresh: document.getElementById('btnRefresh'),
@@ -693,7 +693,7 @@
       els.dash.classList.add('hidden');
       els.empty.classList.add('hidden');
       els.error.classList.remove('hidden');
-      els.errorDetail.textContent = 'Detalhe: ' + err.message + '. Confirme se a planilha compartilhada está liberada e se a aba realmente se chama "ATF\'s".';
+      els.errorDetail.textContent = 'Detalhe: ' + err.message + '. Confirme se a planilha compartilhada está liberada e se a aba realmente se chama "ATFs".';
       setStatus('err','Falha ao carregar');
     }
   }
