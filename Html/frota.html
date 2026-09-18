@@ -321,7 +321,7 @@
         <div class="bar"><i id="barVencidos" style="width:0%"></i></div>
       </div>
       <div class="stat amber" data-flag="vencendo">
-        <div class="k">Vencendo (Próx. 15 dias)</div>
+        <div class="k">Vencendo (Próx. 30 dias)</div>
         <div class="v" id="stVencendo">0</div>
         <div class="bar"><i id="barVencendo" style="width:0%"></i></div>
       </div>
@@ -542,6 +542,30 @@
 
   function normText(s){ return (s||'').toString().trim().toUpperCase(); }
 
+  // Janela (em dias) considerada "Vencendo"
+  const VENCENDO_JANELA_DIAS = 30;
+
+  // Converte "DD/MM/AAAA" (ou "DD/MM/AA") em objeto Date
+  function parseBRDate(str){
+    if(!str) return null;
+    const m = str.toString().trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if(!m) return null;
+    let [, d, mo, y] = m;
+    if(y.length === 2) y = '20' + y;
+    const dt = new Date(Number(y), Number(mo) - 1, Number(d));
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+
+  // Calcula quantos dias faltam (ou já passaram, negativo) até a data final de validade
+  function calcularDiasRestantes(dataFimStr){
+    const fim = parseBRDate(dataFimStr);
+    if(!fim) return NaN;
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    fim.setHours(0,0,0,0);
+    return Math.round((fim - hoje) / 86400000);
+  }
+
   // Função para inferir estado baseado em dias ou no texto do status
   function getATFState(dias, statusText){
     const txt = normText(statusText);
@@ -554,18 +578,28 @@
     // Se o texto não for claro, avalia pelos dias
     if(!isNaN(numDias)){
         if(numDias < 0) return 'vencido';
-        if(numDias >= 0 && numDias <= 15) return 'vencendo';
+        if(numDias >= 0 && numDias <= VENCENDO_JANELA_DIAS) return 'vencendo';
         return 'regular';
     }
     return 'regular'; // Padrão
   }
 
+  // Remove acentos e normaliza espaços para comparação de cabeçalhos mais tolerante
+  function normalizeHeader(s){
+    return (s || '').toString()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
   function parseATFRows(data){
-    const cols = data.table.cols.map(c => (c.label || '').toString().trim().toUpperCase());
+    const cols = data.table.cols.map(c => normalizeHeader(c.label || ''));
     
     const idx = (name) => {
-        let i = cols.findIndex(c => c === name);
-        if(i === -1) i = cols.findIndex(c => c.includes(name));
+        const n = normalizeHeader(name);
+        let i = cols.findIndex(c => c === n);
+        if(i === -1) i = cols.findIndex(c => c.includes(n));
         return i;
     };
 
@@ -579,6 +613,12 @@
     const iCliente = idx('CLIENTE');
     const iOrigemDestino = idx('ORIGEM');
 
+    // Diagnóstico: avisa no console (F12) se alguma coluna esperada não foi encontrada na planilha
+    const colunasEsperadas = { FROTA:iFrota, PLACA:iPlaca, UNIDADE:iUnidade, CLIENTE:iCliente, VALIDADE:iValidade };
+    Object.entries(colunasEsperadas).forEach(([nome, i]) => {
+      if(i === -1) console.warn(`[Painel ATF] Coluna "${nome}" não encontrada no cabeçalho da planilha. Cabeçalhos lidos:`, cols);
+    });
+
     return data.table.rows
       .map(r => r.c)
       .filter(c => c && (iFrota > -1 && cellText(c[iFrota])) || (iPlaca > -1 && cellText(c[iPlaca]))) // Precisa ter Frota ou Placa
@@ -587,7 +627,7 @@
         const placa = iPlaca > -1 ? cellText(c[iPlaca]) : '';
         const unidade = iUnidade > -1 ? cellText(c[iUnidade]) : '';
         const dataEmissao = iEmissao > -1 ? cellText(c[iEmissao]) : '';
-        const dias = iDias > -1 ? cellText(c[iDias]) : '';
+        let dias = iDias > -1 ? cellText(c[iDias]) : '';
         const status = iStatus > -1 ? cellText(c[iStatus]) : '';
         const cliente = iCliente > -1 ? cellText(c[iCliente]) : '';
         const origemDestino = iOrigemDestino > -1 ? cellText(c[iOrigemDestino]) : '';
@@ -599,6 +639,13 @@
         const valParts = periodoValidadeFull.split(/\s+[aAàÀ]\s+/);
         if(valParts.length > 1){
             periodoValidadeCurto = valParts[valParts.length - 1].trim();
+        }
+
+        // Se a coluna DIAS estiver vazia/inválida (caso comum na planilha atual),
+        // calcula os dias restantes a partir da data final do PERÍODO VALIDADE.
+        if(dias === '' || dias === null || dias === undefined || isNaN(parseInt(dias, 10))){
+            const diasCalc = calcularDiasRestantes(periodoValidadeCurto);
+            if(!isNaN(diasCalc)) dias = String(diasCalc);
         }
 
         const situacao = getATFState(dias, status);
