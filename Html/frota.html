@@ -456,6 +456,10 @@
   let rawRows = [];
   let allUnidades = [];
   let allClientes = [];
+
+  // Unidades que devem ser totalmente desconsideradas pelo painel (como se não existissem)
+  const UNIDADES_EXCLUIDAS = ['PARAUAPEBAS', 'PATOS DE MINAS', 'PATROCÍNIO', 'TAPIRA', 'TUCUMÃ'];
+  const unidadesExcluidasNorm = new Set(UNIDADES_EXCLUIDAS.map(normalizeHeader));
   let currentPageRows = [];
   let sortState = {key:'cliente', dir:1};
   let charts = {unidade:null, status:null};
@@ -670,7 +674,7 @@
       const data = JSON.parse(jsonStr);
       if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha');
 
-      rawRows = parseATFRows(data);
+      rawRows = parseATFRows(data).filter(r => !unidadesExcluidasNorm.has(normalizeHeader(r.unidade)));
       if(rawRows.length === 0) throw new Error('Nenhum ATF encontrado na leitura.');
       
       // Carrega as listas mestras de Unidades e Clientes
