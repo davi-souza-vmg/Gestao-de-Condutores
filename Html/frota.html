@@ -290,7 +290,7 @@
     <button class="tab-btn active" data-tab="painel" id="tabBtnPainel">Painel de ATF's</button>
     <button class="tab-btn" data-tab="clientes" id="tabBtnClientes">Clientes por Frota</button>
   </nav>
-  <div class="road-top">
+  <div class="road-top" id="roadTop">
     <div class="road-title">
       <span class="eyebrow">Viação · Gestão de ATF's</span>
       <h1>Painel de ATF's</h1>
@@ -1009,7 +1009,7 @@
 
   const tabPainel = document.getElementById('tabPainel');
   const tabClientes = document.getElementById('tabClientes');
-  const topBarControls = document.getElementById('topBarControls');
+  const roadTop = document.getElementById('roadTop');
   const tabBtnPainel = document.getElementById('tabBtnPainel');
   const tabBtnClientes = document.getElementById('tabBtnClientes');
   const iframeClientes = document.getElementById('iframeClientes');
@@ -1019,7 +1019,7 @@
     const isPainel = nome === 'painel';
     tabPainel.classList.toggle('hidden', !isPainel);
     tabClientes.classList.toggle('hidden', isPainel);
-    topBarControls.style.display = isPainel ? '' : 'none';
+    roadTop.style.display = isPainel ? '' : 'none';
     tabBtnPainel.classList.toggle('active', isPainel);
     tabBtnClientes.classList.toggle('active', !isPainel);
 
