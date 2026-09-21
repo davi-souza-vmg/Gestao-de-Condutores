@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clientes por Frota — ATF's</title>
+<script>
+  // Detecta se esta página está embutida (ex.: dentro da aba "Clientes por Frota" do Painel de ATF's)
+  // e, nesse caso, marca o <html> para reduzir o espaçamento do cabeçalho.
+  if (window.self !== window.top) {
+    document.documentElement.classList.add('embedded');
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -21,6 +28,7 @@
   body{margin:0;background:var(--bg);color:var(--slate-900);font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
 
   .road{position:relative;background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));color:#fff;padding:34px 40px 30px;overflow:hidden;}
+  html.embedded .road{padding-top:14px;}
   .road::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px, transparent 34px 60px);opacity:.9;}
   .road-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
   .road-title h1{font-family:var(--font-display);font-size:28px;margin:0 0 4px;letter-spacing:.2px;}
