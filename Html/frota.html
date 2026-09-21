@@ -50,6 +50,8 @@
     background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px, transparent 34px 60px);
     opacity:.9;
   }
+  .road.tab-clientes-active{padding-bottom:0;}
+  .road.tab-clientes-active::after{display:none;}
   .road-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
   .road-title h1{font-family:var(--font-display);font-size:28px;margin:0 0 4px;letter-spacing:.2px;}
   .road-title p{margin:0;color:var(--slate-400);font-size:14px;}
@@ -285,7 +287,7 @@
 </head>
 <body>
 
-<header class="road">
+<header class="road" id="roadHeader">
   <nav class="tabbar" id="tabbar">
     <button class="tab-btn active" data-tab="painel" id="tabBtnPainel">Painel de ATF's</button>
     <button class="tab-btn" data-tab="clientes" id="tabBtnClientes">Clientes por Frota</button>
@@ -1010,6 +1012,7 @@
   const tabPainel = document.getElementById('tabPainel');
   const tabClientes = document.getElementById('tabClientes');
   const roadTop = document.getElementById('roadTop');
+  const roadHeader = document.getElementById('roadHeader');
   const tabBtnPainel = document.getElementById('tabBtnPainel');
   const tabBtnClientes = document.getElementById('tabBtnClientes');
   const iframeClientes = document.getElementById('iframeClientes');
@@ -1020,6 +1023,7 @@
     tabPainel.classList.toggle('hidden', !isPainel);
     tabClientes.classList.toggle('hidden', isPainel);
     roadTop.style.display = isPainel ? '' : 'none';
+    roadHeader.classList.toggle('tab-clientes-active', !isPainel);
     tabBtnPainel.classList.toggle('active', isPainel);
     tabBtnClientes.classList.toggle('active', !isPainel);
 
