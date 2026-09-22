@@ -1855,6 +1855,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     const modoConfidencial = els.exportModoConfidencial.checked;
     let rowsToExport;
     let subtitulo;
+
     if(manual){
       if(!exportPickedCpf.size){
         alert('Selecione pelo menos um condutor para gerar o relatório.');
@@ -1867,6 +1868,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       rowsToExport = lastFilteredRows;
       subtitulo = `${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'} — ${currentFilterSummaryText()}`;
     }
+
     if(!rowsToExport.length){
       alert('Não há condutores para exportar com esses critérios.');
       return;
@@ -1881,180 +1883,171 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
 
-        // Mesma lógica de cor/rótulo da barrinha "Dias rest." que aparece na tela
-        // (função daysBar), só que com as cores já em RGB pro jsPDF.
-        function pdfDaysInfo(days, status){
-          if(status === 'AGUARDANDO') return {pct:100, color:[30,66,120], label:'Aguard. DER'};
-          if(status === 'SEM_CADASTRO' || days===null || days===undefined || isNaN(days)) return {pct:0, color:[147,160,179], label:'—'};
-          let color = [43,173,125];
-          if(days < 0) color = [229,72,77];
-          else if(days <= 30) color = [242,169,59];
-          const pct = days < 0 ? 100 : Math.max(4, Math.min(100, (Math.min(days,180)/180)*100));
-          return {pct, color, label: days < 0 ? 'Vencido' : `${days}d`};
-        }
-
-        // (o cabeçalho é desenhado dentro do didDrawPage abaixo — cobre a página 1 e as seguintes)
-
-        // Mapeia cada linha do corpo (pela referência do array) até o condutor de origem.
-        // Usar a referência da linha em vez de "rowsToExport[data.row.index]" evita o crash
-        // "Cannot read properties of undefined (reading 'derDias')": o autoTable pode invocar
-        // os hooks de célula com um índice de linha que não bate 1:1 com rowsToExport (ex.
-        // quando uma linha quebra entre páginas), então indexar por posição é frágil.
-        const pdfRowMeta = new Map();
-
-        // Documentos que são controle interno do setor. Por padrão continuam aparecendo
-        // no relatório normalmente (igual à tela); só somem quando "Modo confidencial"
-        // estiver marcado no popup de exportação.
+        // O relatório foi simplificado para uso operacional:
+        // não exibe validade/dias restantes de CNH nem validade/dias restantes do DER.
+        // Mostra somente a situação do DER e as pendências documentais.
         const TAGS_OCULTAS_NO_RELATORIO = ['Criminal', 'Antecedentes'];
+
         function docsPendentesRelatorio(r){
-          const pendentes = r.docsPendentes || [];
-          return modoConfidencial ? pendentes.filter(tag => !TAGS_OCULTAS_NO_RELATORIO.includes(tag)) : pendentes;
+          const pendentes = Array.isArray(r.docsPendentes) ? r.docsPendentes : [];
+          return modoConfidencial
+            ? pendentes.filter(tag => !TAGS_OCULTAS_NO_RELATORIO.includes(tag))
+            : pendentes;
         }
 
-        // "Tem pendência documental" = checklist de documentos pendentes (planilha de
-        // documentação) OU DER/CNH vencido/sem cadastro — ou seja, não está "tudo certo".
-        function temPendenciaDocumental(r){
-          return (docsPendentesRelatorio(r).length > 0)
-            || r.derStatus === 'VENCIDO' || r.derStatus === 'SEM_CADASTRO'
-            || r.cnhStatus === 'VENCIDO' || r.cnhStatus === 'SEM_CADASTRO';
+        function statusDerRelatorio(status){
+          if(status === 'AGUARDANDO') return 'Aguardando retorno do DER';
+          if(status === 'VENCIDO') return 'Vencido';
+          if(status === 'VENCENDO') return 'Vencendo';
+          if(status === 'ATIVO') return 'Regular';
+          if(status === 'SEM_CADASTRO') return 'Sem cadastro';
+          return '—';
         }
-        // Lista de "tags" de pendência de um condutor: documentos do checklist + DER/CNH
-        // vencido ou sem cadastro (rotulados igual ao badge que aparece na tela).
-        // Obs: "DER vencido" não entra na lista — é informação redundante, já dá pra ver
-        // que o DER tá vencido pela validade/coloração; só "DER sem cadastro" entra, pois
-        // esse sim é uma pendência de fato (não dá pra saber se venceu sem o cadastro).
-        function pendenciaTags(r){
-          const tags = docsPendentesRelatorio(r);
-          if(r.derStatus === 'SEM_CADASTRO') tags.push('DER sem cadastro');
-          if(r.cnhStatus === 'SEM_CADASTRO') tags.push('CNH sem cadastro');
-          else if(r.cnhStatus === 'VENCIDO') tags.push('CNH vencida');
-          return tags;
-        }
-        // Relatório "de pendências": só entra nesse modo (2 colunas em vez de 4) quando
-        // TODOS os condutores exportados têm alguma pendência documental — trocado
-        // automaticamente, sem precisar de nenhuma opção extra no popup de exportação.
-        const modoPendencias = rowsToExport.length > 0 && rowsToExport.every(temPendenciaDocumental);
 
-        const body = rowsToExport.map(r => {
-          let row;
-          if(modoPendencias){
-            const tags = pendenciaTags(r);
-            // Se não sobrou nenhuma tag mas o condutor só está aqui por causa do DER
-            // vencido (tag omitida de propósito), não é "tudo certo" — só não tem mais
-            // nada pra listar na coluna de documentos.
-            const derVencidoSemOutraPendencia = !tags.length && r.derStatus === 'VENCIDO';
-            if(!tags.length && !derVencidoSemOutraPendencia){
-              // Salvaguarda: se por algum motivo esse condutor não tiver nenhuma pendência
-              // (mesmo o relatório sendo "de pendências"), avisa que está tudo certo em vez
-              // de deixar a linha em branco.
-              row = [
-                r.motorista || '—',
-                r.filial || '—',
-                r.funcao || '—',
-                { content: 'TUDO CERTO', colSpan: 2, styles: { halign:'center', fontStyle:'bold', textColor:[43,173,125] } },
-              ];
-            } else {
-              const docsTxt = tags.length ? tags.join(', ') : '—';
-              const obsTxt = (r.docsObservacao || '').trim() || '—';
-              row = [
-                r.motorista || '—',
-                r.filial || '—',
-                r.funcao || '—',
-                docsTxt,
-                obsTxt,
-              ];
-            }
+        function statusDerStyle(status){
+          if(status === 'AGUARDANDO') return {fill:[232,239,250], text:[30,66,120]};
+          if(status === 'VENCIDO') return {fill:[253,235,235], text:[190,53,58]};
+          if(status === 'VENCENDO') return {fill:[255,246,228], text:[170,106,18]};
+          if(status === 'ATIVO') return {fill:[232,247,240], text:[31,126,88]};
+          return {fill:[240,243,247], text:[91,101,119]};
+        }
+
+        function docsInfoRelatorio(r){
+          const originais = Array.isArray(r.docsPendentes) ? r.docsPendentes : [];
+          const pendentes = docsPendentesRelatorio(r);
+          const temOcultas = modoConfidencial && originais.some(tag => TAGS_OCULTAS_NO_RELATORIO.includes(tag));
+          const observacao = (r.docsObservacao || '').trim();
+
+          let texto;
+          if(pendentes.length){
+            texto = pendentes.join(', ');
+            if(temOcultas) texto += ' · pendência interna oculta';
+          } else if(temOcultas){
+            texto = 'Pendência interna oculta';
           } else {
-            // Motorista sem cadastro no DER (sem validade lançada) E com documentos pendentes:
-            // troca as 4 colunas de DER/CNH por "Documentos pendentes" + "Observações" só
-            // nessa linha (o relatório como um todo continua no formato de 7 colunas).
-            const semDerComPendencia = r.derStatus === 'SEM_CADASTRO' && docsPendentesRelatorio(r).length;
-            if(semDerComPendencia){
-              const docsTxt = docsPendentesRelatorio(r).join(', ');
-              const obsTxt = (r.docsObservacao || '').trim() || '—';
-              row = [
-                r.motorista || '—',
-                r.filial || '—',
-                r.funcao || '—',
-                { content: docsTxt, colSpan: 2 },
-                { content: obsTxt, colSpan: 2 },
-              ];
-            } else {
-              row = [
-                r.motorista || '—',
-                r.filial || '—',
-                r.funcao || '—',
-                r.derValEstimado ? fmtDate(r.derVal) + ' ≈' : fmtDate(r.derVal),
-                pdfDaysInfo(r.derDias, r.derStatus).label,
-                r.cnhValEstimado ? fmtDate(r.cnhVal) + ' ≈' : fmtDate(r.cnhVal),
-                pdfDaysInfo(r.cnhDias, r.cnhStatus).label,
-              ];
-            }
+            texto = 'Nenhuma pendência';
           }
-          pdfRowMeta.set(row, r);
-          return row;
+
+          return {texto, observacao: observacao || '—'};
+        }
+
+        // Resumo operacional do relatório.
+        const resumo = [
+          {label:'Regular', value:rowsToExport.filter(r=>r.derStatus==='ATIVO').length, color:[43,173,125]},
+          {label:'Vencendo', value:rowsToExport.filter(r=>r.derStatus==='VENCENDO').length, color:[242,169,59]},
+          {label:'Vencido', value:rowsToExport.filter(r=>r.derStatus==='VENCIDO').length, color:[229,72,77]},
+          {label:'Aguardando retorno do DER', value:rowsToExport.filter(r=>r.derStatus==='AGUARDANDO').length, color:[30,66,120]},
+          {label:'Sem cadastro', value:rowsToExport.filter(r=>r.derStatus==='SEM_CADASTRO').length, color:[147,160,179]},
+          {label:'Com documentação pendente', value:rowsToExport.filter(r=>docsPendentesRelatorio(r).length>0).length, color:[124,91,180]},
+        ];
+
+        const totalPendencias = rowsToExport.reduce((n,r)=>n + docsPendentesRelatorio(r).length, 0);
+        const pdfRows = rowsToExport.map(r => {
+          const docs = docsInfoRelatorio(r);
+          const row = [
+            r.motorista || '—',
+            r.filial || '—',
+            r.funcao || '—',
+            statusDerRelatorio(r.derStatus),
+            docs.texto,
+            docs.observacao,
+          ];
+          return {row, source:r};
         });
 
-        const DER_DIAS_COL = 4, CNH_DIAS_COL = 6;
-        const BAR_MAX_W = 15; // mm — largura máxima da trilha da barrinha, igual pros dois
+        function drawSummary(){
+          const marginX = 14;
+          const gap = 4;
+          const cols = 6;
+          const cardW = (pageW - marginX*2 - gap*(cols-1)) / cols;
+          const cardH = 19;
+          const y = 31;
 
-        const head = modoPendencias
-          ? [['Motorista','Filial','Função','Documentação pendente','Informação']]
-          : [['Motorista','Filial','Função','DER validade','Dias rest. DER','CNH validade','Dias rest. CNH']];
+          resumo.forEach((item, i) => {
+            const x = marginX + i*(cardW+gap);
+            doc.setFillColor(250,251,253);
+            doc.setDrawColor(228,232,240);
+            doc.roundedRect(x, y, cardW, cardH, 2, 2, 'FD');
+            doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+            doc.roundedRect(x, y, 1.5, cardH, 0.75, 0.75, 'F');
+            doc.setFont('helvetica','normal');
+            doc.setFontSize(7.2);
+            doc.setTextColor(91,101,119);
+            const labelLines = doc.splitTextToSize(item.label, cardW-8);
+            doc.text(labelLines.slice(0,2), x+5, y+6.2, {lineHeightFactor:1.05});
+            doc.setFont('helvetica','bold');
+            doc.setFontSize(14);
+            doc.setTextColor(27,36,51);
+            doc.text(String(item.value), x+5, y+15.7);
+          });
 
+          doc.setFont('helvetica','normal');
+          doc.setFontSize(8);
+          doc.setTextColor(91,101,119);
+          doc.text(`${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'} · ${totalPendencias} pendência${totalPendencias===1?'':'s'} documental${totalPendencias===1?'':'ais'}`, marginX, y+25);
+        }
+
+        let firstPage = true;
         doc.autoTable({
-          startY: 32,
-          head,
-          body,
-          styles: { font:'helvetica', fontSize:8.5, cellPadding:{top:2.6,bottom:2.6,left:3,right:3}, textColor:[27,36,51], lineColor:[228,232,240], lineWidth:.15, valign:'middle' },
-          headStyles: { fillColor:[15,37,68], textColor:255, fontStyle:'bold', fontSize:8.5 },
-          alternateRowStyles: { fillColor:[250,251,253] },
-          columnStyles: modoPendencias ? {} : {
-            [DER_DIAS_COL]: { halign:'right', cellPadding:{top:2.6,bottom:2.6,left:BAR_MAX_W+5,right:3} },
-            [CNH_DIAS_COL]: { halign:'right', cellPadding:{top:2.6,bottom:2.6,left:BAR_MAX_W+5,right:3} },
+          startY: 61,
+          head: [['Motorista','Filial','Função','Situação DER','Documentação','Observação']],
+          body: pdfRows.map(x=>x.row),
+          styles: {
+            font:'helvetica',
+            fontSize:8.3,
+            cellPadding:{top:2.8,bottom:2.8,left:3,right:3},
+            textColor:[27,36,51],
+            lineColor:[228,232,240],
+            lineWidth:.15,
+            valign:'middle',
           },
-          margin: { left:14, right:14, top:32, bottom:16 },
-          didDrawPage: function(){
-            // Redesenha o cabeçalho em toda página nova que o autoTable criar,
-            // pra manter o relatório consistente mesmo com listas grandes.
-            pdfHeader(doc, pageW, modoPendencias ? 'Relatório de Condutores — Pendências' : 'Relatório de Condutores', modoPendencias ? `${subtitulo} · só documentação pendente` : subtitulo);
+          headStyles: {
+            fillColor:[15,37,68],
+            textColor:255,
+            fontStyle:'bold',
+            fontSize:8.4,
           },
-          didParseCell: function(data){
-            if(modoPendencias) return;
-            if(data.section === 'body' && (data.column.index === DER_DIAS_COL || data.column.index === CNH_DIAS_COL)){
-              const v = (data.cell.raw||'').toString();
-              if(v === 'Vencido') data.cell.styles.textColor = [229,72,77];
-              else if(v === 'Aguard. DER') data.cell.styles.textColor = [30,66,120];
-              else if(v === '—') data.cell.styles.textColor = [147,160,179];
-              else data.cell.styles.textColor = [27,36,51];
+          alternateRowStyles: {fillColor:[250,251,253]},
+          columnStyles: {
+            0:{cellWidth:46},
+            1:{cellWidth:31},
+            2:{cellWidth:34},
+            3:{cellWidth:42},
+            4:{cellWidth:78},
+            5:{cellWidth:'auto'},
+          },
+          margin:{left:14,right:14,top:61,bottom:16},
+          didDrawPage:function(){
+            pdfHeader(doc, pageW, 'Relatório de Condutores', subtitulo);
+            if(firstPage){
+              drawSummary();
+              firstPage = false;
             }
           },
-          willDrawCell: function(data){
-            // Desenha a trilha + preenchimento colorido (a "barrinha de dias
-            // restantes"), igual à que aparece na tela, à esquerda do número.
-            if(modoPendencias) return;
-            if(data.section !== 'body') return;
-            if(data.column.index !== DER_DIAS_COL && data.column.index !== CNH_DIAS_COL) return;
-            const r = pdfRowMeta.get(data.row.raw);
-            if(!r) return; // linha mesclada (Documentos pendentes) ou não localizada: sem barrinha
-            const info = data.column.index === DER_DIAS_COL
-              ? pdfDaysInfo(r.derDias, r.derStatus)
-              : pdfDaysInfo(r.cnhDias, r.cnhStatus);
-            const trackH = 2.1;
-            const trackX = data.cell.x + 3;
-            const trackY = data.cell.y + data.cell.height/2 - trackH/2;
-            doc.setFillColor(233,236,242);
-            doc.roundedRect(trackX, trackY, BAR_MAX_W, trackH, 1, 1, 'F');
-            const fillW = Math.max(1.4, BAR_MAX_W * (info.pct/100));
-            doc.setFillColor(info.color[0], info.color[1], info.color[2]);
-            doc.roundedRect(trackX, trackY, fillW, trackH, 1, 1, 'F');
+          didParseCell:function(data){
+            if(data.section !== 'body' || data.column.index !== 3) return;
+            const meta = pdfRows[data.row.index];
+            if(!meta) return;
+            const style = statusDerStyle(meta.source.derStatus);
+            data.cell.styles.fillColor = style.fill;
+            data.cell.styles.textColor = style.text;
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.halign = 'center';
           },
         });
 
+        // Rodapé e nota de escopo: deixa explícito o que o novo relatório mostra.
         pdfFooter(doc, pageW, pageH);
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(7.2);
+        doc.setTextColor(140,150,165);
+        const nota = modoConfidencial
+          ? 'Relatório operacional: situação do DER e documentação. Validades e dias restantes não são exibidos. Documentos internos podem estar ocultos pelo modo confidencial.'
+          : 'Relatório operacional: situação do DER e documentação. Validade e dias restantes de CNH/DER não são exibidos.';
+        doc.text(nota, 14, pageH-17);
 
         const ts = new Date().toISOString().slice(0,16).replace(/[-T:]/g,'').replace(/(\d{8})(\d{4})/,'$1-$2');
-        doc.save(`lista-condutores_${ts}.pdf`);
+        doc.save(`relatorio-condutores_${ts}.pdf`);
         closeExportModal();
       } finally {
         setBtnLoading(els.exportModalGenerate, false, '', 'Gerar PDF');
