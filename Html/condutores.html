@@ -1863,17 +1863,17 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       }
       rowsToExport = rawRows.filter(r => exportPickedCpf.has(exportRowKey(r)))
         .sort((a,b)=> (a.motorista||'').localeCompare(b.motorista||'', 'pt-BR'));
-      subtitulo = `Seleção manual — ${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'}`;
+      subtitulo = '';
     } else {
       rowsToExport = lastFilteredRows;
-      subtitulo = `${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'} — ${currentFilterSummaryText()}`;
+      subtitulo = '';
     }
 
     if(!rowsToExport.length){
       alert('Não há condutores para exportar com esses critérios.');
       return;
     }
-    if(modoConfidencial) subtitulo += ' · modo confidencial';
+    // O relatório não exibe no cabeçalho a forma de seleção nem o modo confidencial.
 
     setBtnLoading(els.exportModalGenerate, true, '⏳ Gerando…');
     setTimeout(() => {
@@ -1931,34 +1931,41 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           return {texto, observacao: observacao || '—'};
         }
 
-        // Resumo operacional do relatório.
+        // Resumo operacional do relatório. O card de documentação só aparece
+        // quando existe ao menos uma pendência documental visível no relatório.
+        const totalCondutores = rowsToExport.length;
+        const totalPendencias = rowsToExport.reduce((n,r)=>n + docsPendentesRelatorio(r).length, 0);
+        const temDocumentacaoPendente = totalPendencias > 0;
         const resumo = [
           {label:'Regular', value:rowsToExport.filter(r=>r.derStatus==='ATIVO').length, color:[43,173,125]},
           {label:'Vencendo', value:rowsToExport.filter(r=>r.derStatus==='VENCENDO').length, color:[242,169,59]},
           {label:'Vencido', value:rowsToExport.filter(r=>r.derStatus==='VENCIDO').length, color:[229,72,77]},
           {label:'Aguardando retorno do DER', value:rowsToExport.filter(r=>r.derStatus==='AGUARDANDO').length, color:[30,66,120]},
           {label:'Sem cadastro', value:rowsToExport.filter(r=>r.derStatus==='SEM_CADASTRO').length, color:[147,160,179]},
-          {label:'Com documentação pendente', value:rowsToExport.filter(r=>docsPendentesRelatorio(r).length>0).length, color:[124,91,180]},
         ];
+        if(temDocumentacaoPendente){
+          resumo.push({label:'Com documentação pendente', value:rowsToExport.filter(r=>docsPendentesRelatorio(r).length>0).length, color:[124,91,180]});
+        }
 
-        const totalPendencias = rowsToExport.reduce((n,r)=>n + docsPendentesRelatorio(r).length, 0);
+        // A coluna de documentação só entra no relatório quando houver
+        // documentação pendente visível. Condutores sem pendência ficam sem essa coluna.
         const pdfRows = rowsToExport.map(r => {
           const docs = docsInfoRelatorio(r);
           const row = [
             r.motorista || '—',
             r.filial || '—',
-            r.funcao || '—',
             statusDerRelatorio(r.derStatus),
-            docs.texto,
-            docs.observacao,
           ];
+          if(temDocumentacaoPendente){
+            row.push(docs.texto === 'Nenhuma pendência' ? '—' : docs.texto, docs.observacao === '—' ? '—' : docs.observacao);
+          }
           return {row, source:r};
         });
 
         function drawSummary(){
           const marginX = 14;
           const gap = 4;
-          const cols = 6;
+          const cols = resumo.length;
           const cardW = (pageW - marginX*2 - gap*(cols-1)) / cols;
           const cardH = 19;
           const y = 31;
@@ -1981,16 +1988,20 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
             doc.text(String(item.value), x+5, y+15.7);
           });
 
-          doc.setFont('helvetica','normal');
+          doc.setFont('helvetica','bold');
           doc.setFontSize(8);
           doc.setTextColor(91,101,119);
-          doc.text(`${rowsToExport.length} condutor${rowsToExport.length===1?'':'es'} · ${totalPendencias} pendência${totalPendencias===1?'':'s'} documental${totalPendencias===1?'':'ais'}`, marginX, y+25);
+          doc.text(`${totalCondutores} Condutor${totalCondutores===1?'':'es'}`, marginX, y+25);
         }
 
+        const tableStartY = 61;
+        const tableHead = temDocumentacaoPendente
+          ? ['Motorista','Filial','Situação DER','Documentação','Observação']
+          : ['Motorista','Filial','Situação DER'];
         let firstPage = true;
         doc.autoTable({
-          startY: 61,
-          head: [['Motorista','Filial','Função','Situação DER','Documentação','Observação']],
+          startY: tableStartY,
+          head: [tableHead],
           body: pdfRows.map(x=>x.row),
           styles: {
             font:'helvetica',
@@ -2008,13 +2019,16 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
             fontSize:8.4,
           },
           alternateRowStyles: {fillColor:[250,251,253]},
-          columnStyles: {
-            0:{cellWidth:46},
-            1:{cellWidth:31},
-            2:{cellWidth:34},
-            3:{cellWidth:42},
-            4:{cellWidth:78},
-            5:{cellWidth:'auto'},
+          columnStyles: temDocumentacaoPendente ? {
+            0:{cellWidth:58},
+            1:{cellWidth:38},
+            2:{cellWidth:48},
+            3:{cellWidth:78},
+            4:{cellWidth:'auto'},
+          } : {
+            0:{cellWidth:70},
+            1:{cellWidth:48},
+            2:{cellWidth:'auto'},
           },
           margin:{left:14,right:14,top:61,bottom:16},
           didDrawPage:function(){
@@ -2025,7 +2039,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
             }
           },
           didParseCell:function(data){
-            if(data.section !== 'body' || data.column.index !== 3) return;
+            if(data.section !== 'body' || data.column.index !== 2) return;
             const meta = pdfRows[data.row.index];
             if(!meta) return;
             const style = statusDerStyle(meta.source.derStatus);
