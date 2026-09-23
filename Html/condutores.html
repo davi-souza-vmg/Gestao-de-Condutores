@@ -2050,15 +2050,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           },
         });
 
-        // Rodapé e nota de escopo: deixa explícito o que o novo relatório mostra.
         pdfFooter(doc, pageW, pageH);
-        doc.setFont('helvetica','normal');
-        doc.setFontSize(7.2);
-        doc.setTextColor(140,150,165);
-        const nota = modoConfidencial
-          ? 'Relatório operacional: situação do DER e documentação. Validades e dias restantes não são exibidos. Documentos internos podem estar ocultos pelo modo confidencial.'
-          : 'Relatório operacional: situação do DER e documentação. Validade e dias restantes de CNH/DER não são exibidos.';
-        doc.text(nota, 14, pageH-17);
 
         const ts = new Date().toISOString().slice(0,16).replace(/[-T:]/g,'').replace(/(\d{8})(\d{4})/,'$1-$2');
         doc.save(`relatorio-condutores_${ts}.pdf`);
