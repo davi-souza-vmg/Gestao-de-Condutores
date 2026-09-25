@@ -456,14 +456,20 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     syncModalReview();
 
     try{
-      const response = await fetch(MULTAS_API_URL, {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ action:'saveStatus', plate, status, vehicle, fine: multaDetails })
+      // Use GET em vez de POST para evitar o bloqueio CORS típico de Web Apps
+      // do Google Apps Script quando o HTML é aberto fora do próprio Apps Script.
+      const params = new URLSearchParams({
+        action: 'saveStatus',
+        plate,
+        status,
+        vehicle: JSON.stringify(vehicle),
+        fine: JSON.stringify(multaDetails || {})
       });
-      const data = await response.json();
-      if(!data.ok) throw new Error(data.error || 'Não foi possível salvar.');
-      setStatus(true, 'Planilha de multas · salvo');
+      const url = MULTAS_API_URL + (MULTAS_API_URL.includes('?') ? '&' : '?') + params.toString() + '&_=' + Date.now();
+      const response = await fetch(url, { cache:'no-store', mode:'no-cors' });
+
+      // Com no-cors a resposta é opaca; o Apps Script recebe e grava os dados.
+      setStatus(true, 'Planilha de multas · enviado');
     }catch(error){
       if(previous) multaStatuses[plate] = previous;
       else delete multaStatuses[plate];
