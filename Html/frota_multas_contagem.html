@@ -233,6 +233,12 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .review-check{margin-top:18px;background:#f7faf9;border-color:#dce9e3;}
 @media(max-width:600px){.modal-shell{width:calc(100vw - 20px);gap:7px}.modal-arrow{flex-basis:38px;width:38px;height:38px;font-size:29px}.modal{max-width:none;width:100%}.modal-head{padding-left:17px;padding-right:44px}.modal-title{font-size:19px}.modal-body{padding:18px}}
 
+
+.fine-modal{width:min(470px,100%);background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 28px 80px rgba(10,25,48,.42);border:1px solid rgba(255,255,255,.7);}
+.fine-head{background:linear-gradient(135deg,#7e3030,#a94b4b);color:#fff;padding:21px 22px;display:flex;justify-content:space-between;align-items:flex-start;gap:15px;}
+.fine-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:1.1px;text-transform:uppercase;opacity:.75;margin-bottom:5px;}
+.fine-head h2{margin:0;font:700 20px var(--display);}.fine-head p{margin:4px 0 0;color:#f6dede;font-size:12px;}
+.fine-body{padding:21px;display:grid;gap:13px;}.fine-field{display:grid;gap:6px;}.fine-field>span{font:700 10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--slate-600);}.fine-field input,.fine-field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:11px 12px;font:13px var(--body);color:var(--slate-900);outline:none;resize:vertical;}.fine-field input:focus,.fine-field textarea:focus{border-color:#b77a7a;box-shadow:0 0 0 3px rgba(169,75,75,.09);}.fine-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px;}.fine-cancel,.fine-save{border:0;border-radius:10px;padding:11px 15px;font:700 12px var(--body);cursor:pointer;}.fine-cancel{background:#f0f2f5;color:var(--slate-600);}.fine-save{background:#a94b4b;color:#fff;}.fine-save:disabled{opacity:.55;cursor:wait;}.fine-error{padding:10px 12px;border-radius:9px;background:#fff0f0;color:#a33f3f;font-size:11px;}
 </style>
 </head>
 <body>
@@ -339,6 +345,29 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   </div>
 </div>
 
+<div class="backdrop" id="fineBackdrop">
+  <div class="fine-modal" role="dialog" aria-modal="true" aria-labelledby="fineModalTitle">
+    <div class="fine-head">
+      <div>
+        <div class="fine-eyebrow">Registro de multa</div>
+        <h2 id="fineModalTitle">Com multa</h2>
+        <p id="fineModalPlate">Veículo</p>
+      </div>
+      <button class="close" id="fineClose" type="button" aria-label="Fechar">✕</button>
+    </div>
+    <div class="fine-body">
+      <label class="fine-field"><span>Data da Infração</span><input id="fineDate" type="date" required></label>
+      <label class="fine-field"><span>Descrição</span><textarea id="fineDescription" rows="4" placeholder="Descreva a infração…" required></textarea></label>
+      <label class="fine-field"><span>Valor</span><input id="fineValue" type="number" min="0" step="0.01" placeholder="0,00" required></label>
+      <div class="fine-actions">
+        <button type="button" class="fine-cancel" id="fineCancel">Cancelar</button>
+        <button type="button" class="fine-save" id="fineSave">Salvar multa</button>
+      </div>
+      <div class="fine-error hidden" id="fineError"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   // Mesma planilha do sistema enviado; leitura exclusiva da aba "Frota".
@@ -364,7 +393,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
   // URL do Web App do Google Apps Script. Depois de publicar o Code.gs,
   // cole aqui a URL que termina em /exec.
-  const MULTAS_API_URL = 'https://script.google.com/macros/s/AKfycbyOFx5qhDmYHKb_W-TNE8YcxwLsBtWA7cS5kALI4nDCvFjGHVv8nibFzXLnCPiq7Y6syw/exec';
+  const MULTAS_API_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
 
   let vehicles = [];
   let reviewFilter = 'all';
@@ -411,6 +440,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   async function saveMultaStatus(vehicle, status){
     const plate = normalizePlate(vehicle.placa);
     const previous = multaStatuses[plate];
+
+    let multaDetails = null;
+    if(status === 'COM MULTA') {
+      multaDetails = await askFineDetails(vehicle);
+      if(!multaDetails) {
+        syncModalReview();
+        return;
+      }
+    }
+
     multaStatuses[plate] = status;
     setStatusFromReview();
     render();
@@ -419,7 +458,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     try{
       const response = await fetch(MULTAS_API_URL, {
         method:'POST',
-        body: JSON.stringify({ action:'saveStatus', plate, status })
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'saveStatus', plate, status, vehicle, fine: multaDetails })
       });
       const data = await response.json();
       if(!data.ok) throw new Error(data.error || 'Não foi possível salvar.');
@@ -433,6 +473,53 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       setStatus(false, 'Falha ao salvar multa');
       alert('Não foi possível salvar na planilha de multas.\n\n' + error.message);
     }
+  }
+
+  function askFineDetails(vehicle){
+    return new Promise(resolve => {
+      const fineBackdrop = document.getElementById('fineBackdrop');
+      const fineDate = document.getElementById('fineDate');
+      const fineDescription = document.getElementById('fineDescription');
+      const fineValue = document.getElementById('fineValue');
+      const fineError = document.getElementById('fineError');
+      const fineSave = document.getElementById('fineSave');
+      const fineCancel = document.getElementById('fineCancel');
+      document.getElementById('fineModalPlate').textContent = vehicle.placa || 'Veículo';
+      fineDate.value = new Date().toISOString().slice(0,10);
+      fineDescription.value = '';
+      fineValue.value = '';
+      fineError.classList.add('hidden');
+      fineSave.disabled = false;
+      fineBackdrop.classList.add('open');
+
+      let settled = false;
+      const finish = value => {
+        if(settled) return;
+        settled = true;
+        fineBackdrop.classList.remove('open');
+        fineSave.onclick = null; fineCancel.onclick = null;
+        document.getElementById('fineClose').onclick = null;
+        fineBackdrop.onclick = null;
+        resolve(value);
+      };
+      fineCancel.onclick = () => finish(null);
+      document.getElementById('fineClose').onclick = () => finish(null);
+      fineBackdrop.onclick = e => { if(e.target === fineBackdrop) finish(null); };
+      fineSave.onclick = () => {
+        const date = fineDate.value;
+        const description = fineDescription.value.trim();
+        const rawValue = fineValue.value;
+        const value = rawValue === '' ? NaN : Number(rawValue);
+        if(!date || !description || !Number.isFinite(value) || value < 0){
+          fineError.textContent = 'Preencha a data, a descrição e um valor válido.';
+          fineError.classList.remove('hidden');
+          return;
+        }
+        fineSave.disabled = true;
+        finish({date, description, value});
+      };
+      setTimeout(() => fineDate.focus(), 30);
+    });
   }
 
   function normalizeHeader(value){
@@ -483,6 +570,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     const iUnidade = find('UNIDADE');
     const iChassi = find('CHASSI');
     const iRenavam = find('RENAVAN');
+    const iFrota = find('FROTA');
 
     if(iPlaca < 0 || iUnidade < 0 || iChassi < 0 || iRenavam < 0){
       throw new Error('As colunas PLACA, UNIDADE, CHASSI e RENAVAN precisam existir na aba Frota.');
@@ -493,7 +581,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       .map(c => ({
         placa: cellText(c[iPlaca]),
         chassi: cellText(c[iChassi]),
-        renavam: cleanRenavam(cellText(c[iRenavam]))
+        renavam: cleanRenavam(cellText(c[iRenavam])),
+        frota: iFrota >= 0 ? cellText(c[iFrota]) : ''
       }))
       .filter(v => v.placa);
   }
@@ -662,7 +751,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     try{
       // Consulta somente as quatro colunas necessárias e filtra CONTAGEM no próprio Google Sheets.
       // Isso evita depender de um range enorme e funciona melhor com a aba Frota.
-      const tq = "select C,I,O,P where I = 'CONTAGEM' format P '00000000000'";
+      const tq = "select * where I = 'CONTAGEM' format P '00000000000'";
       const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&tq=${encodeURIComponent(tq)}&_=${Date.now()}`;
 
       try {
