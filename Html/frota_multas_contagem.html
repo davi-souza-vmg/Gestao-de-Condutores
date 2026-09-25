@@ -442,9 +442,13 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   }
 
   function cleanRenavam(value){
-    if(!value) return '';
-    const n = String(value).trim();
-    return /^\d+\.0$/.test(n) ? n.slice(0,-2) : n;
+    if(value === null || value === undefined || value === '') return '';
+    let n = String(value).trim();
+    // RENAVAM deve ser tratado sempre como texto. Se o Google Sheets
+    // devolver como número, o zero à esquerda pode desaparecer.
+    if(/^\d+\.0$/.test(n)) n = n.slice(0,-2);
+    if(/^\d+$/.test(n)) n = n.padStart(11, '0');
+    return n;
   }
 
   function setStatus(ok, text){
@@ -665,7 +669,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       } catch (liveError) {
         // Fallback para os dados da planilha enviada, para o HTML continuar utilizável
         // mesmo quando o Google Sheets bloquear a leitura direta pelo navegador.
-        vehicles = FALLBACK_VEHICLES.slice();
+        vehicles = FALLBACK_VEHICLES.map(v => ({ ...v, renavam: cleanRenavam(v.renavam) }));
         if(!vehicles.length) throw liveError;
         setStatus(true, `Contagem · ${vehicles.length} veículos`);
       }
