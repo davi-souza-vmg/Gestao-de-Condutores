@@ -151,6 +151,89 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   .vehicle-hint{margin-top:3px}
   .modal-body{padding:17px}
 }
+
+/* ---------- filtro de conferência ---------- */
+.review-stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin:-18px 0 22px;
+  position:relative;
+  z-index:2;
+}
+.review-stat{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:15px 16px 13px;
+  box-shadow:0 12px 30px rgba(15,37,68,.09);
+  cursor:pointer;
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+}
+.review-stat:hover{transform:translateY(-2px);box-shadow:0 9px 20px rgba(15,37,68,.11);}
+.review-stat.active{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(30,66,120,.12);}
+.review-stat .rk{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--slate-600);
+}
+.review-stat .rv{
+  font-family:var(--display);font-size:26px;font-weight:700;margin-top:5px;
+}
+.review-stat.total .rv{color:var(--navy-700);}
+.review-stat.done .rv{color:#2f9b71;}
+.review-stat.pending .rv{color:#d76b70;}
+.review-stat .rbar{
+  height:4px;border-radius:2px;background:var(--line);margin-top:9px;overflow:hidden;
+}
+.review-stat .rbar i{display:block;height:100%;border-radius:2px;}
+.review-stat.total .rbar i{background:var(--navy-700);width:100%;}
+.review-stat.done .rbar i{background:#8ed0b4;}
+.review-stat.pending .rbar i{background:#efb0b3;}
+.vehicle.is-verified{
+  background:#e9f8f0;
+  border-color:#a8dcc4;
+}
+.vehicle.is-pending{
+  background:#fff0f1;
+  border-color:#efc1c4;
+}
+.vehicle.is-verified:hover{border-color:#72bd9b;}
+.vehicle.is-pending:hover{border-color:#e29da2;}
+.vehicle-review{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:12px;padding-top:10px;border-top:1px solid rgba(15,37,68,.08);
+  font-size:11px;color:var(--slate-600);
+}
+.vehicle-review input{width:16px;height:16px;accent-color:#2bad7d;cursor:pointer;}
+.vehicle-review label{display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600;}
+.copyable{cursor:pointer;user-select:none;}
+.copyable:hover{color:var(--navy-700);}
+.copy-hint{
+  display:block;font-size:9.5px;font-family:var(--body);font-weight:500;
+  color:var(--slate-400);margin-top:3px;
+}
+.modal-field-copy{
+  cursor:pointer;
+  user-select:none;
+  border-bottom:1.5px dashed var(--slate-400);
+  width:max-content;
+  max-width:100%;
+}
+.modal-field-copy:hover{color:var(--navy-700);border-color:var(--navy-700);}
+.review-check{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:20px;padding:14px 15px;border:1px solid var(--line);
+  border-radius:10px;background:#f8fafc;
+}
+.review-check label{
+  display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px;cursor:pointer;
+}
+.review-check input{width:19px;height:19px;accent-color:#2bad7d;cursor:pointer;}
+.review-state{font-size:11px;color:var(--slate-600);}
+@media(max-width:760px){
+  .review-stats{grid-template-columns:1fr;margin-top:0;}
+}
+
 </style>
 </head>
 <body>
@@ -170,6 +253,25 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 </header>
 
 <main>
+
+  <section class="review-stats" id="reviewStats">
+    <div class="review-stat total active" data-review-filter="all">
+      <div class="rk">Todos os veículos</div>
+      <div class="rv" id="reviewTotal">0</div>
+      <div class="rbar"><i></i></div>
+    </div>
+    <div class="review-stat done" data-review-filter="verified">
+      <div class="rk">Conferidos</div>
+      <div class="rv" id="reviewVerified">0</div>
+      <div class="rbar"><i id="reviewVerifiedBar"></i></div>
+    </div>
+    <div class="review-stat pending" data-review-filter="pending">
+      <div class="rk">Faltam conferir</div>
+      <div class="rv" id="reviewPending">0</div>
+      <div class="rbar"><i id="reviewPendingBar"></i></div>
+    </div>
+  </section>
+
   <div class="toolbar">
     <div class="search">
       <input id="search" type="text" placeholder="Buscar pela placa…">
@@ -208,16 +310,23 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       <div class="fields">
         <div class="field">
           <span class="label">Placa</span>
-          <span class="value" id="modalPlaca">—</span>
+          <span class="value copyable" id="modalPlaca" title="Clique para copiar">—</span><span class="copy-hint">Clique para copiar</span>
         </div>
         <div class="field">
           <span class="label">Chassi</span>
-          <span class="value" id="modalChassi">—</span>
+          <span class="value copyable" id="modalChassi" title="Clique para copiar">—</span><span class="copy-hint">Clique para copiar</span>
         </div>
         <div class="field">
           <span class="label">Renavam</span>
-          <span class="value" id="modalRenavam">—</span>
+          <span class="value copyable" id="modalRenavam" title="Clique para copiar">—</span><span class="copy-hint">Clique para copiar</span>
         </div>
+      </div>
+      <div class="review-check">
+        <label>
+          <input type="checkbox" id="modalVerified">
+          <span>Veículo conferido</span>
+        </label>
+        <span class="review-state" id="modalReviewState">Pendente</span>
       </div>
     </div>
   </div>
@@ -243,11 +352,63 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   const close = document.getElementById('close');
 
   let vehicles = [];
+  let reviewFilter = 'all';
+  let currentVehicle = null;
+
+  const REVIEW_KEY = 'frota_multas_contagem_verificados_v1';
+
+  function getVerified(){
+    try{
+      const raw = localStorage.getItem(REVIEW_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    }catch(e){
+      return {};
+    }
+  }
+
+  let verified = getVerified();
+
+  function isVerified(vehicle){
+    return !!verified[vehicle.placa];
+  }
+
+  function setVerified(vehicle, value){
+    if(value) verified[vehicle.placa] = true;
+    else delete verified[vehicle.placa];
+    try{
+      localStorage.setItem(REVIEW_KEY, JSON.stringify(verified));
+    }catch(e){}
+    updateReviewStats();
+    render();
+    if(currentVehicle && currentVehicle.placa === vehicle.placa){
+      syncModalReview();
+    }
+  }
+
+  function updateReviewStats(){
+    const total = vehicles.length;
+    const done = vehicles.filter(isVerified).length;
+    const pending = total - done;
+
+    document.getElementById('reviewTotal').textContent = total;
+    document.getElementById('reviewVerified').textContent = done;
+    document.getElementById('reviewPending').textContent = pending;
+
+    const donePct = total ? (done / total) * 100 : 0;
+    const pendingPct = total ? (pending / total) * 100 : 0;
+    document.getElementById('reviewVerifiedBar').style.width = donePct + '%';
+    document.getElementById('reviewPendingBar').style.width = pendingPct + '%';
+
+    document.querySelectorAll('.review-stat').forEach(el => {
+      el.classList.toggle('active', el.dataset.reviewFilter === reviewFilter);
+    });
+  }
 
   function normalizeHeader(value){
     return String(value ?? '')
-      .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')
-      .replace(/\\s+/g,' ').trim().toUpperCase();
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ').trim().toUpperCase();
   }
 
   function cellText(cell){
@@ -266,7 +427,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   function cleanRenavam(value){
     if(!value) return '';
     const n = String(value).trim();
-    return /^\\d+\\.0$/.test(n) ? n.slice(0,-2) : n;
+    return /^\d+\.0$/.test(n) ? n.slice(0,-2) : n;
   }
 
   function setStatus(ok, text){
@@ -303,9 +464,50 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       .filter(v => v.placa);
   }
 
+  function copyText(value, el){
+    if(!value || value === '—') return;
+    const done = () => {
+      const old = el.dataset.oldText || el.textContent;
+      el.dataset.oldText = old;
+      el.textContent = 'Copiado!';
+      setTimeout(() => {
+        if(el.isConnected) el.textContent = old;
+      }, 900);
+    };
+    if(navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(String(value)).then(done).catch(() => fallbackCopy(value, done));
+    }else{
+      fallbackCopy(value, done);
+    }
+  }
+
+  function fallbackCopy(value, done){
+    const ta = document.createElement('textarea');
+    ta.value = String(value);
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){}
+    ta.remove();
+  }
+
+  function bindCopy(id){
+    const el = document.getElementById(id);
+    el.addEventListener('click', () => copyText(el.textContent.trim(), el));
+  }
+
   function render(){
     const q = search.value.trim().toLowerCase();
-    const filtered = vehicles.filter(v => !q || v.placa.toLowerCase().includes(q));
+
+    const filtered = vehicles.filter(v => {
+      const matchesSearch = !q || v.placa.toLowerCase().includes(q);
+      const matchesReview =
+        reviewFilter === 'all' ||
+        (reviewFilter === 'verified' && isVerified(v)) ||
+        (reviewFilter === 'pending' && !isVerified(v));
+      return matchesSearch && matchesReview;
+    });
 
     count.textContent = `${filtered.length} veículo${filtered.length === 1 ? '' : 's'}`;
     grid.innerHTML = '';
@@ -319,31 +521,54 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     empty.classList.add('hidden');
     grid.classList.remove('hidden');
 
-    filtered.forEach((vehicle, index) => {
+    filtered.forEach(vehicle => {
+      const done = isVerified(vehicle);
       const card = document.createElement('article');
-      card.className = 'vehicle';
+      card.className = 'vehicle ' + (done ? 'is-verified' : 'is-pending');
       card.innerHTML = `
         <div>
           <div class="vehicle-label">Veículo</div>
           <div class="vehicle-plate">${escapeHtml(vehicle.placa)}</div>
-          <div class="vehicle-hint">Clique para consultar</div>
+          <div class="vehicle-hint">${done ? 'Conferido · clique para consultar' : 'Pendente · clique para consultar'}</div>
+        </div>
+        <div class="vehicle-review">
+          <label title="${done ? 'Marcar como pendente' : 'Marcar como conferido'}">
+            <input type="checkbox" ${done ? 'checked' : ''} aria-label="Veículo conferido">
+            <span>${done ? 'Conferido' : 'Conferir'}</span>
+          </label>
         </div>
       `;
+
+      const checkbox = card.querySelector('input');
+      checkbox.addEventListener('click', e => {
+        e.stopPropagation();
+        setVerified(vehicle, checkbox.checked);
+      });
       card.addEventListener('click', () => openModal(vehicle));
       grid.appendChild(card);
     });
   }
 
+  function syncModalReview(){
+    if(!currentVehicle) return;
+    const checked = isVerified(currentVehicle);
+    document.getElementById('modalVerified').checked = checked;
+    document.getElementById('modalReviewState').textContent = checked ? 'Conferido' : 'Pendente';
+  }
+
   function openModal(vehicle){
+    currentVehicle = vehicle;
     document.getElementById('modalTitle').textContent = vehicle.placa || 'Veículo';
     document.getElementById('modalPlaca').textContent = vehicle.placa || '—';
     document.getElementById('modalChassi').textContent = vehicle.chassi || '—';
     document.getElementById('modalRenavam').textContent = vehicle.renavam || '—';
+    syncModalReview();
     backdrop.classList.add('open');
   }
 
   function closeModal(){
     backdrop.classList.remove('open');
+    currentVehicle = null;
   }
 
   close.addEventListener('click', closeModal);
@@ -354,6 +579,22 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     if(e.key === 'Escape') closeModal();
   });
   search.addEventListener('input', render);
+
+  document.querySelectorAll('.review-stat').forEach(stat => {
+    stat.addEventListener('click', () => {
+      reviewFilter = stat.dataset.reviewFilter;
+      updateReviewStats();
+      render();
+    });
+  });
+
+  document.getElementById('modalVerified').addEventListener('change', e => {
+    if(currentVehicle) setVerified(currentVehicle, e.target.checked);
+  });
+
+  bindCopy('modalPlaca');
+  bindCopy('modalChassi');
+  bindCopy('modalRenavam');
 
   async function loadData(){
     try{
@@ -396,6 +637,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
       stateLoading.classList.add('hidden');
       stateError.classList.add('hidden');
+      updateReviewStats();
       render();
     }catch(error){
       stateLoading.classList.add('hidden');
@@ -406,6 +648,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     }
   }
 
+  updateReviewStats();
   loadData();
 })();
 </script>
