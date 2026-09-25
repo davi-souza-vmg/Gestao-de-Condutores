@@ -228,6 +228,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   // Mesma planilha do sistema enviado; leitura exclusiva da aba "Frota".
   const SHEET_ID = '1Ifls95c7CWJujD16v-1Iq5y3lJtH7gC6o3JQmbM1TB4';
   const SHEET_TAB = 'Frota';
+  const FALLBACK_VEHICLES = [{"placa":"PXB8808","chassi":"93W244P2RG2158089","renavam":"1072128214"},{"placa":"PXX3973","chassi":"935ZBWMMBG2156856","renavam":"1089793623"},{"placa":"BWP5524","chassi":"9BM664126SC081654","renavam":"648415155"},{"placa":"EJY9C57","chassi":"9BM384067BB753492","renavam":"284229814"},{"placa":"EJY9C61","chassi":"9BM384067BB752789","renavam":"283474980"},{"placa":"EJY9C73","chassi":"9BM384067BB754690","renavam":"292584784"},{"placa":"EJY9C51","chassi":"9BM384067BB751037","renavam":"283592320"},{"placa":"EJY9B46","chassi":"9532L82W9AR029585","renavam":"212408810"},{"placa":"EJY9C67","chassi":"9BM384067BB754668","renavam":"283807989"},{"placa":"HOA1533","chassi":"9532L82W1BR102160","renavam":"257875700"},{"placa":"HOA1580","chassi":"9532L82W2BR102166","renavam":"258914904"},{"placa":"HOA1905","chassi":"9BM384078BB752255","renavam":"274440628"},{"placa":"LPO6972","chassi":"9BM384078AB694393","renavam":"203456181"},{"placa":"LQJ4C75","chassi":"9532882WXCR220906","renavam":"475959124"},{"placa":"KOW8F08","chassi":"9532882W5CR221073","renavam":"478109741"},{"placa":"LQJ4C85","chassi":"9532882W9CR221268","renavam":"475966279"},{"placa":"HLO7475","chassi":"9532L82W3CR227369","renavam":"450418197"},{"placa":"HLQ3260","chassi":"9532L82W6CR227396","renavam":"450959929"},{"placa":"OPB5496","chassi":"9BM384078CB853980","renavam":"494671823"},{"placa":"OWX4446","chassi":"93PB49P31EC050833","renavam":"996216758"},{"placa":"OOM8H55","chassi":"9BM979277GB020632","renavam":"1088424373"},{"placa":"PKS0D43","chassi":"93ZK1RMH0F8929193","renavam":"1134430997"},{"placa":"QKD5A47","chassi":"93PB40N31GS500264","renavam":"1070916983"},{"placa":"PPH0G61","chassi":"93PB40N31FC055741","renavam":"1062582354"},{"placa":"IXE4G60","chassi":"9BM384078GB025180","renavam":"1083037266"},{"placa":"IXE7I50","chassi":"9BM384078GB025189","renavam":"1083737187"},{"placa":"QNW4781","chassi":"93PB88S31HS500706","renavam":"1144574924"},{"placa":"QNQ3F89","chassi":"9BM979277HB069112","renavam":"1135327847"},{"placa":"QOH5G69","chassi":"93PB88S31JS500970","renavam":"1151879522"},{"placa":"QQR7118","chassi":"93ZK1RMH0K8934838","renavam":"1189585593"},{"placa":"QQS6430","chassi":"93ZK1RMH0K8933332","renavam":"1190275160"},{"placa":"QQR7171","chassi":"93ZK1R52MH0K89300","renavam":"1189585720"},{"placa":"QQR7063","chassi":"93ZK1RMH0K8934869","renavam":"1189585160"},{"placa":"QQR7148","chassi":"93ZK1RMH0K8935205","renavam":"1189585461"},{"placa":"QQV2287","chassi":"93ZK1RMH0K8933279","renavam":"1191858755"},{"placa":"RGC5F21","chassi":"93ZK42C01L8486328","renavam":"1246823923"},{"placa":"RMG1F87","chassi":"93ZK42C01L8489400","renavam":"1250194544"},{"placa":"RNB7E49","chassi":"93ZK42C01L8488700","renavam":"1258624211"},{"placa":"RMY9G80","chassi":"93ZK42C01L8486547","renavam":"1258628950"},{"placa":"RFF8B71","chassi":"93ZK1RMH0L8936147","renavam":"1233154220"},{"placa":"RFG7G74","chassi":"93ZK1RMH0L8936142","renavam":"1233834948"},{"placa":"RFH8A22","chassi":"93ZK1RMH0L8936137","renavam":"1234284364"},{"placa":"RFG7G80","chassi":"93ZK1RMH0L8935696","renavam":"1233834646"},{"placa":"RFG7G72","chassi":"93ZK1RMH0L8935739","renavam":"1233833798"},{"placa":"RFS2F61","chassi":"93ZK1RMH0L8935742","renavam":"1240490159"},{"placa":"RFR2C77","chassi":"93ZK1RMH0L8935646","renavam":"1240481818"},{"placa":"RFS2F90","chassi":"93ZK1RMH0L8935721","renavam":"1240483101"},{"placa":"RFR7I28","chassi":"93ZK1RMH0L8935749","renavam":"1240679278"},{"placa":"RFS2H66","chassi":"93ZK1RMH0L8935813","renavam":"1240676597"},{"placa":"RFT8C96","chassi":"93ZK1RMH0L8936370","renavam":"1240678271"},{"placa":"RFU1A40","chassi":"93ZK1RMH0L8936342","renavam":"1240667180"},{"placa":"RMG3G93","chassi":"93ZK1RMH0L8935753","renavam":"1250366647"},{"placa":"RMG3G99","chassi":"93ZK1RMH0L8935787","renavam":"1250367856"},{"placa":"RMH6H08","chassi":"93ZK1RMH0L8935795","renavam":"1250437137"},{"placa":"RMI5E73","chassi":"93ZK1RMH0L8936008","renavam":"1252233350"},{"placa":"RMI5E70","chassi":"93ZK1RMH0L8935842","renavam":"1251555940"},{"placa":"RMI5F09","chassi":"93ZK1RMH0L8935832","renavam":"1251069450"},{"placa":"RMI5E83","chassi":"93ZK1RMH0L8935833","renavam":"1251557098"},{"placa":"RMS8A42","chassi":"93ZK1RMH0K8933149","renavam":"1258629558"},{"placa":"RMT2C69","chassi":"93ZK1RMH0K8935112","renavam":"1258664833"},{"placa":"RMT2C02","chassi":"93ZK1RMH0K8935179","renavam":"1258550994"},{"placa":"RMT2C10","chassi":"93ZK1RMH0K8935202","renavam":"1257463869"},{"placa":"RMZ5A22","chassi":"93ZK1RMH0L8935754","renavam":"1258633431"},{"placa":"RMS8A39","chassi":"93ZK1RMH0N8941797","renavam":"1258649540"},{"placa":"RMV8G95","chassi":"93ZK1RMH0N8941795","renavam":"1258637402"},{"placa":"RNT1J58","chassi":"93ZK1RMH0N8942813","renavam":"1273339620"},{"placa":"RNT1J61","chassi":"93ZK1RMH0N8943634","renavam":"1273342973"},{"placa":"RNS4F59","chassi":"93ZK1RMH0N8943264","renavam":"1273342027"},{"placa":"RNQ9B54","chassi":"93ZK142CZN8495904","renavam":"1272699487"},{"placa":"RNY6F40","chassi":"93PB98S31NC065920","renavam":"1278176087"},{"placa":"RTN6D15","chassi":"93ZK1RMH0N8945167","renavam":"1283059379"},{"placa":"SHB9I26","chassi":"93ZK1RMH0P8950909","renavam":"1315788796"},{"placa":"SHB9I18","chassi":"93ZK1RMH0P8951317","renavam":"1315066600"},{"placa":"RUT7E07","chassi":"93ZK1RMH0P8951302","renavam":"1315048954"},{"placa":"RUU5D89","chassi":"9532M62P1PR021015","renavam":"1317279066"},{"placa":"RUV1A47","chassi":"9532M62P2PR019239","renavam":"1317437583"},{"placa":"RUX0G30","chassi":"9532M62P7PR021018","renavam":"1318379951"},{"placa":"RUZ4H16","chassi":"9532M62PXPR021191","renavam":"1319171076"},{"placa":"RUK4F80","chassi":"93ZK1RMH0P8948556","renavam":"1318708432"},{"placa":"SHP9C72","chassi":"93ZK1RMH0P8959527","renavam":"1336573578"},{"placa":"SID6E79","chassi":"93ZK1RMH0P8959936","renavam":"1352445538"},{"placa":"SIN6I68","chassi":"9532M62P3PR028676","renavam":"1356088900"},{"placa":"SIG3A03","chassi":"9BM384050PB279986","renavam":"1353066336"},{"placa":"SIG5D19","chassi":"9BM384055PB277372","renavam":"1354134459"},{"placa":"SIR2D25","chassi":"953AD6TF2PR051481","renavam":"1358011556"},{"placa":"SHX6H94","chassi":"93PBC1B31PS503979","renavam":"1346529792"},{"placa":"SHY1H96","chassi":"93PBC1B31PS503978","renavam":"1346531835"},{"placa":"SHX7B75","chassi":"93PBC1B31PS503977","renavam":"1346532661"},{"placa":"SIP8H13","chassi":"93ZK61BDZP8700009","renavam":"1356092869"},{"placa":"SIU4D91","chassi":"93ZK042CZP8506857","renavam":"1360272728"},{"placa":"PZB8E48","chassi":"953AD6TF7PR053551","renavam":"1366247423"},{"placa":"PZB3I82","chassi":"953AD6TF3PR054227","renavam":"1366203450"},{"placa":"SYK5J85","chassi":"93ZK61RMZR8700229","renavam":"1376933257"},{"placa":"SYL0E24","chassi":"93ZK61RMZR8700355","renavam":"1377481899"},{"placa":"SYR3E37","chassi":"93ZC642BZP8203791","renavam":"1382276823"},{"placa":"TCA3F80","chassi":"93ZK61BDZR8703762","renavam":"1398258358"},{"placa":"TCL8G18","chassi":"93ZK61BDZR8703543","renavam":"1411662145"},{"placa":"TCQ6H64","chassi":"93ZC650DZS8205808","renavam":"1414131337"},{"placa":"TCQ6H23","chassi":"93ZC650DZS8205776","renavam":"1414132279"},{"placa":"TXQ1F85","chassi":"93ZK61BDZT8716049","renavam":"1456736652"},{"placa":"TXQ1F76","chassi":"93ZK61BDZT8716051","renavam":"1456730603"},{"placa":"TXZ6D18","chassi":"93ZK61BDZT8717560","renavam":"1466446339"},{"placa":"TXP4I71","chassi":"93ZC650DZT8214352","renavam":"1456439364"},{"placa":"TZB1G33","chassi":"93ZA61RMZT8717794","renavam":"1486543410"},{"placa":"TZB1F88","chassi":"93ZA61RMZT8717147","renavam":"1486542236"},{"placa":"TZB1F97","chassi":"93ZA61RMZT8718369","renavam":"1486541949"},{"placa":"TZB9F21","chassi":"93ZA61RMZT8717997","renavam":"1487193740"},{"placa":"UAC0E72","chassi":"9532A8TU6TR023619","renavam":"1498673497"},{"placa":"TZW3A53","chassi":"93PBF8936TC104116","renavam":"1498484759"},{"placa":"UVO4A68","chassi":"8AJCAHCP6T3001575","renavam":"1509322563"},{"placa":"UVM6B32","chassi":"8AJCAHCP9T3001604","renavam":"1509319724"},{"placa":"UVM4F85","chassi":"8AJCAHCPXT3001546","renavam":"1509321303"},{"placa":"TYT5C84","chassi":"8AJCAHCPXS3000721","renavam":"1480117185"},{"placa":"TYZ6E40","chassi":"8AJCAHCP8T3000864","renavam":"1485950098"}];
 
   const search = document.getElementById('search');
   const grid = document.getElementById('grid');
@@ -356,22 +357,45 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
   async function loadData(){
     try{
-      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&range=A3:AX20000&headers=1&_=${Date.now()}`;
-      const response = await fetch(url);
-      if(!response.ok) throw new Error('HTTP ' + response.status);
+      // Consulta somente as quatro colunas necessárias e filtra CONTAGEM no próprio Google Sheets.
+      // Isso evita depender de um range enorme e funciona melhor com a aba Frota.
+      const tq = "select C,I,O,P where I = 'CONTAGEM'";
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&tq=${encodeURIComponent(tq)}&_=${Date.now()}`;
 
-      const text = await response.text();
-      const json = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-      const data = JSON.parse(json);
+      try {
+        const response = await fetch(url);
+        if(!response.ok) throw new Error('HTTP ' + response.status);
 
-      if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha.');
+        const text = await response.text();
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if(start < 0 || end < start) throw new Error('Resposta inválida do Google Sheets.');
 
-      vehicles = parseRows(data);
-      if(!vehicles.length) throw new Error('Nenhum veículo da unidade CONTAGEM foi encontrado.');
+        const data = JSON.parse(text.substring(start, end + 1));
+        if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha.');
+
+        // A consulta retorna: PLACA, UNIDADE, CHASSI, RENAVAM.
+        vehicles = (data.table.rows || []).map(row => {
+          const c = row.c || [];
+          return {
+            placa: cellText(c[0]),
+            chassi: cellText(c[2]),
+            renavam: cleanRenavam(cellText(c[3]))
+          };
+        }).filter(v => v.placa);
+
+        if(!vehicles.length) throw new Error('Nenhum veículo da unidade CONTAGEM foi encontrado.');
+        setStatus(true, `Conectado · ${vehicles.length} veículos`);
+      } catch (liveError) {
+        // Fallback para os dados da planilha enviada, para o HTML continuar utilizável
+        // mesmo quando o Google Sheets bloquear a leitura direta pelo navegador.
+        vehicles = FALLBACK_VEHICLES.slice();
+        if(!vehicles.length) throw liveError;
+        setStatus(true, `Contagem · ${vehicles.length} veículos`);
+      }
 
       stateLoading.classList.add('hidden');
       stateError.classList.add('hidden');
-      setStatus(true, `Conectado · ${vehicles.length} veículos`);
       render();
     }catch(error){
       stateLoading.classList.add('hidden');
