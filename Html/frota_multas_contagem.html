@@ -156,60 +156,49 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .review-stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:14px;
-  margin:-18px 0 22px;
+  gap:10px;
+  margin:-16px 0 20px;
   position:relative;
   z-index:2;
 }
 .review-stat{
   background:#fff;
   border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:15px 16px 13px;
-  box-shadow:0 12px 30px rgba(15,37,68,.09);
+  border-radius:12px;
+  padding:12px 14px;
   cursor:pointer;
-  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+  transition:border-color .15s ease,background .15s ease,transform .15s ease;
 }
-.review-stat:hover{transform:translateY(-2px);box-shadow:0 9px 20px rgba(15,37,68,.11);}
-.review-stat.active{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(30,66,120,.12);}
+.review-stat:hover{transform:translateY(-1px);border-color:#b9c5d4;}
+.review-stat.active{border-color:var(--navy-700);background:#f8fafc;}
 .review-stat .rk{
-  font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.55px;
   text-transform:uppercase;color:var(--slate-600);
 }
 .review-stat .rv{
-  font-family:var(--display);font-size:26px;font-weight:700;margin-top:5px;
+  font-family:var(--display);font-size:23px;font-weight:700;line-height:1;margin-top:7px;
 }
 .review-stat.total .rv{color:var(--navy-700);}
-.review-stat.done .rv{color:#2f9b71;}
-.review-stat.pending .rv{color:#d76b70;}
-.review-stat .rbar{
-  height:4px;border-radius:2px;background:var(--line);margin-top:9px;overflow:hidden;
+.review-stat.done .rv{color:#278b67;}
+.review-stat.pending .rv{color:#c65f66;}
+.review-stat .rbar{display:none;}
+
+.vehicle{
+  box-shadow:none;
+  border-radius:12px;
+  padding:16px;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease;
 }
-.review-stat .rbar i{display:block;height:100%;border-radius:2px;}
-.review-stat.total .rbar i{background:var(--navy-700);width:100%;}
-.review-stat.done .rbar i{background:#8ed0b4;}
-.review-stat.pending .rbar i{background:#efb0b3;}
-.vehicle.is-verified{
-  background:#e9f8f0;
-  border-color:#a8dcc4;
-}
-.vehicle.is-pending{
-  background:#fff0f1;
-  border-color:#efc1c4;
-}
-.vehicle.is-verified:hover{border-color:#72bd9b;}
-.vehicle.is-pending:hover{border-color:#e29da2;}
-.vehicle-review{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin-top:12px;padding-top:10px;border-top:1px solid rgba(15,37,68,.08);
-  font-size:11px;color:var(--slate-600);
-}
-.vehicle-review input{width:16px;height:16px;accent-color:#2bad7d;cursor:pointer;}
-.vehicle-review label{display:flex;align-items:center;gap:7px;cursor:pointer;font-weight:600;}
+.vehicle:hover{transform:translateY(-2px);box-shadow:none;}
+.vehicle.is-verified{background:#edf9f3;border-color:#b9dfcd;}
+.vehicle.is-pending{background:#fff5f5;border-color:#eccfd1;}
+.vehicle.is-verified:hover{border-color:#8bc9ad;}
+.vehicle.is-pending:hover{border-color:#dfaeb2;}
+.vehicle-hint{margin-top:6px;font-size:10px;color:var(--slate-500);}
 .copyable{cursor:pointer;user-select:none;}
 .copyable:hover{color:var(--navy-700);}
 .copy-hint{
-  display:block;font-size:9.5px;font-family:var(--body);font-weight:500;
+  display:block;font-size:9px;font-family:var(--body);font-weight:500;
   color:var(--slate-400);margin-top:3px;
 }
 .modal-field-copy{
@@ -222,7 +211,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .modal-field-copy:hover{color:var(--navy-700);border-color:var(--navy-700);}
 .review-check{
   display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-top:20px;padding:14px 15px;border:1px solid var(--line);
+  margin-top:20px;padding:13px 14px;border:1px solid var(--line);
   border-radius:10px;background:#f8fafc;
 }
 .review-check label{
@@ -233,6 +222,20 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 @media(max-width:760px){
   .review-stats{grid-template-columns:1fr;margin-top:0;}
 }
+
+
+.modal-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none;padding:0 8px}
+.modal-nav button{pointer-events:auto;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:27px;line-height:1;display:grid;place-items:center;transition:.15s}
+.modal-nav button:hover{background:rgba(255,255,255,.23);transform:scale(1.04)}
+.modal-head{position:relative;padding-left:58px;padding-right:58px}
+.modal-head>div:not(.modal-nav){min-width:0;text-align:center;width:100%}
+.modal-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.field.copy-field{cursor:pointer;transition:background .15s,border-color .15s,transform .1s}
+.field.copy-field:hover{background:#f4f7fb;border-color:#c6d1df}
+.field.copy-field:active{transform:scale(.995)}
+.field.copy-field.copied{background:#edf9f3;border-color:#b9dfcd}
+.copy-hint,.modal-field-copy{display:none!important}
+@media(max-width:460px){.modal-head{padding-left:52px;padding-right:52px}.modal-nav button{width:34px;height:34px;font-size:23px}}
 
 </style>
 </head>
@@ -300,6 +303,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 <div class="backdrop" id="backdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
+      <div class="modal-nav" aria-label="Navegação entre veículos">
+        <button type="button" id="prevVehicle" aria-label="Veículo anterior">‹</button>
+        <button type="button" id="nextVehicle" aria-label="Próximo veículo">›</button>
+      </div>
       <div>
         <h2 class="modal-title" id="modalTitle">Veículo</h2>
         <p class="modal-sub">Unidade CONTAGEM</p>
@@ -308,17 +315,17 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     </div>
     <div class="modal-body">
       <div class="fields">
-        <div class="field">
+        <div class="field copy-field" id="copyFieldPlaca" title="Clique para copiar o placa">
           <span class="label">Placa</span>
-          <span class="value copyable" id="modalPlaca" title="Clique para copiar">—</span><span class="copy-hint">Clique para copiar</span>
+          <span class="value copyable" id="modalPlaca">—</span>
         </div>
-        <div class="field">
+        <div class="field copy-field" id="copyFieldChassi" title="Clique para copiar o chassi">
           <span class="label">Chassi</span>
-          <span class="value copyable" id="modalChassi" title="Clique para copiar">—</span><span class="copy-hint">Clique para copiar</span>
+          <span class="value copyable" id="modalChassi">—</span>
         </div>
-        <div class="field">
+        <div class="field copy-field" id="copyFieldRenavam" title="Clique para copiar o Renavam">
           <span class="label">Renavam</span>
-          <span class="value copyable" id="modalRenavam" title="Clique para copiar">—</span><span class="copy-hint">Clique para copiar</span>
+          <span class="value copyable" id="modalRenavam">—</span>
         </div>
       </div>
       <div class="review-check">
@@ -341,6 +348,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
   const search = document.getElementById('search');
   const grid = document.getElementById('grid');
+  const prevVehicle = document.getElementById('prevVehicle');
+  const nextVehicle = document.getElementById('nextVehicle');
+  let visibleVehicles = [];
+  let currentIndex = -1;
   const count = document.getElementById('count');
   const stateLoading = document.getElementById('stateLoading');
   const stateError = document.getElementById('stateError');
@@ -508,6 +519,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         (reviewFilter === 'pending' && !isVerified(v));
       return matchesSearch && matchesReview;
     });
+    visibleVehicles = filtered;
 
     count.textContent = `${filtered.length} veículo${filtered.length === 1 ? '' : 's'}`;
     grid.innerHTML = '';
@@ -529,21 +541,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         <div>
           <div class="vehicle-label">Veículo</div>
           <div class="vehicle-plate">${escapeHtml(vehicle.placa)}</div>
-          <div class="vehicle-hint">${done ? 'Conferido · clique para consultar' : 'Pendente · clique para consultar'}</div>
-        </div>
-        <div class="vehicle-review">
-          <label title="${done ? 'Marcar como pendente' : 'Marcar como conferido'}">
-            <input type="checkbox" ${done ? 'checked' : ''} aria-label="Veículo conferido">
-            <span>${done ? 'Conferido' : 'Conferir'}</span>
-          </label>
+          <div class="vehicle-hint">${done ? 'Conferido' : 'Pendente'}</div>
         </div>
       `;
 
-      const checkbox = card.querySelector('input');
-      checkbox.addEventListener('click', e => {
-        e.stopPropagation();
-        setVerified(vehicle, checkbox.checked);
-      });
       card.addEventListener('click', () => openModal(vehicle));
       grid.appendChild(card);
     });
@@ -558,17 +559,31 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
   function openModal(vehicle){
     currentVehicle = vehicle;
+    currentIndex = visibleVehicles.findIndex(v => v.placa === vehicle.placa);
     document.getElementById('modalTitle').textContent = vehicle.placa || 'Veículo';
     document.getElementById('modalPlaca').textContent = vehicle.placa || '—';
     document.getElementById('modalChassi').textContent = vehicle.chassi || '—';
     document.getElementById('modalRenavam').textContent = vehicle.renavam || '—';
     syncModalReview();
+    updateModalNav();
     backdrop.classList.add('open');
+  }
+
+  function updateModalNav(){
+    const hasPrev = currentIndex > 0, hasNext = currentIndex >= 0 && currentIndex < visibleVehicles.length - 1;
+    prevVehicle.disabled = !hasPrev; nextVehicle.disabled = !hasNext;
+    prevVehicle.style.opacity = hasPrev ? '1' : '.3'; nextVehicle.style.opacity = hasNext ? '1' : '.3';
+  }
+
+  function navigateModal(direction){
+    const nextIndex = currentIndex + direction;
+    if(nextIndex >= 0 && nextIndex < visibleVehicles.length) openModal(visibleVehicles[nextIndex]);
   }
 
   function closeModal(){
     backdrop.classList.remove('open');
     currentVehicle = null;
+    currentIndex = -1;
   }
 
   close.addEventListener('click', closeModal);
@@ -592,9 +607,21 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     if(currentVehicle) setVerified(currentVehicle, e.target.checked);
   });
 
-  bindCopy('modalPlaca');
-  bindCopy('modalChassi');
-  bindCopy('modalRenavam');
+  [['copyFieldPlaca','modalPlaca'],['copyFieldChassi','modalChassi'],['copyFieldRenavam','modalRenavam']].forEach(([fieldId,valueId]) => {
+    const field = document.getElementById(fieldId);
+    field.addEventListener('click', () => {
+      const value = document.getElementById(valueId).textContent.trim();
+      if(value && value !== '—') copyText(value, field);
+    });
+  });
+
+  prevVehicle.addEventListener('click', () => navigateModal(-1));
+  nextVehicle.addEventListener('click', () => navigateModal(1));
+  document.addEventListener('keydown', e => {
+    if(!backdrop.classList.contains('open')) return;
+    if(e.key === 'ArrowLeft') navigateModal(-1);
+    if(e.key === 'ArrowRight') navigateModal(1);
+  });
 
   async function loadData(){
     try{
