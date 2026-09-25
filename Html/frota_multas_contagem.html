@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta de Frota — Contagem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-950:#0a1930;
+  --navy-900:#0f2544;
+  --navy-800:#16335f;
+  --navy-700:#1e4278;
+  --amber:#f2a93b;
+  --slate-900:#1b2433;
+  --slate-600:#5b6577;
+  --slate-400:#93a0b3;
+  --line:#e4e8f0;
+  --bg:#f4f6fb;
+  --card:#fff;
+  --radius:14px;
+  --display:'Space Grotesk',sans-serif;
+  --body:'Inter',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--slate-900);
+  font-family:var(--body);-webkit-font-smoothing:antialiased;
+}
+header{
+  position:relative;overflow:hidden;
+  background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));
+  color:#fff;padding:34px 40px 30px;
+}
+header:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:6px;
+  background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px,transparent 34px 60px);
+}
+.header-inner{
+  max-width:1320px;margin:auto;display:flex;justify-content:space-between;
+  align-items:flex-end;gap:20px;flex-wrap:wrap;
+}
+.eyebrow{
+  display:block;color:var(--amber);font-family:var(--mono);
+  font-size:11px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;
+}
+h1{font-family:var(--display);font-size:28px;margin:0 0 4px}
+.subtitle{margin:0;color:var(--slate-400);font-size:14px}
+.status{
+  display:flex;align-items:center;gap:9px;color:var(--slate-400);font-size:13px;
+}
+.dot{
+  width:8px;height:8px;border-radius:50%;background:var(--slate-400);
+}
+.dot.ok{background:#2bad7d;box-shadow:0 0 0 4px rgba(43,173,125,.18)}
+.dot.err{background:#e5484d}
+main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
+.toolbar{
+  display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;
+}
+.search{
+  flex:1;min-width:220px;position:relative;
+}
+.search input{
+  width:100%;padding:12px 14px;border:1.5px solid var(--line);
+  border-radius:10px;background:#fff;outline:none;font:13px var(--body);
+}
+.search input:focus{border-color:var(--navy-700)}
+.count{
+  font-family:var(--mono);font-size:12px;color:var(--slate-600);
+  white-space:nowrap;
+}
+.grid{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;
+}
+.vehicle{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+  box-shadow:0 5px 18px rgba(15,37,68,.05);
+}
+.vehicle:hover{
+  transform:translateY(-2px);border-color:var(--navy-700);
+  box-shadow:0 10px 24px rgba(15,37,68,.10);
+}
+.vehicle-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--slate-400);margin-bottom:7px;
+}
+.vehicle-plate{
+  font-family:var(--display);font-size:22px;font-weight:700;color:var(--navy-900);
+  letter-spacing:.5px;
+}
+.vehicle-hint{font-size:11.5px;color:var(--slate-600);margin-top:8px}
+.state{
+  background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+  padding:45px 20px;text-align:center;color:var(--slate-600);
+}
+.state strong{display:block;font-family:var(--display);font-size:18px;color:var(--slate-900);margin-bottom:7px}
+.hidden{display:none!important}
+
+/* modal */
+.backdrop{
+  position:fixed;inset:0;background:rgba(10,25,48,.58);display:none;
+  align-items:center;justify-content:center;padding:20px;z-index:50;
+}
+.backdrop.open{display:flex}
+.modal{
+  width:100%;max-width:470px;background:#fff;border-radius:var(--radius);
+  overflow:hidden;box-shadow:0 24px 60px rgba(10,25,48,.35);
+}
+.modal-head{
+  background:var(--navy-900);color:#fff;padding:19px 22px;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:15px;
+}
+.modal-title{
+  font-family:var(--display);font-size:19px;font-weight:700;margin:0 0 3px;
+}
+.modal-sub{font-size:12px;color:var(--slate-400);margin:0}
+.close{
+  width:30px;height:30px;border:0;border-radius:50%;
+  background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:15px;
+}
+.close:hover{background:rgba(255,255,255,.23)}
+.modal-body{padding:22px}
+.fields{display:grid;gap:13px}
+.field{
+  padding:13px 14px;border:1px solid var(--line);border-radius:10px;
+  background:#fafbfe;
+}
+.label{
+  display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.6px;
+  text-transform:uppercase;color:var(--slate-600);margin-bottom:5px;
+}
+.value{
+  font-family:var(--mono);font-size:14px;font-weight:500;color:var(--slate-900);
+  word-break:break-all;
+}
+@media(max-width:1050px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){
+  header{padding:27px 20px 25px}
+  main{padding:22px 16px 45px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .vehicle{padding:15px}
+  .vehicle-plate{font-size:19px}
+}
+@media(max-width:460px){
+  .grid{grid-template-columns:1fr}
+  .vehicle{display:flex;align-items:center;justify-content:space-between;gap:15px}
+  .vehicle-hint{margin-top:3px}
+  .modal-body{padding:17px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <span class="eyebrow">Viação · Consulta de frota</span>
+      <h1>Frota de Contagem</h1>
+      <p class="subtitle">Clique em um veículo para consultar seus dados.</p>
+    </div>
+    <div class="status">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Carregando…</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="search">
+      <input id="search" type="text" placeholder="Buscar pela placa…">
+    </div>
+    <span class="count" id="count">0 veículos</span>
+  </div>
+
+  <div id="stateLoading" class="state">
+    <strong>Carregando frota…</strong>
+    <span>Aguarde enquanto os veículos de Contagem são consultados.</span>
+  </div>
+
+  <div id="stateError" class="state hidden">
+    <strong>Não foi possível carregar a frota</strong>
+    <span id="errorText">Verifique o acesso à planilha.</span>
+  </div>
+
+  <div id="empty" class="state hidden">
+    <strong>Nenhum veículo encontrado</strong>
+    <span>Não há veículos correspondentes à busca.</span>
+  </div>
+
+  <section id="grid" class="grid hidden"></section>
+</main>
+
+<div class="backdrop" id="backdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <div>
+        <h2 class="modal-title" id="modalTitle">Veículo</h2>
+        <p class="modal-sub">Unidade CONTAGEM</p>
+      </div>
+      <button class="close" id="close" aria-label="Fechar">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fields">
+        <div class="field">
+          <span class="label">Placa</span>
+          <span class="value" id="modalPlaca">—</span>
+        </div>
+        <div class="field">
+          <span class="label">Chassi</span>
+          <span class="value" id="modalChassi">—</span>
+        </div>
+        <div class="field">
+          <span class="label">Renavam</span>
+          <span class="value" id="modalRenavam">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Mesma planilha do sistema enviado; leitura exclusiva da aba "Frota".
+  const SHEET_ID = '1Ifls95c7CWJujD16v-1Iq5y3lJtH7gC6o3JQmbM1TB4';
+  const SHEET_TAB = 'Frota';
+
+  const search = document.getElementById('search');
+  const grid = document.getElementById('grid');
+  const count = document.getElementById('count');
+  const stateLoading = document.getElementById('stateLoading');
+  const stateError = document.getElementById('stateError');
+  const errorText = document.getElementById('errorText');
+  const empty = document.getElementById('empty');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const backdrop = document.getElementById('backdrop');
+  const close = document.getElementById('close');
+
+  let vehicles = [];
+
+  function normalizeHeader(value){
+    return String(value ?? '')
+      .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')
+      .replace(/\\s+/g,' ').trim().toUpperCase();
+  }
+
+  function cellText(cell){
+    if(!cell) return '';
+    if(cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+    if(cell.v !== undefined && cell.v !== null) return String(cell.v).trim();
+    return '';
+  }
+
+  function escapeHtml(value){
+    return String(value ?? '').replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  function cleanRenavam(value){
+    if(!value) return '';
+    const n = String(value).trim();
+    return /^\\d+\\.0$/.test(n) ? n.slice(0,-2) : n;
+  }
+
+  function setStatus(ok, text){
+    statusDot.className = 'dot' + (ok ? ' ok' : '');
+    if(!ok && text.includes('Falha')) statusDot.classList.add('err');
+    statusText.textContent = text;
+  }
+
+  function parseRows(data){
+    const cols = data.table.cols.map(c => normalizeHeader(c.label || ''));
+    const find = name => {
+      const target = normalizeHeader(name);
+      let i = cols.findIndex(c => c === target);
+      if(i === -1) i = cols.findIndex(c => c.includes(target));
+      return i;
+    };
+
+    const iPlaca = find('PLACA');
+    const iUnidade = find('UNIDADE');
+    const iChassi = find('CHASSI');
+    const iRenavam = find('RENAVAN');
+
+    if(iPlaca < 0 || iUnidade < 0 || iChassi < 0 || iRenavam < 0){
+      throw new Error('As colunas PLACA, UNIDADE, CHASSI e RENAVAN precisam existir na aba Frota.');
+    }
+
+    return data.table.rows.map(row => row.c || [])
+      .filter(c => normalizeHeader(cellText(c[iUnidade])) === 'CONTAGEM')
+      .map(c => ({
+        placa: cellText(c[iPlaca]),
+        chassi: cellText(c[iChassi]),
+        renavam: cleanRenavam(cellText(c[iRenavam]))
+      }))
+      .filter(v => v.placa);
+  }
+
+  function render(){
+    const q = search.value.trim().toLowerCase();
+    const filtered = vehicles.filter(v => !q || v.placa.toLowerCase().includes(q));
+
+    count.textContent = `${filtered.length} veículo${filtered.length === 1 ? '' : 's'}`;
+    grid.innerHTML = '';
+
+    if(!filtered.length){
+      grid.classList.add('hidden');
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    grid.classList.remove('hidden');
+
+    filtered.forEach((vehicle, index) => {
+      const card = document.createElement('article');
+      card.className = 'vehicle';
+      card.innerHTML = `
+        <div>
+          <div class="vehicle-label">Veículo</div>
+          <div class="vehicle-plate">${escapeHtml(vehicle.placa)}</div>
+          <div class="vehicle-hint">Clique para consultar</div>
+        </div>
+      `;
+      card.addEventListener('click', () => openModal(vehicle));
+      grid.appendChild(card);
+    });
+  }
+
+  function openModal(vehicle){
+    document.getElementById('modalTitle').textContent = vehicle.placa || 'Veículo';
+    document.getElementById('modalPlaca').textContent = vehicle.placa || '—';
+    document.getElementById('modalChassi').textContent = vehicle.chassi || '—';
+    document.getElementById('modalRenavam').textContent = vehicle.renavam || '—';
+    backdrop.classList.add('open');
+  }
+
+  function closeModal(){
+    backdrop.classList.remove('open');
+  }
+
+  close.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', e => {
+    if(e.target === backdrop) closeModal();
+  });
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape') closeModal();
+  });
+  search.addEventListener('input', render);
+
+  async function loadData(){
+    try{
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&range=A3:AX20000&headers=1&_=${Date.now()}`;
+      const response = await fetch(url);
+      if(!response.ok) throw new Error('HTTP ' + response.status);
+
+      const text = await response.text();
+      const json = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+      const data = JSON.parse(json);
+
+      if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha.');
+
+      vehicles = parseRows(data);
+      if(!vehicles.length) throw new Error('Nenhum veículo da unidade CONTAGEM foi encontrado.');
+
+      stateLoading.classList.add('hidden');
+      stateError.classList.add('hidden');
+      setStatus(true, `Conectado · ${vehicles.length} veículos`);
+      render();
+    }catch(error){
+      stateLoading.classList.add('hidden');
+      grid.classList.add('hidden');
+      stateError.classList.remove('hidden');
+      errorText.textContent = error.message;
+      setStatus(false, 'Falha ao carregar');
+    }
+  }
+
+  loadData();
+})();
+</script>
+</body>
+</html>
