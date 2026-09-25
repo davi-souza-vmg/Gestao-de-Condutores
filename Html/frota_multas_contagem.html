@@ -152,10 +152,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   .modal-body{padding:17px}
 }
 
-/* ---------- filtro de conferência ---------- */
+/* ---------- status de multas ---------- */
 .review-stats{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:10px;
   margin:-16px 0 20px;
   position:relative;
@@ -171,58 +171,48 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 }
 .review-stat:hover{transform:translateY(-1px);border-color:#b9c5d4;}
 .review-stat.active{border-color:var(--navy-700);background:#f8fafc;}
-.review-stat .rk{
-  font-family:var(--mono);font-size:9.5px;letter-spacing:.55px;
-  text-transform:uppercase;color:var(--slate-600);
-}
-.review-stat .rv{
-  font-family:var(--display);font-size:23px;font-weight:700;line-height:1;margin-top:7px;
-}
+.review-stat .rk{font-family:var(--mono);font-size:9.5px;letter-spacing:.55px;text-transform:uppercase;color:var(--slate-600);}
+.review-stat .rv{font-family:var(--display);font-size:23px;font-weight:700;line-height:1;margin-top:7px;}
 .review-stat.total .rv{color:var(--navy-700);}
-.review-stat.done .rv{color:#278b67;}
-.review-stat.pending .rv{color:#c65f66;}
+.review-stat.clear .rv{color:#278b67;}
+.review-stat.pending .rv{color:#b58a12;}
+.review-stat.fine .rv{color:#c54d4d;}
 .review-stat .rbar{display:none;}
 
-.vehicle{
-  box-shadow:none;
-  border-radius:12px;
-  padding:16px;
-  transition:transform .15s ease,border-color .15s ease,background .15s ease;
-}
+.vehicle{box-shadow:none;border-radius:12px;padding:16px;transition:transform .15s ease,border-color .15s ease,background .15s ease;}
 .vehicle:hover{transform:translateY(-2px);box-shadow:none;}
-.vehicle.is-verified{background:#edf9f3;border-color:#b9dfcd;}
-.vehicle.is-pending{background:#fff5f5;border-color:#eccfd1;}
-.vehicle.is-verified:hover{border-color:#8bc9ad;}
-.vehicle.is-pending:hover{border-color:#dfaeb2;}
+.vehicle.is-clear{background:#edf9f3;border-color:#b9dfcd;}
+.vehicle.is-pending{background:#fff9e8;border-color:#ead58a;}
+.vehicle.is-fine{background:#fff0f0;border-color:#e5b5b5;}
+.vehicle.is-clear:hover{border-color:#8bc9ad;}
+.vehicle.is-pending:hover{border-color:#d7bc57;}
+.vehicle.is-fine:hover{border-color:#d99595;}
 .vehicle-hint{margin-top:6px;font-size:10px;color:var(--slate-500);}
+
 .copyable{cursor:pointer;user-select:none;}
 .copyable:hover{color:var(--navy-700);}
-.copy-hint{
-  display:block;font-size:9px;font-family:var(--body);font-weight:500;
-  color:var(--slate-400);margin-top:3px;
-}
-.modal-field-copy{
-  cursor:pointer;
-  user-select:none;
-  border-bottom:1.5px dashed var(--slate-400);
-  width:max-content;
-  max-width:100%;
-}
-.modal-field-copy:hover{color:var(--navy-700);border-color:var(--navy-700);}
-.review-check{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin-top:20px;padding:13px 14px;border:1px solid var(--line);
-  border-radius:10px;background:#f8fafc;
-}
-.review-check label{
-  display:flex;align-items:center;gap:10px;font-weight:700;font-size:13px;cursor:pointer;
-}
-.review-check input{width:19px;height:19px;accent-color:#2bad7d;cursor:pointer;}
-.review-state{font-size:11px;color:var(--slate-600);}
-@media(max-width:760px){
-  .review-stats{grid-template-columns:1fr;margin-top:0;}
-}
+.copy-hint{display:block;font-size:9px;font-family:var(--body);font-weight:500;color:var(--slate-400);margin-top:3px;}
+.field.copy-field{cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s,transform .1s;}
+.field.copy-field:hover{background:#f5f8fc;border-color:#c6d1df;}
+.field.copy-field:active{transform:scale(.995);}
+.field.copy-field.copied{background:#ecfaf3;border-color:#8fd0af;box-shadow:0 0 0 3px rgba(43,173,125,.10);}
 
+.review-check{margin-top:20px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#f8fafc;}
+.review-check-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;}
+.review-check-title strong{font-size:12px;color:var(--navy-900);}
+.review-state{font-size:11px;font-weight:700;color:var(--slate-600);}
+.review-options{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.review-option{position:relative;display:flex;align-items:center;gap:8px;padding:10px 11px;border:1px solid #dfe5ea;border-radius:10px;background:#fff;cursor:pointer;transition:.15s ease;font-size:12px;font-weight:700;color:var(--slate-700);}
+.review-option input{position:absolute;opacity:0;pointer-events:none;}
+.review-option .review-dot{width:10px;height:10px;border-radius:50%;background:#f3c84b;box-shadow:0 0 0 3px rgba(243,200,75,.13);flex:0 0 auto;}
+.review-option.clear .review-dot{background:#35b87d;box-shadow:0 0 0 3px rgba(53,184,125,.13);}
+.review-option.fine .review-dot{background:#e87979;box-shadow:0 0 0 3px rgba(232,121,121,.13);}
+.review-option:has(input:checked){border-color:#c9d3db;background:#f6f8fa;}
+.review-option.clear:has(input:checked){border-color:#9fd7bc;background:#edf9f3;color:#17734f;}
+.review-option.fine:has(input:checked){border-color:#e5b5b5;background:#fff0f0;color:#a33f3f;}
+
+@media(max-width:900px){.review-stats{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:760px){.review-stats{grid-template-columns:1fr;margin-top:0;}}
 
 .modal-shell{position:relative;display:flex;align-items:center;justify-content:center;gap:18px;width:min(620px,calc(100vw - 28px));}
 .modal-arrow{flex:0 0 46px;width:46px;height:46px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.94);color:var(--navy-900);cursor:pointer;font-size:30px;line-height:46px;text-align:center;padding:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:transform .15s,opacity .15s,background .15s;}
@@ -267,17 +257,18 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     <div class="review-stat total active" data-review-filter="all">
       <div class="rk">Todos os veículos</div>
       <div class="rv" id="reviewTotal">0</div>
-      <div class="rbar"><i></i></div>
     </div>
-    <div class="review-stat done" data-review-filter="verified">
-      <div class="rk">Conferidos</div>
-      <div class="rv" id="reviewVerified">0</div>
-      <div class="rbar"><i id="reviewVerifiedBar"></i></div>
+    <div class="review-stat clear" data-review-filter="clear">
+      <div class="rk">Sem multa</div>
+      <div class="rv" id="reviewClear">0</div>
     </div>
     <div class="review-stat pending" data-review-filter="pending">
-      <div class="rk">Faltam conferir</div>
+      <div class="rk">Falta conferir</div>
       <div class="rv" id="reviewPending">0</div>
-      <div class="rbar"><i id="reviewPendingBar"></i></div>
+    </div>
+    <div class="review-stat fine" data-review-filter="fine">
+      <div class="rk">Com multa</div>
+      <div class="rv" id="reviewFine">0</div>
     </div>
   </section>
 
@@ -333,11 +324,14 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         </div>
       </div>
       <div class="review-check">
-        <label>
-          <input type="checkbox" id="modalVerified">
-          <span>Veículo conferido</span>
-        </label>
-        <span class="review-state" id="modalReviewState">Pendente</span>
+        <div class="review-check-title">
+          <strong>Situação da multa</strong>
+          <span class="review-state" id="modalReviewState">Pendente</span>
+        </div>
+        <div class="review-options">
+          <label class="review-option clear"><input type="radio" name="modalReviewStatus" value="SEM MULTA"><span class="review-dot"></span><span>Sem multa</span></label>
+          <label class="review-option fine"><input type="radio" name="modalReviewStatus" value="COM MULTA"><span class="review-dot"></span><span>Com multa</span></label>
+        </div>
       </div>
     </div>
     </div>
@@ -368,58 +362,77 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   const backdrop = document.getElementById('backdrop');
   const close = document.getElementById('close');
 
+  // URL do Web App do Google Apps Script. Depois de publicar o Code.gs,
+  // cole aqui a URL que termina em /exec.
+  const MULTAS_API_URL = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+
   let vehicles = [];
   let reviewFilter = 'all';
   let currentVehicle = null;
+  let multaStatuses = {};
 
-  const REVIEW_KEY = 'frota_multas_contagem_verificados_v1';
-
-  function getVerified(){
-    try{
-      const raw = localStorage.getItem(REVIEW_KEY);
-      const parsed = raw ? JSON.parse(raw) : {};
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    }catch(e){
-      return {};
-    }
+  function reviewStatus(vehicle){
+    const status = multaStatuses[normalizePlate(vehicle.placa)];
+    return status === 'SEM MULTA' || status === 'COM MULTA' ? status : 'PENDENTE';
   }
 
-  let verified = getVerified();
-
-  function isVerified(vehicle){
-    return !!verified[vehicle.placa];
+  function normalizePlate(value){
+    return String(value ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   }
 
-  function setVerified(vehicle, value){
-    if(value) verified[vehicle.placa] = true;
-    else delete verified[vehicle.placa];
-    try{
-      localStorage.setItem(REVIEW_KEY, JSON.stringify(verified));
-    }catch(e){}
-    updateReviewStats();
-    render();
-    if(currentVehicle && currentVehicle.placa === vehicle.placa){
-      syncModalReview();
-    }
-  }
-
-  function updateReviewStats(){
+  function setStatusFromReview(){
     const total = vehicles.length;
-    const done = vehicles.filter(isVerified).length;
-    const pending = total - done;
+    const clear = vehicles.filter(v => reviewStatus(v) === 'SEM MULTA').length;
+    const fine = vehicles.filter(v => reviewStatus(v) === 'COM MULTA').length;
+    const pending = total - clear - fine;
 
     document.getElementById('reviewTotal').textContent = total;
-    document.getElementById('reviewVerified').textContent = done;
+    document.getElementById('reviewClear').textContent = clear;
     document.getElementById('reviewPending').textContent = pending;
-
-    const donePct = total ? (done / total) * 100 : 0;
-    const pendingPct = total ? (pending / total) * 100 : 0;
-    document.getElementById('reviewVerifiedBar').style.width = donePct + '%';
-    document.getElementById('reviewPendingBar').style.width = pendingPct + '%';
+    document.getElementById('reviewFine').textContent = fine;
 
     document.querySelectorAll('.review-stat').forEach(el => {
       el.classList.toggle('active', el.dataset.reviewFilter === reviewFilter);
     });
+  }
+
+  async function loadMultaStatuses(){
+    if(!MULTAS_API_URL || MULTAS_API_URL.includes('COLE_AQUI')){
+      throw new Error('Configure a URL do Google Apps Script em MULTAS_API_URL.');
+    }
+    const url = MULTAS_API_URL + (MULTAS_API_URL.includes('?') ? '&' : '?') + 'action=statuses&_=' + Date.now();
+    const response = await fetch(url, { cache:'no-store' });
+    if(!response.ok) throw new Error('Não foi possível consultar a planilha de multas.');
+    const data = await response.json();
+    if(!data.ok) throw new Error(data.error || 'Erro ao consultar a planilha de multas.');
+    multaStatuses = data.statuses || {};
+  }
+
+  async function saveMultaStatus(vehicle, status){
+    const plate = normalizePlate(vehicle.placa);
+    const previous = multaStatuses[plate];
+    multaStatuses[plate] = status;
+    setStatusFromReview();
+    render();
+    syncModalReview();
+
+    try{
+      const response = await fetch(MULTAS_API_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'saveStatus', plate, status })
+      });
+      const data = await response.json();
+      if(!data.ok) throw new Error(data.error || 'Não foi possível salvar.');
+      setStatus(true, 'Planilha de multas · salvo');
+    }catch(error){
+      if(previous) multaStatuses[plate] = previous;
+      else delete multaStatuses[plate];
+      setStatusFromReview();
+      render();
+      syncModalReview();
+      setStatus(false, 'Falha ao salvar multa');
+      alert('Não foi possível salvar na planilha de multas.\n\n' + error.message);
+    }
   }
 
   function normalizeHeader(value){
@@ -525,10 +538,12 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
     const filtered = vehicles.filter(v => {
       const matchesSearch = !q || v.placa.toLowerCase().includes(q);
+      const status = reviewStatus(v);
       const matchesReview =
         reviewFilter === 'all' ||
-        (reviewFilter === 'verified' && isVerified(v)) ||
-        (reviewFilter === 'pending' && !isVerified(v));
+        (reviewFilter === 'clear' && status === 'SEM MULTA') ||
+        (reviewFilter === 'pending' && status === 'PENDENTE') ||
+        (reviewFilter === 'fine' && status === 'COM MULTA');
       return matchesSearch && matchesReview;
     });
     visibleVehicles = filtered;
@@ -546,14 +561,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     grid.classList.remove('hidden');
 
     filtered.forEach(vehicle => {
-      const done = isVerified(vehicle);
+      const status = reviewStatus(vehicle);
       const card = document.createElement('article');
-      card.className = 'vehicle ' + (done ? 'is-verified' : 'is-pending');
+      const statusClass = status === 'SEM MULTA' ? 'is-clear' : status === 'COM MULTA' ? 'is-fine' : 'is-pending';
+      const statusText = status === 'SEM MULTA' ? 'Sem multa' : status === 'COM MULTA' ? 'Com multa' : 'Falta conferir';
+      card.className = 'vehicle ' + statusClass;
       card.innerHTML = `
         <div>
           <div class="vehicle-label">Veículo</div>
           <div class="vehicle-plate">${escapeHtml(vehicle.placa)}</div>
-          <div class="vehicle-hint">${done ? 'Conferido' : 'Pendente'}</div>
+          <div class="vehicle-hint">${statusText}</div>
         </div>
       `;
 
@@ -564,9 +581,13 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
   function syncModalReview(){
     if(!currentVehicle) return;
-    const checked = isVerified(currentVehicle);
-    document.getElementById('modalVerified').checked = checked;
-    document.getElementById('modalReviewState').textContent = checked ? 'Conferido' : 'Pendente';
+    const status = reviewStatus(currentVehicle);
+    document.querySelectorAll('input[name="modalReviewStatus"]').forEach(input => {
+      input.checked = input.value === status;
+    });
+    document.getElementById('modalReviewState').textContent =
+      status === 'SEM MULTA' ? 'Sem multa' :
+      status === 'COM MULTA' ? 'Com multa' : 'Falta conferir';
   }
 
   function openModal(vehicle){
@@ -610,13 +631,15 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   document.querySelectorAll('.review-stat').forEach(stat => {
     stat.addEventListener('click', () => {
       reviewFilter = stat.dataset.reviewFilter;
-      updateReviewStats();
+      setStatusFromReview();
       render();
     });
   });
 
-  document.getElementById('modalVerified').addEventListener('change', e => {
-    if(currentVehicle) setVerified(currentVehicle, e.target.checked);
+  document.querySelectorAll('input[name="modalReviewStatus"]').forEach(input => {
+    input.addEventListener('change', e => {
+      if(currentVehicle) saveMultaStatus(currentVehicle, e.target.value);
+    });
   });
 
   [['copyFieldPlaca','modalPlaca'],['copyFieldChassi','modalChassi'],['copyFieldRenavam','modalRenavam']].forEach(([fieldId,valueId]) => {
@@ -676,7 +699,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
       stateLoading.classList.add('hidden');
       stateError.classList.add('hidden');
-      updateReviewStats();
+      await loadMultaStatuses();
+      setStatusFromReview();
       render();
     }catch(error){
       stateLoading.classList.add('hidden');
@@ -687,7 +711,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     }
   }
 
-  updateReviewStats();
+  setStatusFromReview();
   loadData();
 })();
 </script>
