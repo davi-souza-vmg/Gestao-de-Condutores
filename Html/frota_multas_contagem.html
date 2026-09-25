@@ -224,18 +224,23 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 }
 
 
-.modal-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none;padding:0 8px}
-.modal-nav button{pointer-events:auto;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:27px;line-height:1;display:grid;place-items:center;transition:.15s}
-.modal-nav button:hover{background:rgba(255,255,255,.23);transform:scale(1.04)}
-.modal-head{position:relative;padding-left:58px;padding-right:58px}
-.modal-head>div:not(.modal-nav){min-width:0;text-align:center;width:100%}
-.modal-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.field.copy-field{cursor:pointer;transition:background .15s,border-color .15s,transform .1s}
-.field.copy-field:hover{background:#f4f7fb;border-color:#c6d1df}
-.field.copy-field:active{transform:scale(.995)}
-.field.copy-field.copied{background:#edf9f3;border-color:#b9dfcd}
+.modal-shell{position:relative;display:flex;align-items:center;justify-content:center;gap:18px;width:min(620px,calc(100vw - 28px));}
+.modal-arrow{flex:0 0 46px;width:46px;height:46px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.94);color:var(--navy-900);cursor:pointer;font-size:34px;line-height:1;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:transform .15s,opacity .15s,background .15s;}
+.modal-arrow:hover:not(:disabled){transform:scale(1.06);background:#fff;}
+.modal-arrow:disabled{cursor:default;opacity:.28;box-shadow:none;}
+.modal{max-width:470px;border:1px solid rgba(255,255,255,.65);box-shadow:0 28px 80px rgba(10,25,48,.38);}
+.modal-head{background:linear-gradient(135deg,var(--navy-900),#163b62);padding:22px 22px 20px;}
+.modal-body{padding:24px;background:#fff;}
+.field.copy-field{cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s,transform .1s;}
+.field.copy-field:hover{background:#f5f8fc;border-color:#c6d1df;}
+.field.copy-field:active{transform:scale(.995);}
+.field.copy-field.copied{background:#ecfaf3;border-color:#8fd0af;box-shadow:0 0 0 3px rgba(43,173,125,.10);}
 .copy-hint,.modal-field-copy{display:none!important}
-@media(max-width:460px){.modal-head{padding-left:52px;padding-right:52px}.modal-nav button{width:34px;height:34px;font-size:23px}}
+.modal-head{padding-left:22px;padding-right:50px}
+.modal-head>div:not(.modal-nav){text-align:left}
+.modal-title{font-size:22px;letter-spacing:.2px}
+.review-check{margin-top:18px;background:#f7faf9;border-color:#dce9e3;}
+@media(max-width:600px){.modal-shell{width:calc(100vw - 20px);gap:7px}.modal-arrow{flex-basis:38px;width:38px;height:38px;font-size:29px}.modal{max-width:none;width:100%}.modal-head{padding-left:17px;padding-right:44px}.modal-title{font-size:19px}.modal-body{padding:18px}}
 
 </style>
 </head>
@@ -301,12 +306,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 </main>
 
 <div class="backdrop" id="backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-shell">
+    <button class="modal-arrow modal-arrow-left" type="button" id="prevVehicle" aria-label="Veículo anterior">‹</button>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal-head">
-      <div class="modal-nav" aria-label="Navegação entre veículos">
-        <button type="button" id="prevVehicle" aria-label="Veículo anterior">‹</button>
-        <button type="button" id="nextVehicle" aria-label="Próximo veículo">›</button>
-      </div>
       <div>
         <h2 class="modal-title" id="modalTitle">Veículo</h2>
         <p class="modal-sub">Unidade CONTAGEM</p>
@@ -315,15 +318,15 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     </div>
     <div class="modal-body">
       <div class="fields">
-        <div class="field copy-field" id="copyFieldPlaca" title="Clique para copiar o placa">
+        <div class="field copy-field" id="copyFieldPlaca">
           <span class="label">Placa</span>
           <span class="value copyable" id="modalPlaca">—</span>
         </div>
-        <div class="field copy-field" id="copyFieldChassi" title="Clique para copiar o chassi">
+        <div class="field copy-field" id="copyFieldChassi">
           <span class="label">Chassi</span>
           <span class="value copyable" id="modalChassi">—</span>
         </div>
-        <div class="field copy-field" id="copyFieldRenavam" title="Clique para copiar o Renavam">
+        <div class="field copy-field" id="copyFieldRenavam">
           <span class="label">Renavam</span>
           <span class="value copyable" id="modalRenavam">—</span>
         </div>
@@ -336,6 +339,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         <span class="review-state" id="modalReviewState">Pendente</span>
       </div>
     </div>
+    </div>
+    <button class="modal-arrow modal-arrow-right" type="button" id="nextVehicle" aria-label="Próximo veículo">›</button>
   </div>
 </div>
 
@@ -478,12 +483,13 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   function copyText(value, el){
     if(!value || value === '—') return;
     const done = () => {
-      const old = el.dataset.oldText || el.textContent;
-      el.dataset.oldText = old;
-      el.textContent = 'Copiado!';
-      setTimeout(() => {
-        if(el.isConnected) el.textContent = old;
-      }, 900);
+      el.classList.remove('copied');
+      void el.offsetWidth;
+      el.classList.add('copied');
+      clearTimeout(el._copyTimer);
+      el._copyTimer = setTimeout(() => {
+        if(el.isConnected) el.classList.remove('copied');
+      }, 750);
     };
     if(navigator.clipboard && window.isSecureContext){
       navigator.clipboard.writeText(String(value)).then(done).catch(() => fallbackCopy(value, done));
@@ -496,10 +502,11 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     const ta = document.createElement('textarea');
     ta.value = String(value);
     ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
     ta.style.opacity = '0';
     document.body.appendChild(ta);
     ta.select();
-    try{ document.execCommand('copy'); done(); }catch(e){}
+    try{ if(document.execCommand('copy')) done(); }catch(e){}
     ta.remove();
   }
 
