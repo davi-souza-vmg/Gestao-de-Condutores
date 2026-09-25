@@ -772,15 +772,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         const data = JSON.parse(text.substring(start, end + 1));
         if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha.');
 
-        // A consulta retorna: PLACA, UNIDADE, CHASSI, RENAVAM.
-        vehicles = (data.table.rows || []).map(row => {
-          const c = row.c || [];
-          return {
-            placa: cellText(c[0]),
-            chassi: cellText(c[2]),
-            renavam: cleanRenavam(cellText(c[3]))
-          };
-        }).filter(v => v.placa);
+        // Monta os veículos usando os nomes dos cabeçalhos da aba Frota.
+        // Assim o FROTA é levado junto com PLACA, CHASSI e RENAVAM e pode
+        // ser enviado para a aba CONDUTORES quando houver uma multa.
+        vehicles = parseRows(data);
 
         if(!vehicles.length) throw new Error('Nenhum veículo da unidade CONTAGEM foi encontrado.');
         setStatus(true, `Conectado · ${vehicles.length} veículos`);
