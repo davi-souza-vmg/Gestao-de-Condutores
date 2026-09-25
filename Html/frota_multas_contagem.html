@@ -225,7 +225,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
 
 .modal-shell{position:relative;display:flex;align-items:center;justify-content:center;gap:18px;width:min(620px,calc(100vw - 28px));}
-.modal-arrow{flex:0 0 46px;width:46px;height:46px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.94);color:var(--navy-900);cursor:pointer;font-size:34px;line-height:1;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:transform .15s,opacity .15s,background .15s;}
+.modal-arrow{flex:0 0 46px;width:46px;height:46px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.94);color:var(--navy-900);cursor:pointer;font-size:30px;line-height:46px;text-align:center;padding:0;display:flex;align-items:center;justify-content:center;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:transform .15s,opacity .15s,background .15s;}
+.modal-arrow::first-letter{position:relative;top:-1px;}
 .modal-arrow:hover:not(:disabled){transform:scale(1.06);background:#fff;}
 .modal-arrow:disabled{cursor:default;opacity:.28;box-shadow:none;}
 .modal{max-width:470px;border:1px solid rgba(255,255,255,.65);box-shadow:0 28px 80px rgba(10,25,48,.38);}
@@ -634,7 +635,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     try{
       // Consulta somente as quatro colunas necessárias e filtra CONTAGEM no próprio Google Sheets.
       // Isso evita depender de um range enorme e funciona melhor com a aba Frota.
-      const tq = "select C,I,O,P where I = 'CONTAGEM'";
+      const tq = "select C,I,O,P where I = 'CONTAGEM' format P '00000000000'";
       const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&tq=${encodeURIComponent(tq)}&_=${Date.now()}`;
 
       try {
