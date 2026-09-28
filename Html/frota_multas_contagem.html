@@ -487,12 +487,17 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     const plate = normalizePlate(vehicle.placa);
     const allFines = finesByPlate[plate] || [];
     const activeFines = allFines.filter(isActiveFine);
+
+    // CONDUTORES manda somente quando existe multa ainda não paga/cancelada.
+    // Multas históricas PAGA/CANCELADA não encerram a conferência do mês.
     if(activeFines.length) return 'COM MULTA';
-    // Se já houve multa, mas todas foram pagas/canceladas, o veículo volta
-    // para SEM MULTA sem apagar o histórico existente em CONDUTORES.
-    if(allFines.length) return 'SEM MULTA';
+
+    // Sem multa ativa, quem define a situação é a aba VEICULOS.
+    // Se B estiver vazia, o veículo fica aguardando a conferência.
     const status = multaStatuses[plate];
-    return status === 'SEM MULTA' ? 'SEM MULTA' : 'PENDENTE';
+    if(status === 'SEM MULTA') return 'SEM MULTA';
+    if(status === 'COM MULTA') return 'COM MULTA';
+    return 'PENDENTE';
   }
 
   function normalizePlate(value){ return String(value ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
