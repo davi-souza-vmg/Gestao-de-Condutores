@@ -70,6 +70,11 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .search input:focus{border-color:var(--navy-700)}
 .search-clear{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:50%;background:#eef1f5;color:#657184;font:700 13px var(--body);cursor:pointer;display:grid;place-items:center;}
 .search-clear:hover{background:#dfe5ec;color:#1b2433;}
+.fine-filter-wrap{display:none;align-items:center;gap:8px;}
+.fine-filter-wrap.visible{display:flex;}
+.fine-filter-label{font-size:12px;font-weight:700;color:var(--slate-500);white-space:nowrap;}
+.fine-filter{height:40px;padding:0 34px 0 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;color:var(--navy-900);font:600 13px var(--body);outline:none;cursor:pointer;}
+.fine-filter:focus{border-color:var(--navy-700);}
 
 .count{
   font-family:var(--mono);font-size:12px;color:var(--slate-600);
@@ -354,6 +359,14 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       <input id="search" type="text" placeholder="Buscar por placa, pref., chassi ou Renavam…" autocomplete="off">
       <button type="button" class="search-clear hidden" id="searchClear" aria-label="Limpar busca" title="Limpar busca">✕</button>
     </div>
+    <div class="fine-filter-wrap" id="fineFilterWrap">
+      <label class="fine-filter-label" for="fineFilter">Filtrar multas:</label>
+      <select class="fine-filter" id="fineFilter" aria-label="Filtrar multas">
+        <option value="all">Todas</option>
+        <option value="toIssue">Faltam emitir</option>
+        <option value="toPay">Faltam pagar</option>
+      </select>
+    </div>
     <span class="count" id="count">0 veículos</span>
   </div>
 
@@ -453,6 +466,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   const count = document.getElementById('count');
   const stateLoading = document.getElementById('stateLoading');
   const searchClear = document.getElementById('searchClear');
+  const fineFilterWrap = document.getElementById('fineFilterWrap');
+  const fineFilter = document.getElementById('fineFilter');
   const stateError = document.getElementById('stateError');
   const errorText = document.getElementById('errorText');
   const empty = document.getElementById('empty');
@@ -473,6 +488,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   let visibleVehicles = [];
   let multaStatuses = {};
   let finesByPlate = {};
+  let fineRecordFilter = 'all';
 
   function isActiveFine(fine){
     const status = String(fine?.status || 'PENDENTE').toUpperCase();
@@ -792,7 +808,18 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     search.focus();
     render();
   });
-  document.querySelectorAll('.review-stat').forEach(stat=>stat.addEventListener('click',()=>{reviewFilter=stat.dataset.reviewFilter;setStatusFromReview();render();}));
+  document.querySelectorAll('.review-stat').forEach(stat=>stat.addEventListener('click',()=>{
+    reviewFilter=stat.dataset.reviewFilter;
+    fineFilterWrap.classList.toggle('visible', reviewFilter === 'fineRecords');
+    if(reviewFilter !== 'fineRecords') fineRecordFilter = 'all';
+    fineFilter.value = fineRecordFilter;
+    setStatusFromReview();
+    render();
+  }));
+  fineFilter.addEventListener('change',()=>{
+    fineRecordFilter = fineFilter.value;
+    render();
+  });
   document.getElementById('addFineBtn').addEventListener('click',()=>openFineForm());
   document.getElementById('markClearBtn').addEventListener('click',markVehicleClear);
   [['copyFieldPlaca','modalPlaca'],['copyFieldChassi','modalChassi'],['copyFieldRenavam','modalRenavam']].forEach(([fieldId,valueId])=>document.getElementById(fieldId).addEventListener('click',()=>{const value=document.getElementById(valueId).textContent.trim();if(value&&value!=='—')copyText(value,document.getElementById(fieldId));}));
@@ -952,12 +979,25 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       const matchesSearch = vehicleMatchesSearch(v, q);
       const status = reviewStatus(v);
       const fines = finesFor(v);
+      let matchesFineRecordFilter = true;
+      if(reviewFilter === 'fineRecords') {
+        if(fineRecordFilter === 'toIssue') {
+          matchesFineRecordFilter = fines.some(f => {
+            const s = String(f.status || 'PENDENTE').toUpperCase();
+            return s === 'PENDENTE' || s === 'EM RECURSO';
+          });
+        } else if(fineRecordFilter === 'toPay') {
+          matchesFineRecordFilter = fines.some(f => String(f.status || '').toUpperCase() === 'EMITIDA');
+        } else {
+          matchesFineRecordFilter = fines.length > 0;
+        }
+      }
       const matchesReview =
         reviewFilter === 'all' ||
         (reviewFilter === 'clear' && status === 'SEM MULTA') ||
         (reviewFilter === 'pending' && status === 'PENDENTE') ||
         (reviewFilter === 'fine' && status === 'COM MULTA') ||
-        (reviewFilter === 'fineRecords' && fines.length > 0);
+        (reviewFilter === 'fineRecords' && matchesFineRecordFilter);
       return matchesSearch && matchesReview;
     });
     visibleVehicles = filtered;
