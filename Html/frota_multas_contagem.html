@@ -257,6 +257,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .fine-actions-inline{display:flex;gap:6px;}
 .fine-mini{border:1px solid #d7dee7;background:#f7f9fb;color:var(--slate-700);border-radius:7px;padding:5px 8px;font:700 10px var(--body);cursor:pointer;}
 .fine-mini:hover{border-color:#b7c3d1;background:#fff;}
+.fine-mini:disabled{opacity:.65;cursor:default;}
 .vehicle-fine-count{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:3px;}
 .vehicle-fine-total{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:2px;}
 .review-stats{grid-template-columns:repeat(5,1fr)}
@@ -533,6 +534,23 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     setTimeout(()=>fineDate.focus(),30);
   }
 
+  async function markFinePaid(fine){
+    if(!fine || fine.status === 'PAGA' || !currentVehicle) return;
+    try{
+      const fineData={
+        date:fine.dateInput,
+        description:fine.description,
+        value:Number(fine.value||0),
+        status:'PAGA'
+      };
+      await apiGet('updateFine',{id:fine.id,fine:JSON.stringify(fineData)});
+      await refreshVehicleFines(currentVehicle);
+      setStatus(true,'Planilha de multas · multa marcada como paga');
+    }catch(error){
+      alert(error.message);
+    }
+  }
+
   function editFine(fine){ openFineForm(fine); }
   async function deleteFine(fine){
     if(!confirm(`Excluir a multa de ${fine.date} no valor de ${money(fine.value)}?`)) return;
@@ -554,11 +572,10 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       return `<div class="fine-card">
         <div class="fine-card-top"><span class="fine-card-date">${escapeHtml(f.date)}</span><span class="fine-card-value">${money(f.value)}</span></div>
         <div class="fine-card-desc">${escapeHtml(f.description)}</div>
-        <div class="fine-card-bottom"><span class="fine-badge ${badgeClass}">${escapeHtml(f.status)}</span><div class="fine-actions-inline"><button class="fine-mini" data-edit="${escapeHtml(f.id)}">Editar</button><button class="fine-mini" data-delete="${escapeHtml(f.id)}">Excluir</button></div></div>
+        <div class="fine-card-bottom"><span class="fine-badge ${badgeClass}">${escapeHtml(f.status)}</span><div class="fine-actions-inline"><button type="button" class="fine-mini fine-paid" data-paid="${escapeHtml(f.id)}" ${f.status==='PAGA'?'disabled':''}>Pago</button></div></div>
       </div>`;
     }).join('');
-    list.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{const f=fines.find(x=>x.id===btn.dataset.edit);if(f)editFine(f);}));
-    list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',()=>{const f=fines.find(x=>x.id===btn.dataset.delete);if(f)deleteFine(f);}));
+    list.querySelectorAll('[data-paid]').forEach(btn=>btn.addEventListener('click',()=>{const f=fines.find(x=>x.id===btn.dataset.paid);if(f)markFinePaid(f);}));
   }
 
   function syncModalReview(){
@@ -774,85 +791,6 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       grid.appendChild(card);
     });
   }
-
-  function syncModalReview(){
-    if(!currentVehicle) return;
-    const status = reviewStatus(currentVehicle);
-    document.querySelectorAll('input[name="modalReviewStatus"]').forEach(input => {
-      input.checked = input.value === status;
-    });
-    document.getElementById('modalReviewState').textContent =
-      status === 'SEM MULTA' ? 'Sem multa' :
-      status === 'COM MULTA' ? 'Com multa' : 'Falta conferir';
-  }
-
-  function openModal(vehicle){
-    currentVehicle = vehicle;
-    currentIndex = visibleVehicles.findIndex(v => v.placa === vehicle.placa);
-    document.getElementById('modalTitle').textContent = vehicle.placa || 'Veículo';
-    document.getElementById('modalPlaca').textContent = vehicle.placa || '—';
-    document.getElementById('modalChassi').textContent = vehicle.chassi || '—';
-    document.getElementById('modalRenavam').textContent = vehicle.renavam || '—';
-    syncModalReview();
-    updateModalNav();
-    backdrop.classList.add('open');
-  }
-
-  function updateModalNav(){
-    const hasPrev = currentIndex > 0, hasNext = currentIndex >= 0 && currentIndex < visibleVehicles.length - 1;
-    prevVehicle.disabled = !hasPrev; nextVehicle.disabled = !hasNext;
-    prevVehicle.style.opacity = hasPrev ? '1' : '.3'; nextVehicle.style.opacity = hasNext ? '1' : '.3';
-  }
-
-  function navigateModal(direction){
-    const nextIndex = currentIndex + direction;
-    if(nextIndex >= 0 && nextIndex < visibleVehicles.length) openModal(visibleVehicles[nextIndex]);
-  }
-
-  function closeModal(){
-    backdrop.classList.remove('open');
-    currentVehicle = null;
-    currentIndex = -1;
-  }
-
-  close.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', e => {
-    if(e.target === backdrop) closeModal();
-  });
-  document.addEventListener('keydown', e => {
-    if(e.key === 'Escape') closeModal();
-  });
-  search.addEventListener('input', render);
-
-  document.querySelectorAll('.review-stat').forEach(stat => {
-    stat.addEventListener('click', () => {
-      reviewFilter = stat.dataset.reviewFilter;
-      setStatusFromReview();
-      render();
-    });
-  });
-
-  document.querySelectorAll('input[name="modalReviewStatus"]').forEach(input => {
-    input.addEventListener('change', e => {
-      if(currentVehicle) saveMultaStatus(currentVehicle, e.target.value);
-    });
-  });
-
-  [['copyFieldPlaca','modalPlaca'],['copyFieldChassi','modalChassi'],['copyFieldRenavam','modalRenavam']].forEach(([fieldId,valueId]) => {
-    const field = document.getElementById(fieldId);
-    field.addEventListener('click', () => {
-      const value = document.getElementById(valueId).textContent.trim();
-      if(value && value !== '—') copyText(value, field);
-    });
-  });
-
-  prevVehicle.addEventListener('click', () => navigateModal(-1));
-  nextVehicle.addEventListener('click', () => navigateModal(1));
-  document.addEventListener('keydown', e => {
-    if(!backdrop.classList.contains('open')) return;
-    if(e.key === 'ArrowLeft') navigateModal(-1);
-    if(e.key === 'ArrowRight') navigateModal(1);
-  });
 
   async function loadData(){
     try{
