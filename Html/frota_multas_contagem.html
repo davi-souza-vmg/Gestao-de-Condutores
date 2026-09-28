@@ -238,7 +238,35 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .fine-head{background:linear-gradient(135deg,#7e3030,#a94b4b);color:#fff;padding:21px 22px;display:flex;justify-content:space-between;align-items:flex-start;gap:15px;}
 .fine-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:1.1px;text-transform:uppercase;opacity:.75;margin-bottom:5px;}
 .fine-head h2{margin:0;font:700 20px var(--display);}.fine-head p{margin:4px 0 0;color:#f6dede;font-size:12px;}
-.fine-body{padding:21px;display:grid;gap:13px;}.fine-field{display:grid;gap:6px;}.fine-field>span{font:700 10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--slate-600);}.fine-field input,.fine-field textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:11px 12px;font:13px var(--body);color:var(--slate-900);outline:none;resize:vertical;}.fine-field input:focus,.fine-field textarea:focus{border-color:#b77a7a;box-shadow:0 0 0 3px rgba(169,75,75,.09);}.fine-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px;}.fine-cancel,.fine-save{border:0;border-radius:10px;padding:11px 15px;font:700 12px var(--body);cursor:pointer;}.fine-cancel{background:#f0f2f5;color:var(--slate-600);}.fine-save{background:#a94b4b;color:#fff;}.fine-save:disabled{opacity:.55;cursor:wait;}.fine-error{padding:10px 12px;border-radius:9px;background:#fff0f0;color:#a33f3f;font-size:11px;}
+.fine-body{padding:21px;display:grid;gap:13px;}.fine-field{display:grid;gap:6px;}.fine-field>span{font:700 10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--slate-600);}.fine-field input,.fine-field textarea,.fine-field select{width:100%;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:11px 12px;font:13px var(--body);color:var(--slate-900);outline:none;resize:vertical;}.fine-field input:focus,.fine-field textarea:focus,.fine-field select:focus{border-color:#b77a7a;box-shadow:0 0 0 3px rgba(169,75,75,.09);}.fine-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px;}.fine-cancel,.fine-save{border:0;border-radius:10px;padding:11px 15px;font:700 12px var(--body);cursor:pointer;}.fine-cancel{background:#f0f2f5;color:var(--slate-600);}.fine-save{background:#a94b4b;color:#fff;}.fine-save:disabled{opacity:.55;cursor:wait;}.fine-error{padding:10px 12px;border-radius:9px;background:#fff0f0;color:#a33f3f;font-size:11px;}
+
+.fine-summary{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#f8fafc;}
+.fine-summary-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px;}
+.fine-summary-title{font-size:12px;font-weight:700;color:var(--navy-900);}
+.fine-summary-total{font:700 12px var(--mono);color:var(--slate-600);}
+.fine-list{display:grid;gap:9px;max-height:270px;overflow:auto;}
+.fine-empty{padding:16px;border:1px dashed #cfd7e2;border-radius:10px;text-align:center;color:var(--slate-600);font-size:11px;background:#fff;}
+.fine-card{border:1px solid #dfe5ea;border-radius:10px;background:#fff;padding:11px 12px;}
+.fine-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.fine-card-date{font:700 10px var(--mono);color:var(--slate-600);}
+.fine-card-value{font:700 13px var(--mono);color:var(--navy-900);white-space:nowrap;}
+.fine-card-desc{font-size:12px;line-height:1.4;color:var(--slate-900);margin:6px 0 8px;}
+.fine-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.fine-badge{display:inline-flex;padding:4px 7px;border-radius:999px;font:700 9px var(--mono);letter-spacing:.25px;background:#fff7df;color:#8d6b08;}
+.fine-badge.paga{background:#edf9f3;color:#17734f}.fine-badge.cancelada{background:#f1f3f6;color:#687384}.fine-badge.recurso{background:#eef4ff;color:#2d5d9f}
+.fine-actions-inline{display:flex;gap:6px;}
+.fine-mini{border:1px solid #d7dee7;background:#f7f9fb;color:var(--slate-700);border-radius:7px;padding:5px 8px;font:700 10px var(--body);cursor:pointer;}
+.fine-mini:hover{border-color:#b7c3d1;background:#fff;}
+.vehicle-fine-count{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:3px;}
+.vehicle-fine-total{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:2px;}
+.review-stats{grid-template-columns:repeat(5,1fr)}
+.vehicle-actions{display:flex;gap:8px;margin-top:12px;}
+.vehicle-action{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 10px;font:700 11px var(--body);cursor:pointer;color:var(--slate-700);}
+.vehicle-action.primary{background:var(--navy-900);border-color:var(--navy-900);color:#fff;}
+.vehicle-action:hover{border-color:#b7c3d1;}
+@media(max-width:1100px){.review-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.review-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.review-stats{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -260,27 +288,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 <main>
 
   <section class="review-stats" id="reviewStats">
-    <div class="review-stat total active" data-review-filter="all">
-      <div class="rk">Todos os veículos</div>
-      <div class="rv" id="reviewTotal">0</div>
-    </div>
-    <div class="review-stat clear" data-review-filter="clear">
-      <div class="rk">Sem multa</div>
-      <div class="rv" id="reviewClear">0</div>
-    </div>
-    <div class="review-stat pending" data-review-filter="pending">
-      <div class="rk">Falta conferir</div>
-      <div class="rv" id="reviewPending">0</div>
-    </div>
-    <div class="review-stat fine" data-review-filter="fine">
-      <div class="rk">Com multa</div>
-      <div class="rv" id="reviewFine">0</div>
-    </div>
+    <div class="review-stat total active" data-review-filter="all"><div class="rk">Todos os veículos</div><div class="rv" id="reviewTotal">0</div></div>
+    <div class="review-stat clear" data-review-filter="clear"><div class="rk">Sem multa</div><div class="rv" id="reviewClear">0</div></div>
+    <div class="review-stat pending" data-review-filter="pending"><div class="rk">Falta conferir</div><div class="rv" id="reviewPending">0</div></div>
+    <div class="review-stat fine" data-review-filter="fine"><div class="rk">Veículos com multa</div><div class="rv" id="reviewFine">0</div></div>
+    <div class="review-stat total" data-review-filter="fineRecords"><div class="rk">Multas registradas</div><div class="rv" id="reviewFineRecords">0</div></div>
   </section>
 
   <div class="toolbar">
     <div class="search">
-      <input id="search" type="text" placeholder="Buscar pela placa…">
+      <input id="search" type="text" placeholder="Buscar por placa, chassi, Renavam ou frota…">
     </div>
     <span class="count" id="count">0 veículos</span>
   </div>
@@ -307,39 +324,31 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   <div class="modal-shell">
     <button class="modal-arrow modal-arrow-left" type="button" id="prevVehicle" aria-label="Veículo anterior">‹</button>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-head">
-      <div>
-        <h2 class="modal-title" id="modalTitle">Veículo</h2>
-        <p class="modal-sub">Unidade CONTAGEM</p>
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title" id="modalTitle">Veículo</h2>
+          <p class="modal-sub">Unidade CONTAGEM</p>
+        </div>
+        <button class="close" id="close" aria-label="Fechar">✕</button>
       </div>
-      <button class="close" id="close" aria-label="Fechar">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="fields">
-        <div class="field copy-field" id="copyFieldPlaca">
-          <span class="label">Placa</span>
-          <span class="value copyable" id="modalPlaca">—</span>
+      <div class="modal-body">
+        <div class="fields">
+          <div class="field copy-field" id="copyFieldPlaca"><span class="label">Placa</span><span class="value copyable" id="modalPlaca">—</span></div>
+          <div class="field copy-field" id="copyFieldChassi"><span class="label">Chassi</span><span class="value copyable" id="modalChassi">—</span></div>
+          <div class="field copy-field" id="copyFieldRenavam"><span class="label">Renavam</span><span class="value copyable" id="modalRenavam">—</span></div>
         </div>
-        <div class="field copy-field" id="copyFieldChassi">
-          <span class="label">Chassi</span>
-          <span class="value copyable" id="modalChassi">—</span>
+        <div class="review-check">
+          <div class="review-check-title"><strong>Situação da multa</strong><span class="review-state" id="modalReviewState">Falta conferir</span></div>
+          <div class="vehicle-actions">
+            <button type="button" class="vehicle-action" id="markClearBtn">Marcar sem multa</button>
+            <button type="button" class="vehicle-action primary" id="addFineBtn">+ Adicionar multa</button>
+          </div>
         </div>
-        <div class="field copy-field" id="copyFieldRenavam">
-          <span class="label">Renavam</span>
-          <span class="value copyable" id="modalRenavam">—</span>
-        </div>
-      </div>
-      <div class="review-check">
-        <div class="review-check-title">
-          <strong>Situação da multa</strong>
-          <span class="review-state" id="modalReviewState">Pendente</span>
-        </div>
-        <div class="review-options">
-          <label class="review-option clear"><input type="radio" name="modalReviewStatus" value="SEM MULTA"><span class="review-dot"></span><span>Sem multa</span></label>
-          <label class="review-option fine"><input type="radio" name="modalReviewStatus" value="COM MULTA"><span class="review-dot"></span><span>Com multa</span></label>
+        <div class="fine-summary">
+          <div class="fine-summary-top"><span class="fine-summary-title">Multas deste veículo</span><span class="fine-summary-total" id="modalFineSummary">0 multas · R$ 0,00</span></div>
+          <div class="fine-list" id="fineList"><div class="fine-empty">Carregando multas…</div></div>
         </div>
       </div>
-    </div>
     </div>
     <button class="modal-arrow modal-arrow-right" type="button" id="nextVehicle" aria-label="Próximo veículo">›</button>
   </div>
@@ -350,7 +359,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     <div class="fine-head">
       <div>
         <div class="fine-eyebrow">Registro de multa</div>
-        <h2 id="fineModalTitle">Com multa</h2>
+        <h2 id="fineModalTitle">Nova multa</h2>
         <p id="fineModalPlate">Veículo</p>
       </div>
       <button class="close" id="fineClose" type="button" aria-label="Fechar">✕</button>
@@ -359,6 +368,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       <label class="fine-field"><span>Data da Infração</span><input id="fineDate" type="date" required></label>
       <label class="fine-field"><span>Descrição</span><textarea id="fineDescription" rows="4" placeholder="Descreva a infração…" required></textarea></label>
       <label class="fine-field"><span>Valor</span><input id="fineValue" type="number" min="0" step="0.01" placeholder="0,00" required></label>
+      <label class="fine-field"><span>Situação</span><select id="fineStatus"><option value="PENDENTE">Pendente</option><option value="EM RECURSO">Em recurso</option><option value="PAGA">Paga</option><option value="CANCELADA">Cancelada</option></select></label>
       <div class="fine-actions">
         <button type="button" class="fine-cancel" id="fineCancel">Cancelar</button>
         <button type="button" class="fine-save" id="fineSave">Salvar multa</button>
@@ -379,8 +389,6 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   const grid = document.getElementById('grid');
   const prevVehicle = document.getElementById('prevVehicle');
   const nextVehicle = document.getElementById('nextVehicle');
-  let visibleVehicles = [];
-  let currentIndex = -1;
   const count = document.getElementById('count');
   const stateLoading = document.getElementById('stateLoading');
   const stateError = document.getElementById('stateError');
@@ -398,135 +406,189 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   let vehicles = [];
   let reviewFilter = 'all';
   let currentVehicle = null;
+  let currentIndex = -1;
+  let visibleVehicles = [];
   let multaStatuses = {};
+  let finesByPlate = {};
 
   function reviewStatus(vehicle){
-    const status = multaStatuses[normalizePlate(vehicle.placa)];
-    return status === 'SEM MULTA' || status === 'COM MULTA' ? status : 'PENDENTE';
+    const plate = normalizePlate(vehicle.placa);
+    const fines = finesByPlate[plate] || [];
+    if(fines.length) return 'COM MULTA';
+    const status = multaStatuses[plate];
+    return status === 'SEM MULTA' ? 'SEM MULTA' : 'PENDENTE';
   }
 
-  function normalizePlate(value){
-    return String(value ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
-  }
+  function normalizePlate(value){ return String(value ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  function money(value){ return Number(value || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+  function finesFor(vehicle){ return finesByPlate[normalizePlate(vehicle.placa)] || []; }
+  function totalFines(){ return Object.values(finesByPlate).reduce((n,list)=>n+list.length,0); }
 
   function setStatusFromReview(){
     const total = vehicles.length;
     const clear = vehicles.filter(v => reviewStatus(v) === 'SEM MULTA').length;
     const fine = vehicles.filter(v => reviewStatus(v) === 'COM MULTA').length;
     const pending = total - clear - fine;
-
     document.getElementById('reviewTotal').textContent = total;
     document.getElementById('reviewClear').textContent = clear;
     document.getElementById('reviewPending').textContent = pending;
     document.getElementById('reviewFine').textContent = fine;
+    document.getElementById('reviewFineRecords').textContent = totalFines();
+    document.querySelectorAll('.review-stat').forEach(el => el.classList.toggle('active', el.dataset.reviewFilter === reviewFilter));
+  }
 
-    document.querySelectorAll('.review-stat').forEach(el => {
-      el.classList.toggle('active', el.dataset.reviewFilter === reviewFilter);
-    });
+  async function apiGet(action, params={}){
+    const query = new URLSearchParams({action,...params,_:Date.now()});
+    const response = await fetch(MULTAS_API_URL + '?' + query.toString(), {cache:'no-store'});
+    if(!response.ok) throw new Error('Não foi possível consultar a planilha de multas.');
+    const data = await response.json();
+    if(!data.ok) throw new Error(data.error || 'Erro na API de multas.');
+    return data;
   }
 
   async function loadMultaStatuses(){
-    if(!MULTAS_API_URL || MULTAS_API_URL.includes('COLE_AQUI')){
-      throw new Error('Configure a URL do Google Apps Script em MULTAS_API_URL.');
-    }
-    const url = MULTAS_API_URL + (MULTAS_API_URL.includes('?') ? '&' : '?') + 'action=statuses&_=' + Date.now();
-    const response = await fetch(url, { cache:'no-store' });
-    if(!response.ok) throw new Error('Não foi possível consultar a planilha de multas.');
-    const data = await response.json();
-    if(!data.ok) throw new Error(data.error || 'Erro ao consultar a planilha de multas.');
+    if(!MULTAS_API_URL || MULTAS_API_URL.includes('COLE_AQUI')) throw new Error('Configure a URL do Google Apps Script em MULTAS_API_URL.');
+    const data = await apiGet('statuses');
     multaStatuses = data.statuses || {};
+    await loadAllFines();
   }
 
-  async function saveMultaStatus(vehicle, status){
+  async function loadAllFines(){
+    const data = await apiGet('allFines');
+    finesByPlate = data.fines || {};
+    vehicles.forEach(v => { const plate=normalizePlate(v.placa); if(!finesByPlate[plate]) finesByPlate[plate]=[]; });
+  }
+
+  async function refreshVehicleFines(vehicle){
     const plate = normalizePlate(vehicle.placa);
-    const previous = multaStatuses[plate];
+    const data = await apiGet('fines',{plate});
+    finesByPlate[plate] = data.fines || [];
+    multaStatuses[plate] = finesByPlate[plate].length ? 'COM MULTA' : (multaStatuses[plate] || 'PENDENTE');
+    if(!finesByPlate[plate].length && multaStatuses[plate] !== 'SEM MULTA') multaStatuses[plate] = 'SEM MULTA';
+    setStatusFromReview(); render();
+    if(currentVehicle && normalizePlate(currentVehicle.placa) === plate) renderFineList();
+  }
 
-    let multaDetails = null;
-    if(status === 'COM MULTA') {
-      multaDetails = await askFineDetails(vehicle);
-      if(!multaDetails) {
-        syncModalReview();
-        return;
-      }
+  async function markVehicleClear(){
+    if(!currentVehicle) return;
+    const plate = normalizePlate(currentVehicle.placa);
+    if(finesFor(currentVehicle).length){
+      alert('Este veículo ainda possui multas registradas. Exclua ou mantenha essas multas antes de marcar sem multa.');
+      return;
     }
-
-    multaStatuses[plate] = status;
-    setStatusFromReview();
-    render();
-    syncModalReview();
-
+    multaStatuses[plate] = 'SEM MULTA';
+    setStatusFromReview(); render(); syncModalReview();
     try{
-      // Use GET em vez de POST para evitar o bloqueio CORS típico de Web Apps
-      // do Google Apps Script quando o HTML é aberto fora do próprio Apps Script.
-      const params = new URLSearchParams({
-        action: 'saveStatus',
-        plate,
-        status,
-        vehicle: JSON.stringify(vehicle),
-        fine: JSON.stringify(multaDetails || {})
-      });
-      const url = MULTAS_API_URL + (MULTAS_API_URL.includes('?') ? '&' : '?') + params.toString() + '&_=' + Date.now();
-      const response = await fetch(url, { cache:'no-store', mode:'no-cors' });
-
-      // Com no-cors a resposta é opaca; o Apps Script recebe e grava os dados.
-      setStatus(true, 'Planilha de multas · enviado');
+      await apiGet('saveStatus',{plate,status:'SEM MULTA'});
+      setStatus(true,'Planilha de multas · atualizado');
     }catch(error){
-      if(previous) multaStatuses[plate] = previous;
-      else delete multaStatuses[plate];
-      setStatusFromReview();
-      render();
-      syncModalReview();
-      setStatus(false, 'Falha ao salvar multa');
-      alert('Não foi possível salvar na planilha de multas.\n\n' + error.message);
+      multaStatuses[plate] = 'PENDENTE'; setStatusFromReview(); render(); syncModalReview();
+      setStatus(false,'Falha ao salvar situação'); alert(error.message);
     }
   }
 
-  function askFineDetails(vehicle){
-    return new Promise(resolve => {
-      const fineBackdrop = document.getElementById('fineBackdrop');
-      const fineDate = document.getElementById('fineDate');
-      const fineDescription = document.getElementById('fineDescription');
-      const fineValue = document.getElementById('fineValue');
-      const fineError = document.getElementById('fineError');
-      const fineSave = document.getElementById('fineSave');
-      const fineCancel = document.getElementById('fineCancel');
-      document.getElementById('fineModalPlate').textContent = vehicle.placa || 'Veículo';
-      fineDate.value = new Date().toISOString().slice(0,10);
-      fineDescription.value = '';
-      fineValue.value = '';
-      fineError.classList.add('hidden');
-      fineSave.disabled = false;
-      fineBackdrop.classList.add('open');
+  function openFineForm(fine=null){
+    if(!currentVehicle) return;
+    const fineBackdrop = document.getElementById('fineBackdrop');
+    const fineDate = document.getElementById('fineDate');
+    const fineDescription = document.getElementById('fineDescription');
+    const fineValue = document.getElementById('fineValue');
+    const fineStatus = document.getElementById('fineStatus');
+    const fineError = document.getElementById('fineError');
+    const fineSave = document.getElementById('fineSave');
+    const fineCancel = document.getElementById('fineCancel');
+    document.getElementById('fineModalTitle').textContent = fine ? 'Editar multa' : 'Nova multa';
+    document.getElementById('fineModalPlate').textContent = currentVehicle.placa || 'Veículo';
+    fineDate.value = fine?.dateInput || new Date().toISOString().slice(0,10);
+    fineDescription.value = fine?.description || '';
+    fineValue.value = fine ? String(fine.value ?? '') : '';
+    fineStatus.value = fine?.status || 'PENDENTE';
+    fineError.classList.add('hidden'); fineSave.disabled = false; fineBackdrop.classList.add('open');
 
-      let settled = false;
-      const finish = value => {
-        if(settled) return;
-        settled = true;
-        fineBackdrop.classList.remove('open');
-        fineSave.onclick = null; fineCancel.onclick = null;
-        document.getElementById('fineClose').onclick = null;
-        fineBackdrop.onclick = null;
-        resolve(value);
-      };
-      fineCancel.onclick = () => finish(null);
-      document.getElementById('fineClose').onclick = () => finish(null);
-      fineBackdrop.onclick = e => { if(e.target === fineBackdrop) finish(null); };
-      fineSave.onclick = () => {
-        const date = fineDate.value;
-        const description = fineDescription.value.trim();
-        const rawValue = fineValue.value;
-        const value = rawValue === '' ? NaN : Number(rawValue);
-        if(!date || !description || !Number.isFinite(value) || value < 0){
-          fineError.textContent = 'Preencha a data, a descrição e um valor válido.';
-          fineError.classList.remove('hidden');
-          return;
+    let settled=false;
+    const finish=()=>{ if(settled)return; settled=true; fineBackdrop.classList.remove('open'); fineSave.onclick=null; fineCancel.onclick=null; document.getElementById('fineClose').onclick=null; fineBackdrop.onclick=null; };
+    fineCancel.onclick=finish; document.getElementById('fineClose').onclick=finish; fineBackdrop.onclick=e=>{if(e.target===fineBackdrop)finish();};
+    fineSave.onclick=async()=>{
+      const date=fineDate.value, description=fineDescription.value.trim(), value=Number(fineValue.value);
+      if(!date||!description||!Number.isFinite(value)||value<0){fineError.textContent='Preencha a data, a descrição e um valor válido.';fineError.classList.remove('hidden');return;}
+      fineSave.disabled=true;
+      try{
+        const fineData={date,description,value,status:fineStatus.value};
+        let data;
+        if(fine){
+          data=await apiGet('updateFine',{id:fine.id,fine:JSON.stringify(fineData)});
+        }else{
+          data=await apiGet('saveFine',{plate:normalizePlate(currentVehicle.placa),vehicle:JSON.stringify(currentVehicle),fine:JSON.stringify(fineData)});
         }
-        fineSave.disabled = true;
-        finish({date, description, value});
-      };
-      setTimeout(() => fineDate.focus(), 30);
-    });
+        finish();
+        await refreshVehicleFines(currentVehicle);
+        multaStatuses[normalizePlate(currentVehicle.placa)]='COM MULTA';
+        setStatusFromReview(); render(); syncModalReview();
+        setStatus(true,'Planilha de multas · salvo');
+      }catch(error){
+        fineSave.disabled=false; fineError.textContent=error.message; fineError.classList.remove('hidden');
+      }
+    };
+    setTimeout(()=>fineDate.focus(),30);
   }
+
+  function editFine(fine){ openFineForm(fine); }
+  async function deleteFine(fine){
+    if(!confirm(`Excluir a multa de ${fine.date} no valor de ${money(fine.value)}?`)) return;
+    try{
+      await apiGet('deleteFine',{id:fine.id});
+      await refreshVehicleFines(currentVehicle);
+      setStatus(true,'Planilha de multas · multa excluída');
+    }catch(error){ alert(error.message); }
+  }
+
+  function renderFineList(){
+    if(!currentVehicle) return;
+    const list=document.getElementById('fineList'); const summary=document.getElementById('modalFineSummary'); const fines=finesFor(currentVehicle);
+    const total=fines.reduce((sum,f)=>sum+Number(f.value||0),0);
+    summary.textContent=`${fines.length} multa${fines.length===1?'':'s'} · ${money(total)}`;
+    if(!fines.length){list.innerHTML='<div class="fine-empty">Nenhuma multa registrada para este veículo.</div>';return;}
+    list.innerHTML=fines.map(f=>{
+      const badgeClass=f.status==='PAGA'?'paga':f.status==='CANCELADA'?'cancelada':f.status==='EM RECURSO'?'recurso':'';
+      return `<div class="fine-card">
+        <div class="fine-card-top"><span class="fine-card-date">${escapeHtml(f.date)}</span><span class="fine-card-value">${money(f.value)}</span></div>
+        <div class="fine-card-desc">${escapeHtml(f.description)}</div>
+        <div class="fine-card-bottom"><span class="fine-badge ${badgeClass}">${escapeHtml(f.status)}</span><div class="fine-actions-inline"><button class="fine-mini" data-edit="${escapeHtml(f.id)}">Editar</button><button class="fine-mini" data-delete="${escapeHtml(f.id)}">Excluir</button></div></div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',()=>{const f=fines.find(x=>x.id===btn.dataset.edit);if(f)editFine(f);}));
+    list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',()=>{const f=fines.find(x=>x.id===btn.dataset.delete);if(f)deleteFine(f);}));
+  }
+
+  function syncModalReview(){
+    if(!currentVehicle)return;
+    const status=reviewStatus(currentVehicle);
+    document.getElementById('modalReviewState').textContent=status==='SEM MULTA'?'Sem multa':status==='COM MULTA'?`Com multa · ${finesFor(currentVehicle).length}`:'Falta conferir';
+    document.getElementById('markClearBtn').disabled=finesFor(currentVehicle).length>0;
+  }
+
+  function openModal(vehicle){
+    currentVehicle=vehicle; currentIndex=visibleVehicles.findIndex(v=>normalizePlate(v.placa)===normalizePlate(vehicle.placa));
+    document.getElementById('modalTitle').textContent=vehicle.placa||'Veículo';
+    document.getElementById('modalPlaca').textContent=vehicle.placa||'—';
+    document.getElementById('modalChassi').textContent=vehicle.chassi||'—';
+    document.getElementById('modalRenavam').textContent=vehicle.renavam||'—';
+    syncModalReview(); renderFineList(); updateModalNav(); backdrop.classList.add('open');
+  }
+
+  function updateModalNav(){const hasPrev=currentIndex>0,hasNext=currentIndex>=0&&currentIndex<visibleVehicles.length-1;prevVehicle.disabled=!hasPrev;nextVehicle.disabled=!hasNext;prevVehicle.style.opacity=hasPrev?'1':'.3';nextVehicle.style.opacity=hasNext?'1':'.3';}
+  function navigateModal(direction){const nextIndex=currentIndex+direction;if(nextIndex>=0&&nextIndex<visibleVehicles.length)openModal(visibleVehicles[nextIndex]);}
+  function closeModal(){backdrop.classList.remove('open');currentVehicle=null;currentIndex=-1;}
+
+  close.addEventListener('click',closeModal); backdrop.addEventListener('click',e=>{if(e.target===backdrop)closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();document.getElementById('fineBackdrop').classList.remove('open');}});
+  search.addEventListener('input',render);
+  document.querySelectorAll('.review-stat').forEach(stat=>stat.addEventListener('click',()=>{reviewFilter=stat.dataset.reviewFilter;setStatusFromReview();render();}));
+  document.getElementById('addFineBtn').addEventListener('click',()=>openFineForm());
+  document.getElementById('markClearBtn').addEventListener('click',markVehicleClear);
+  [['copyFieldPlaca','modalPlaca'],['copyFieldChassi','modalChassi'],['copyFieldRenavam','modalRenavam']].forEach(([fieldId,valueId])=>document.getElementById(fieldId).addEventListener('click',()=>{const value=document.getElementById(valueId).textContent.trim();if(value&&value!=='—')copyText(value,document.getElementById(fieldId));}));
+  prevVehicle.addEventListener('click',()=>navigateModal(-1)); nextVehicle.addEventListener('click',()=>navigateModal(1));
+  document.addEventListener('keydown',e=>{if(!backdrop.classList.contains('open'))return;if(e.key==='ArrowLeft')navigateModal(-1);if(e.key==='ArrowRight')navigateModal(1);});
 
   function normalizeHeader(value){
     return String(value ?? '')
@@ -632,13 +694,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     const q = search.value.trim().toLowerCase();
 
     const filtered = vehicles.filter(v => {
-      const matchesSearch = !q || v.placa.toLowerCase().includes(q);
+      const haystack = [v.placa,v.chassi,v.renavam,v.frota].join(' ').toLowerCase();
+      const matchesSearch = !q || haystack.includes(q);
       const status = reviewStatus(v);
+      const fines = finesFor(v);
       const matchesReview =
         reviewFilter === 'all' ||
         (reviewFilter === 'clear' && status === 'SEM MULTA') ||
         (reviewFilter === 'pending' && status === 'PENDENTE') ||
-        (reviewFilter === 'fine' && status === 'COM MULTA');
+        (reviewFilter === 'fine' && status === 'COM MULTA') ||
+        (reviewFilter === 'fineRecords' && fines.length > 0);
       return matchesSearch && matchesReview;
     });
     visibleVehicles = filtered;
@@ -659,13 +724,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       const status = reviewStatus(vehicle);
       const card = document.createElement('article');
       const statusClass = status === 'SEM MULTA' ? 'is-clear' : status === 'COM MULTA' ? 'is-fine' : 'is-pending';
-      const statusText = status === 'SEM MULTA' ? 'Sem multa' : status === 'COM MULTA' ? 'Com multa' : 'Falta conferir';
+      const vehicleFines = finesFor(vehicle);
+      const statusText = status === 'SEM MULTA' ? 'Sem multa' : status === 'COM MULTA' ? `${vehicleFines.length} multa${vehicleFines.length===1?'':'s'}` : 'Falta conferir';
+      const total = vehicleFines.reduce((sum,f)=>sum+Number(f.value||0),0);
       card.className = 'vehicle ' + statusClass;
       card.innerHTML = `
         <div>
           <div class="vehicle-label">Veículo</div>
           <div class="vehicle-plate">${escapeHtml(vehicle.placa)}</div>
           <div class="vehicle-hint">${statusText}</div>
+          ${vehicleFines.length ? `<div class="vehicle-fine-total">${money(total)}</div>` : ''}
         </div>
       `;
 
