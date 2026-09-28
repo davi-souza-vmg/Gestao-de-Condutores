@@ -288,17 +288,28 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .fine-card-obs{display:block;margin:9px 0 10px;padding:10px 11px;border-radius:9px;background:#f3f6fa;border:1px solid #dce3ea;color:var(--slate-700);font-size:11px;line-height:1.45;}
 .fine-card-paid .fine-card-obs{background:#e4f6ec;border-color:#b9dfca;color:#286a4e;}
 .fine-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.fine-badge{display:inline-flex;padding:4px 7px;border-radius:999px;font:700 9px var(--mono);letter-spacing:.25px;background:#fff7df;color:#8d6b08;}
-.fine-badge.paga{background:#edf9f3;color:#17734f}.fine-badge.cancelada{background:#f1f3f6;color:#687384}.fine-badge.recurso{background:#eef4ff;color:#2d5d9f}
-.fine-actions-inline{display:flex;gap:6px;}
-.fine-mini{border:1px solid #d7dee7;background:#f7f9fb;color:var(--slate-700);border-radius:7px;padding:5px 8px;font:700 10px var(--body);cursor:pointer;}
-.fine-mini:hover{border-color:#b7c3d1;background:#fff;}
-.fine-mini:disabled{opacity:.7;cursor:default;}
-.fine-mini.fine-pay{background:#fff0f0!important;border-color:#e5b5b5!important;color:#b33f3f!important;min-width:76px;transition:all .18s ease;}
+.fine-actions-inline{display:flex;align-items:center;justify-content:flex-end;gap:7px;}
+.fine-mini{border:1px solid #d7dee7;background:#f7f9fb;color:var(--slate-700);border-radius:8px;padding:6px 10px;font:700 10px var(--body);cursor:pointer;transition:all .18s ease;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.fine-mini:hover{border-color:#b7c3d1;background:#fff;transform:translateY(-1px);}
+.fine-mini:disabled{opacity:.78;cursor:default;transform:none;}
+.fine-mini.fine-issue{background:#fff7df!important;border-color:#e4c56f!important;color:#8d6b08!important;min-width:86px;}
+.fine-mini.fine-issue:hover{background:#ffefb9!important;border-color:#d9b74e!important;}
+.fine-mini.fine-issue.is-issuing{cursor:wait;background:#fff7df!important;}
+.fine-mini.fine-issue.is-check{background:#edf9f3!important;border-color:#9bd2b5!important;color:#17734f!important;cursor:default;}
+.fine-mini.fine-pay{background:#fff0f0!important;border-color:#e5b5b5!important;color:#b33f3f!important;min-width:76px;}
 .fine-mini.fine-pay:hover{background:#ffe4e4!important;border-color:#d88f8f!important;}
 .fine-mini.fine-pay.is-paying{background:#fff7df!important;border-color:#e2c77a!important;color:#8d6b08!important;cursor:wait;}
 .fine-mini.fine-pay.is-check{background:#edf9f3!important;border-color:#9bd2b5!important;color:#17734f!important;cursor:default;}
-.fine-pay-spinner{display:inline-block;width:10px;height:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;margin-right:5px;animation:finePaySpin .7s linear infinite;}
+.fine-status-icon{width:31px;height:31px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;border:1px solid;box-shadow:0 2px 7px rgba(15,23,42,.05);}
+.fine-status-icon svg,.fine-mini svg{width:16px;height:16px;display:block;}
+.fine-status-icon.issued{background:#fff7df;border-color:#e4c56f;color:#8d6b08;}
+.fine-status-icon.paid{width:34px;height:34px;background:#edf9f3;border-color:#9bd2b5;color:#17734f;border-radius:50%;box-shadow:0 3px 9px rgba(23,115,79,.12);}
+.fine-status-icon.cancelled{background:#f1f3f6;border-color:#d7dee7;color:#687384;}
+.fine-icon-writing{animation:fineWriting .8s ease-in-out infinite;}
+.fine-icon-check{animation:fineCheck .32s ease-out both;}
+@keyframes fineWriting{0%,100%{transform:translate(0,0) rotate(-5deg)}50%{transform:translate(2px,-1px) rotate(3deg)}}
+@keyframes fineCheck{0%{transform:scale(.55);opacity:0}70%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+.fine-pay-spinner{display:inline-block;width:11px;height:11px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:finePaySpin .7s linear infinite;}
 @keyframes finePaySpin{to{transform:rotate(360deg);}}
 .vehicle-fine-count{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:3px;}
 .vehicle-fine-total{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:2px;}
@@ -417,7 +428,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       <label class="fine-field"><span>Data da Infração</span><input id="fineDate" type="date" required></label>
       <label class="fine-field"><span>Descrição</span><textarea id="fineDescription" rows="4" placeholder="Descreva a infração…" required></textarea></label>
       <label class="fine-field"><span>Valor</span><input id="fineValue" type="number" min="0" step="0.01" placeholder="0,00" required></label>
-      <label class="fine-field"><span>Situação</span><select id="fineStatus"><option value="PENDENTE">Pendente</option><option value="EM RECURSO">Em recurso</option><option value="PAGA">Paga</option><option value="CANCELADA">Cancelada</option></select></label>
+      <input id="fineStatus" type="hidden" value="PENDENTE">
       <div class="fine-actions">
         <button type="button" class="fine-cancel" id="fineCancel">Cancelar</button>
         <button type="button" class="fine-save" id="fineSave">Salvar multa</button>
@@ -596,41 +607,83 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     setTimeout(()=>fineDate.focus(),30);
   }
 
-  async function markFinePaid(fine, button){
-    if(!fine || fine.status === 'PAGA' || !currentVehicle || button?.disabled) return;
+  function iconDocPencil(cls=''){
+    return `<svg class="${cls}" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3.8V8h4" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m8.2 16.7 1.1-3.2 6.2-6.2 2.1 2.1-6.2 6.2-3.2 1.1Z" fill="currentColor" opacity=".92"/><path d="m14.6 8.9 2.1 2.1" stroke="#fff" stroke-width="1"/></svg>`;
+  }
+  function iconCheck(){
+    return `<svg class="fine-icon-check" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  function iconIssued(){
+    return `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3.5h8l4 4V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3.8V8h4" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m8.2 14 2.1 2.1 5.5-5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  function iconPaid(){
+    return `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="1.7"/><path d="M8.1 12.4 10.7 15l5.4-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.1 6.8h5.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".45"/></svg>`;
+  }
+  function iconCard(){
+    return `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3.8 9h16.4" stroke="currentColor" stroke-width="1.7"/><path d="M7 14h3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+  }
+
+  async function markFineIssued(fine, button){
+    if(!fine || fine.status === 'PAGA' || fine.status === 'EMITIDA' || !currentVehicle || button?.disabled) return;
     if(button){
       button.disabled=true;
-      button.classList.add('is-paying');
-      button.innerHTML='<span class="fine-pay-spinner"></span>Pagando…';
+      button.classList.add('is-issuing');
+      button.innerHTML=iconDocPencil('fine-icon-writing');
+      button.title='Emitindo boleto…';
     }
     try{
-      const fineData={
-        date:fine.dateInput,
-        description:fine.description,
-        value:Number(fine.value||0),
-        status:'PAGA',
-        obs:fine.obs || ''
-      };
+      const fineData={date:fine.dateInput,description:fine.description,value:Number(fine.value||0),status:'EMITIDA',obs:fine.obs || ''};
       await apiGet('updateFine',{id:fine.id,fine:JSON.stringify(fineData)});
-
-      // Mantém a confirmação visível por alguns instantes para deixar claro
-      // que o clique foi processado, mesmo quando a API responde muito rápido.
       if(button){
-        button.classList.remove('is-paying');
+        button.classList.remove('is-issuing');
         button.classList.add('is-check');
-        button.innerHTML='✓';
+        button.innerHTML=iconCheck();
+        button.title='Boleto emitido';
         await new Promise(resolve=>setTimeout(resolve,450));
       }
-
       await refreshVehicleFines(currentVehicle);
       syncModalReview();
       renderFineList();
-      setStatus(true,'Planilha de multas · multa marcada como paga');
+      setStatus(true,'Planilha de multas · boleto emitido');
+    }catch(error){
+      if(button){
+        button.disabled=false;
+        button.classList.remove('is-issuing','is-check');
+        button.innerHTML=iconDocPencil();
+        button.title='Emitir boleto';
+      }
+      alert(error.message);
+    }
+  }
+
+  async function markFinePaid(fine, button){
+    if(!fine || fine.status !== 'EMITIDA' || !currentVehicle || button?.disabled) return;
+    if(button){
+      button.disabled=true;
+      button.classList.add('is-paying');
+      button.innerHTML=iconCard();
+      button.title='Registrando pagamento…';
+    }
+    try{
+      const fineData={date:fine.dateInput,description:fine.description,value:Number(fine.value||0),status:'PAGA',obs:fine.obs || ''};
+      await apiGet('updateFine',{id:fine.id,fine:JSON.stringify(fineData)});
+      if(button){
+        button.classList.remove('is-paying');
+        button.classList.add('is-check');
+        button.innerHTML=iconCheck();
+        button.title='Pagamento confirmado';
+        await new Promise(resolve=>setTimeout(resolve,450));
+      }
+      await refreshVehicleFines(currentVehicle);
+      syncModalReview();
+      renderFineList();
+      setStatus(true,'Planilha de multas · pagamento registrado');
     }catch(error){
       if(button){
         button.disabled=false;
         button.classList.remove('is-paying','is-check');
-        button.innerHTML='Pagar';
+        button.innerHTML=iconCard()+'<span>Pagar</span>';
+        button.title='Pagar boleto';
       }
       alert(error.message);
     }
@@ -664,14 +717,30 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     if(!fines.length){list.innerHTML='';return;}
 
     list.innerHTML=fines.map(f=>{
-      const paid=String(f.status||'').toUpperCase()==='PAGA';
+      const status=String(f.status||'PENDENTE').toUpperCase();
+      const paid=status==='PAGA';
+      const issued=status==='EMITIDA';
+      const cancelled=status==='CANCELADA';
+      let action='';
+      if(paid){
+        action=`<span class="fine-status-icon paid" title="Multa paga" aria-label="Multa paga">${iconPaid()}</span>`;
+      }else if(cancelled){
+        action=`<span class="fine-status-icon cancelled" title="Multa cancelada" aria-label="Multa cancelada">✕</span>`;
+      }else if(issued){
+        action=`<span class="fine-status-icon issued" title="Boleto emitido" aria-label="Boleto emitido">${iconIssued()}</span><button type="button" class="fine-mini fine-pay" data-paid="${escapeHtml(f.id)}" title="Pagar boleto">${iconCard()}<span>Pagar</span></button>`;
+      }else{
+        action=`<button type="button" class="fine-mini fine-issue" data-issued="${escapeHtml(f.id)}" title="Emitir boleto">${iconDocPencil()}<span>Emitido</span></button>`;
+      }
       return `<div class="fine-card ${paid?'fine-card-paid':''}">
         <div class="fine-card-top"><span class="fine-card-date">${escapeHtml(f.date)}</span><span class="fine-card-value">${money(f.value)}</span></div>
         <div class="fine-card-desc">${escapeHtml(f.description)}</div>
         ${f.obs ? `<div class="fine-card-obs"><strong>OBS:</strong> ${escapeHtml(f.obs)}</div>` : ''}
-        <div class="fine-card-bottom"><span>${paid?'<span class="fine-badge paga">PAGO</span>':''}</span><div class="fine-actions-inline">${paid?'':'<button type="button" class="fine-mini fine-pay" data-paid="'+escapeHtml(f.id)+'">Pagar</button>'}</div></div>
+        <div class="fine-card-bottom"><span></span><div class="fine-actions-inline">${action}</div></div>
       </div>`;
     }).join('');
+    list.querySelectorAll('[data-issued]').forEach(btn=>btn.addEventListener('click',()=>{
+      const f=fines.find(x=>x.id===btn.dataset.issued); if(f) markFineIssued(f,btn);
+    }));
     list.querySelectorAll('[data-paid]').forEach(btn=>btn.addEventListener('click',()=>{
       const f=fines.find(x=>x.id===btn.dataset.paid); if(f) markFinePaid(f,btn);
     }));
