@@ -268,6 +268,12 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .fine-body{padding:21px;display:grid;gap:13px;}.fine-field{display:grid;gap:6px;}.fine-field>span{font:700 10px var(--mono);letter-spacing:.6px;text-transform:uppercase;color:var(--slate-600);}.fine-field input,.fine-field textarea,.fine-field select{width:100%;border:1px solid var(--line);border-radius:10px;background:#fafbfe;padding:11px 12px;font:13px var(--body);color:var(--slate-900);outline:none;resize:vertical;}.fine-field input:focus,.fine-field textarea:focus,.fine-field select:focus{border-color:#b77a7a;box-shadow:0 0 0 3px rgba(169,75,75,.09);}.fine-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:4px;}.fine-cancel,.fine-save{border:0;border-radius:10px;padding:11px 15px;font:700 12px var(--body);cursor:pointer;}.fine-cancel{background:#f0f2f5;color:var(--slate-600);}.fine-save{background:#a94b4b;color:#fff;}.fine-save:disabled{opacity:.55;cursor:wait;}.fine-error{padding:10px 12px;border-radius:9px;background:#fff0f0;color:#a33f3f;font-size:11px;}
 
 .fine-summary{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#f8fafc;}
+.fine-summary.fine-state{background:#fff0f0;border-color:#e5b5b5;box-shadow:inset 0 0 0 1px rgba(217,83,79,.05);}
+.fine-summary.fine-state .fine-summary-title{color:#b33f3f;}
+.fine-summary.fine-state .fine-summary-total{color:#a34a4a;}
+.fine-summary.paid-state{background:#edf9f3;border-color:#a9d8bf;box-shadow:inset 0 0 0 1px rgba(43,173,125,.05);}
+.fine-summary.paid-state .fine-summary-title{color:#17734f;}
+.fine-summary.paid-state .fine-summary-total{color:#286a4e;}
 .fine-summary-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px;}
 .fine-summary-title{font-size:12px;font-weight:700;color:var(--navy-900);}
 .fine-summary-total{font:700 12px var(--mono);color:var(--slate-600);}
@@ -288,8 +294,12 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .fine-mini{border:1px solid #d7dee7;background:#f7f9fb;color:var(--slate-700);border-radius:7px;padding:5px 8px;font:700 10px var(--body);cursor:pointer;}
 .fine-mini:hover{border-color:#b7c3d1;background:#fff;}
 .fine-mini:disabled{opacity:.7;cursor:default;}
-.fine-mini.fine-pay{background:#fff0f0!important;border-color:#e5b5b5!important;color:#b33f3f!important;}
+.fine-mini.fine-pay{background:#fff0f0!important;border-color:#e5b5b5!important;color:#b33f3f!important;min-width:76px;transition:all .18s ease;}
 .fine-mini.fine-pay:hover{background:#ffe4e4!important;border-color:#d88f8f!important;}
+.fine-mini.fine-pay.is-paying{background:#fff7df!important;border-color:#e2c77a!important;color:#8d6b08!important;cursor:wait;}
+.fine-mini.fine-pay.is-check{background:#edf9f3!important;border-color:#9bd2b5!important;color:#17734f!important;cursor:default;}
+.fine-pay-spinner{display:inline-block;width:10px;height:10px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;margin-right:5px;animation:finePaySpin .7s linear infinite;}
+@keyframes finePaySpin{to{transform:rotate(360deg);}}
 .vehicle-fine-count{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:3px;}
 .vehicle-fine-total{font-family:var(--mono);font-size:10px;color:var(--slate-600);margin-top:2px;}
 .review-stats{grid-template-columns:repeat(5,1fr)}
@@ -586,21 +596,42 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     setTimeout(()=>fineDate.focus(),30);
   }
 
-  async function markFinePaid(fine){
-    if(!fine || fine.status === 'PAGA' || !currentVehicle) return;
+  async function markFinePaid(fine, button){
+    if(!fine || fine.status === 'PAGA' || !currentVehicle || button?.disabled) return;
+    if(button){
+      button.disabled=true;
+      button.classList.add('is-paying');
+      button.innerHTML='<span class="fine-pay-spinner"></span>Pagando…';
+    }
     try{
       const fineData={
         date:fine.dateInput,
         description:fine.description,
         value:Number(fine.value||0),
-        status:'PAGA'
+        status:'PAGA',
+        obs:fine.obs || ''
       };
       await apiGet('updateFine',{id:fine.id,fine:JSON.stringify(fineData)});
+
+      // Mantém a confirmação visível por alguns instantes para deixar claro
+      // que o clique foi processado, mesmo quando a API responde muito rápido.
+      if(button){
+        button.classList.remove('is-paying');
+        button.classList.add('is-check');
+        button.innerHTML='✓';
+        await new Promise(resolve=>setTimeout(resolve,450));
+      }
+
       await refreshVehicleFines(currentVehicle);
       syncModalReview();
       renderFineList();
       setStatus(true,'Planilha de multas · multa marcada como paga');
     }catch(error){
+      if(button){
+        button.disabled=false;
+        button.classList.remove('is-paying','is-check');
+        button.innerHTML='Pagar';
+      }
       alert(error.message);
     }
   }
@@ -624,14 +655,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     const activeFines=fines.filter(isActiveFine);
     const total=fines.reduce((sum,f)=>sum+Number(f.value||0),0);
 
-    // Só mostra a seção enquanto existir alguma multa ativa. Se houver uma ativa,
-    // também mostramos as já pagas como histórico do veículo.
-    section.classList.toggle('hidden-by-state', activeFines.length === 0);
+    // O histórico continua visível mesmo quando todas as multas já foram pagas.
+    // Com multa ativa, a seção fica vermelha; com histórico somente pago, fica verde.
+    section.classList.toggle('hidden-by-state', fines.length === 0);
+    section.classList.toggle('fine-state', activeFines.length > 0);
+    section.classList.toggle('paid-state', fines.length > 0 && activeFines.length === 0);
     summary.textContent=`${fines.length} multa${fines.length===1?'':'s'} · ${money(total)}`;
-    if(!activeFines.length){list.innerHTML='';return;}
+    if(!fines.length){list.innerHTML='';return;}
 
     list.innerHTML=fines.map(f=>{
-      const paid=f.status==='PAGA';
+      const paid=String(f.status||'').toUpperCase()==='PAGA';
       return `<div class="fine-card ${paid?'fine-card-paid':''}">
         <div class="fine-card-top"><span class="fine-card-date">${escapeHtml(f.date)}</span><span class="fine-card-value">${money(f.value)}</span></div>
         <div class="fine-card-desc">${escapeHtml(f.description)}</div>
@@ -640,7 +673,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       </div>`;
     }).join('');
     list.querySelectorAll('[data-paid]').forEach(btn=>btn.addEventListener('click',()=>{
-      const f=fines.find(x=>x.id===btn.dataset.paid); if(f) markFinePaid(f);
+      const f=fines.find(x=>x.id===btn.dataset.paid); if(f) markFinePaid(f,btn);
     }));
   }
 
@@ -667,6 +700,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     document.getElementById('modalRenavam').textContent=vehicle.renavam||'—';
     document.getElementById('fineList').innerHTML='';
     document.getElementById('fineSummary').classList.add('hidden-by-state');
+    document.getElementById('fineSummary').classList.remove('fine-state','paid-state');
     syncModalReview(); renderFineList(); updateModalNav(); backdrop.classList.add('open');
   }
 
