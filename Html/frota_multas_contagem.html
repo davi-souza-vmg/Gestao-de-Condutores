@@ -194,6 +194,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 @media(max-width:520px){.skeleton-grid{grid-template-columns:1fr;}}
 .review-check.clear-state{background:#edf9f3;border-color:#a9d8bf;box-shadow:inset 0 0 0 1px rgba(43,173,125,.05);}
 .review-check.clear-state .review-state{color:#17734f;}
+.review-check.fine-state{background:#fff0f0;border-color:#e5b5b5;box-shadow:inset 0 0 0 1px rgba(217,83,79,.05);}
+.review-check.fine-state .review-state{color:#b33f3f;}
 .vehicle-action.clear-active{background:#35a873;border-color:#35a873;color:#fff;box-shadow:0 5px 14px rgba(53,168,115,.20);}
 .vehicle-action.clear-active:hover{background:#2f9868;border-color:#2f9868;}
 .vehicle-action.fine-active{background:#d9534f;border-color:#d9534f;color:#fff;box-shadow:0 5px 14px rgba(217,83,79,.20);}
@@ -277,6 +279,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .fine-card-date{font:700 10px var(--mono);color:var(--slate-600);}
 .fine-card-value{font:700 13px var(--mono);color:var(--navy-900);white-space:nowrap;}
 .fine-card-desc{font-size:12px;line-height:1.4;color:var(--slate-900);margin:6px 0 8px;}
+.fine-card-obs{display:block;margin:9px 0 10px;padding:10px 11px;border-radius:9px;background:#f3f6fa;border:1px solid #dce3ea;color:var(--slate-700);font-size:11px;line-height:1.45;}
+.fine-card-paid .fine-card-obs{background:#e4f6ec;border-color:#b9dfca;color:#286a4e;}
 .fine-card-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .fine-badge{display:inline-flex;padding:4px 7px;border-radius:999px;font:700 9px var(--mono);letter-spacing:.25px;background:#fff7df;color:#8d6b08;}
 .fine-badge.paga{background:#edf9f3;color:#17734f}.fine-badge.cancelada{background:#f1f3f6;color:#687384}.fine-badge.recurso{background:#eef4ff;color:#2d5d9f}
@@ -628,11 +632,11 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
     list.innerHTML=fines.map(f=>{
       const paid=f.status==='PAGA';
-      const badgeClass=paid?'paga':(f.status==='EM RECURSO'?'recurso':'');
       return `<div class="fine-card ${paid?'fine-card-paid':''}">
         <div class="fine-card-top"><span class="fine-card-date">${escapeHtml(f.date)}</span><span class="fine-card-value">${money(f.value)}</span></div>
         <div class="fine-card-desc">${escapeHtml(f.description)}</div>
-        <div class="fine-card-bottom"><span class="fine-badge ${badgeClass}">${paid?'PAGO':escapeHtml(f.status)}</span><div class="fine-actions-inline">${paid?'':'<button type="button" class="fine-mini fine-pay" data-paid="'+escapeHtml(f.id)+'">Pagar</button>'}</div></div>
+        ${f.obs ? `<div class="fine-card-obs"><strong>OBS:</strong> ${escapeHtml(f.obs)}</div>` : ''}
+        <div class="fine-card-bottom"><span>${paid?'<span class="fine-badge paga">PAGO</span>':''}</span><div class="fine-actions-inline">${paid?'':'<button type="button" class="fine-mini fine-pay" data-paid="'+escapeHtml(f.id)+'">Pagar</button>'}</div></div>
       </div>`;
     }).join('');
     list.querySelectorAll('[data-paid]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -647,6 +651,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     const review=document.querySelector('.review-check');
     const clearBtn=document.getElementById('markClearBtn');
     review.classList.toggle('clear-state',status==='SEM MULTA');
+    review.classList.toggle('fine-state',status==='COM MULTA');
     document.getElementById('modalReviewState').textContent=status==='SEM MULTA'?'Sem multa':status==='COM MULTA'?`Com multa · ${activeFines.length}`:'Falta conferir';
     clearBtn.disabled=activeFines.length>0;
     clearBtn.textContent=status==='SEM MULTA'?'Sem multa':'Marcar sem multa';
