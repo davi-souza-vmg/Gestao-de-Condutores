@@ -178,6 +178,26 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 .review-stat.pending .rv{color:#b58a12;}
 .review-stat.fine .rv{color:#c54d4d;}
 .review-stat .rbar{display:none;}
+.skeleton{position:relative;overflow:hidden;background:linear-gradient(90deg,#eef1f5 25%,#f7f8fa 37%,#eef1f5 63%);background-size:400% 100%;animation:skeletonShimmer 1.35s ease-in-out infinite;color:transparent!important;border-radius:7px;}
+@keyframes skeletonShimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.review-stat .rv.skeleton{height:27px;width:54px;margin-top:7px;color:transparent!important;}
+.skeleton-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+.skeleton-card{height:108px;border:1px solid #e7ebf1;border-radius:12px;background:#fff;padding:18px;overflow:hidden;}
+.skeleton-line{height:10px;border-radius:6px;margin-bottom:12px;width:44%;}
+.skeleton-line.big{height:22px;width:58%;margin-bottom:9px;}
+.skeleton-line.small{height:8px;width:35%;margin-bottom:0;}
+@media(max-width:1000px){.skeleton-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:760px){.skeleton-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:520px){.skeleton-grid{grid-template-columns:1fr;}}
+.review-check.clear-state{background:#edf9f3;border-color:#a9d8bf;box-shadow:inset 0 0 0 1px rgba(43,173,125,.05);}
+.review-check.clear-state .review-state{color:#17734f;}
+.vehicle-action.clear-active{background:#35a873;border-color:#35a873;color:#fff;box-shadow:0 5px 14px rgba(53,168,115,.20);}
+.vehicle-action.clear-active:hover{background:#2f9868;border-color:#2f9868;}
+.vehicle-action:disabled{cursor:not-allowed;opacity:.55;}
+.fine-summary.hidden-by-state{display:none;}
+.fine-paid{background:#edf9f3!important;border-color:#9fd7bc!important;color:#17734f!important;}
+.fine-paid:disabled{opacity:.7;cursor:default;}
+
 
 .vehicle{box-shadow:none;border-radius:12px;padding:16px;transition:transform .15s ease,border-color .15s ease,background .15s ease;}
 .vehicle:hover{transform:translateY(-2px);box-shadow:none;}
@@ -289,16 +309,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 <main>
 
   <section class="review-stats" id="reviewStats">
-    <div class="review-stat total active" data-review-filter="all"><div class="rk">Todos os veículos</div><div class="rv" id="reviewTotal">0</div></div>
-    <div class="review-stat clear" data-review-filter="clear"><div class="rk">Sem multa</div><div class="rv" id="reviewClear">0</div></div>
-    <div class="review-stat pending" data-review-filter="pending"><div class="rk">Falta conferir</div><div class="rv" id="reviewPending">0</div></div>
-    <div class="review-stat fine" data-review-filter="fine"><div class="rk">Veículos com multa</div><div class="rv" id="reviewFine">0</div></div>
-    <div class="review-stat total" data-review-filter="fineRecords"><div class="rk">Multas registradas</div><div class="rv" id="reviewFineRecords">0</div></div>
+    <div class="review-stat total active" data-review-filter="all"><div class="rk">Todos os veículos</div><div class="rv skeleton" id="reviewTotal">0</div></div>
+    <div class="review-stat clear" data-review-filter="clear"><div class="rk">Sem multa</div><div class="rv skeleton" id="reviewClear">0</div></div>
+    <div class="review-stat pending" data-review-filter="pending"><div class="rk">Falta conferir</div><div class="rv skeleton" id="reviewPending">0</div></div>
+    <div class="review-stat fine" data-review-filter="fine"><div class="rk">Veículos com multa</div><div class="rv skeleton" id="reviewFine">0</div></div>
+    <div class="review-stat total" data-review-filter="fineRecords"><div class="rk">Multas registradas</div><div class="rv skeleton" id="reviewFineRecords">0</div></div>
   </section>
 
   <div class="toolbar">
     <div class="search">
-      <input id="search" type="text" placeholder="Buscar por placa, chassi, Renavam ou frota…">
+      <input id="search" type="text" placeholder="Buscar por placa, pref., chassi ou Renavam…">
     </div>
     <span class="count" id="count">0 veículos</span>
   </div>
@@ -319,6 +339,16 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   </div>
 
   <section id="grid" class="grid hidden"></section>
+  <div id="skeletonGrid" class="skeleton-grid">
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+    <div class="skeleton-card"><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line big"></div><div class="skeleton skeleton-line small"></div></div>
+  </div>
 </main>
 
 <div class="backdrop" id="backdrop">
@@ -345,7 +375,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
             <button type="button" class="vehicle-action primary" id="addFineBtn">+ Adicionar multa</button>
           </div>
         </div>
-        <div class="fine-summary">
+        <div class="fine-summary hidden-by-state" id="fineSummary">
           <div class="fine-summary-top"><span class="fine-summary-title">Multas deste veículo</span><span class="fine-summary-total" id="modalFineSummary">0 multas · R$ 0,00</span></div>
           <div class="fine-list" id="fineList"><div class="fine-empty">Carregando multas…</div></div>
         </div>
@@ -396,6 +426,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   const stateError = document.getElementById('stateError');
   const errorText = document.getElementById('errorText');
   const empty = document.getElementById('empty');
+  const skeletonGrid = document.getElementById('skeletonGrid');
   const statusDot = document.getElementById('statusDot');
   const statusText = document.getElementById('statusText');
   const backdrop = document.getElementById('backdrop');
@@ -413,10 +444,23 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   let multaStatuses = {};
   let finesByPlate = {};
 
+  function isActiveFine(fine){
+    const status = String(fine?.status || 'PENDENTE').toUpperCase();
+    return status !== 'PAGA' && status !== 'CANCELADA';
+  }
+
+  function activeFinesFor(vehicle){
+    return finesFor(vehicle).filter(isActiveFine);
+  }
+
   function reviewStatus(vehicle){
     const plate = normalizePlate(vehicle.placa);
-    const fines = finesByPlate[plate] || [];
-    if(fines.length) return 'COM MULTA';
+    const allFines = finesByPlate[plate] || [];
+    const activeFines = allFines.filter(isActiveFine);
+    if(activeFines.length) return 'COM MULTA';
+    // Se já houve multa, mas todas foram pagas/canceladas, o veículo volta
+    // para SEM MULTA sem apagar o histórico existente em CONDUTORES.
+    if(allFines.length) return 'SEM MULTA';
     const status = multaStatuses[plate];
     return status === 'SEM MULTA' ? 'SEM MULTA' : 'PENDENTE';
   }
@@ -474,8 +518,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
   async function markVehicleClear(){
     if(!currentVehicle) return;
     const plate = normalizePlate(currentVehicle.placa);
-    if(finesFor(currentVehicle).length){
-      alert('Este veículo ainda possui multas registradas. Exclua ou mantenha essas multas antes de marcar sem multa.');
+    if(activeFinesFor(currentVehicle).length){
+      alert('Este veículo ainda possui multas ativas. Pague as multas antes de marcar sem multa.');
       return;
     }
     multaStatuses[plate] = 'SEM MULTA';
@@ -524,7 +568,6 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         }
         finish();
         await refreshVehicleFines(currentVehicle);
-        multaStatuses[normalizePlate(currentVehicle.placa)]='COM MULTA';
         setStatusFromReview(); render(); syncModalReview();
         setStatus(true,'Planilha de multas · salvo');
       }catch(error){
@@ -545,6 +588,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       };
       await apiGet('updateFine',{id:fine.id,fine:JSON.stringify(fineData)});
       await refreshVehicleFines(currentVehicle);
+      syncModalReview();
+      renderFineList();
       setStatus(true,'Planilha de multas · multa marcada como paga');
     }catch(error){
       alert(error.message);
@@ -563,26 +608,42 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
 
   function renderFineList(){
     if(!currentVehicle) return;
-    const list=document.getElementById('fineList'); const summary=document.getElementById('modalFineSummary'); const fines=finesFor(currentVehicle);
-    const total=fines.reduce((sum,f)=>sum+Number(f.value||0),0);
-    summary.textContent=`${fines.length} multa${fines.length===1?'':'s'} · ${money(total)}`;
-    if(!fines.length){list.innerHTML='<div class="fine-empty">Nenhuma multa registrada para este veículo.</div>';return;}
-    list.innerHTML=fines.map(f=>{
-      const badgeClass=f.status==='PAGA'?'paga':f.status==='CANCELADA'?'cancelada':f.status==='EM RECURSO'?'recurso':'';
+    const section=document.getElementById('fineSummary');
+    const list=document.getElementById('fineList');
+    const summary=document.getElementById('modalFineSummary');
+    const fines=finesFor(currentVehicle);
+    const activeFines=fines.filter(isActiveFine);
+    const total=activeFines.reduce((sum,f)=>sum+Number(f.value||0),0);
+
+    // O bloco "Multas deste veículo" só aparece enquanto houver multa ativa.
+    section.classList.toggle('hidden-by-state', activeFines.length === 0);
+    summary.textContent=`${activeFines.length} multa${activeFines.length===1?'':'s'} · ${money(total)}`;
+    if(!activeFines.length){list.innerHTML='';return;}
+
+    list.innerHTML=activeFines.map(f=>{
+      const badgeClass=f.status==='EM RECURSO'?'recurso':'';
       return `<div class="fine-card">
         <div class="fine-card-top"><span class="fine-card-date">${escapeHtml(f.date)}</span><span class="fine-card-value">${money(f.value)}</span></div>
         <div class="fine-card-desc">${escapeHtml(f.description)}</div>
-        <div class="fine-card-bottom"><span class="fine-badge ${badgeClass}">${escapeHtml(f.status)}</span><div class="fine-actions-inline"><button type="button" class="fine-mini fine-paid" data-paid="${escapeHtml(f.id)}" ${f.status==='PAGA'?'disabled':''}>Pago</button></div></div>
+        <div class="fine-card-bottom"><span class="fine-badge ${badgeClass}">${escapeHtml(f.status)}</span><div class="fine-actions-inline"><button type="button" class="fine-mini fine-paid" data-paid="${escapeHtml(f.id)}">Pago</button></div></div>
       </div>`;
     }).join('');
-    list.querySelectorAll('[data-paid]').forEach(btn=>btn.addEventListener('click',()=>{const f=fines.find(x=>x.id===btn.dataset.paid);if(f)markFinePaid(f);}));
+    list.querySelectorAll('[data-paid]').forEach(btn=>btn.addEventListener('click',()=>{
+      const f=activeFines.find(x=>x.id===btn.dataset.paid); if(f) markFinePaid(f);
+    }));
   }
 
   function syncModalReview(){
     if(!currentVehicle)return;
     const status=reviewStatus(currentVehicle);
-    document.getElementById('modalReviewState').textContent=status==='SEM MULTA'?'Sem multa':status==='COM MULTA'?`Com multa · ${finesFor(currentVehicle).length}`:'Falta conferir';
-    document.getElementById('markClearBtn').disabled=finesFor(currentVehicle).length>0;
+    const activeFines=activeFinesFor(currentVehicle);
+    const review=document.querySelector('.review-check');
+    const clearBtn=document.getElementById('markClearBtn');
+    review.classList.toggle('clear-state',status==='SEM MULTA');
+    document.getElementById('modalReviewState').textContent=status==='SEM MULTA'?'Sem multa':status==='COM MULTA'?`Com multa · ${activeFines.length}`:'Falta conferir';
+    clearBtn.disabled=activeFines.length>0;
+    clearBtn.textContent=status==='SEM MULTA'?'Sem multa':'Marcar sem multa';
+    clearBtn.classList.toggle('clear-active',status==='SEM MULTA');
   }
 
   function openModal(vehicle){
@@ -591,6 +652,8 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     document.getElementById('modalPlaca').textContent=vehicle.placa||'—';
     document.getElementById('modalChassi').textContent=vehicle.chassi||'—';
     document.getElementById('modalRenavam').textContent=vehicle.renavam||'—';
+    document.getElementById('fineList').innerHTML='';
+    document.getElementById('fineSummary').classList.add('hidden-by-state');
     syncModalReview(); renderFineList(); updateModalNav(); backdrop.classList.add('open');
   }
 
@@ -740,12 +803,25 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     el.addEventListener('click', () => copyText(el.textContent.trim(), el));
   }
 
+  function normalizeSearch(value){
+    return String(value ?? '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toUpperCase().replace(/[^A-Z0-9]/g,'');
+  }
+
+  function vehicleMatchesSearch(vehicle, query){
+    if(!query) return true;
+    const tokens = query.split(/\s+/).filter(Boolean);
+    const haystack = [vehicle.placa, vehicle.frota, vehicle.chassi, vehicle.renavam]
+      .map(normalizeSearch).join(' ');
+    return tokens.every(token => haystack.includes(normalizeSearch(token)));
+  }
+
   function render(){
-    const q = search.value.trim().toLowerCase();
+    const q = search.value.trim();
 
     const filtered = vehicles.filter(v => {
-      const haystack = [v.placa,v.chassi,v.renavam,v.frota].join(' ').toLowerCase();
-      const matchesSearch = !q || haystack.includes(q);
+      const matchesSearch = vehicleMatchesSearch(v, q);
       const status = reviewStatus(v);
       const fines = finesFor(v);
       const matchesReview =
@@ -792,7 +868,18 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
     });
   }
 
+  function setSkeletonLoading(isLoading){
+    document.querySelectorAll('.review-stat .rv').forEach(el=>el.classList.toggle('skeleton',isLoading));
+    if(skeletonGrid) skeletonGrid.classList.toggle('hidden',!isLoading);
+    if(isLoading){
+      grid.classList.add('hidden');
+      empty.classList.add('hidden');
+      stateError.classList.add('hidden');
+    }
+  }
+
   async function loadData(){
+    setSkeletonLoading(true);
     try{
       const loaded = [];
 
@@ -844,9 +931,11 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       stateLoading.classList.add('hidden');
       stateError.classList.add('hidden');
       await loadMultaStatuses();
+      setSkeletonLoading(false);
       setStatusFromReview();
       render();
     }catch(error){
+      setSkeletonLoading(false);
       stateLoading.classList.add('hidden');
       grid.classList.add('hidden');
       stateError.classList.remove('hidden');
