@@ -634,7 +634,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
       button.disabled=true;
       button.classList.add('is-issuing');
       button.innerHTML=iconDocPencil('fine-icon-writing');
-      button.title='Emitindo boleto…';
+      button.title='Registrando emissão…';
     }
     try{
       const fineData={date:fine.dateInput,description:fine.description,value:Number(fine.value||0),status:'EMITIDA',obs:fine.obs || ''};
@@ -643,13 +643,12 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         button.classList.remove('is-issuing');
         button.classList.add('is-check');
         button.innerHTML=iconCheck();
-        button.title='Boleto emitido';
-        await new Promise(resolve=>setTimeout(resolve,450));
+        button.title='Boleto marcado como emitido';
       }
       await refreshVehicleFines(currentVehicle);
       syncModalReview();
       renderFineList();
-      setStatus(true,'Planilha de multas · boleto emitido');
+      setStatus(true,'Planilha de multas · emissão registrada');
     }catch(error){
       if(button){
         button.disabled=false;
@@ -676,8 +675,7 @@ main{max-width:1320px;margin:0 auto;padding:28px 40px 60px}
         button.classList.remove('is-paying');
         button.classList.add('is-check');
         button.innerHTML=iconCheck();
-        button.title='Pagamento confirmado';
-        await new Promise(resolve=>setTimeout(resolve,450));
+        button.title='Pagamento marcado como pago';
       }
       await refreshVehicleFines(currentVehicle);
       syncModalReview();
