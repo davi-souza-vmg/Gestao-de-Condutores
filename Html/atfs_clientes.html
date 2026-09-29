@@ -466,6 +466,14 @@
     return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
 
+  // RENAVAM é exibido sempre com 11 dígitos.
+  // Isso recupera zeros à esquerda quando a API/planilha devolve o valor como número.
+  function formatarRenavam(valor){
+    if (valor == null || valor === '') return '';
+    const somenteDigitos = String(valor).replace(/\D/g, '');
+    return somenteDigitos ? somenteDigitos.padStart(11, '0').slice(-11) : '';
+  }
+
   // --- CLIENTES QUE NÃO EMITEM ATF (ignorados em toda a comparação) ---
   const CLIENTES_IGNORADOS = ['ADLER', 'LOJA ELETRICA', 'PONTO FRIO', 'DCML', 'ATMOSFERA', 'JAT', 'NOV', "VMG", "MINAS MAQUINAS"]
     .map(c => normalizarCliente(c));
@@ -1032,7 +1040,7 @@
         ? Array.from(new Set(d.enviados || [])).join(', ')
         : Array.from(new Set(d.pendentes || [])).join(', ');
       const df = d.dadosFrota || {};
-      return [d.frota, d.filial, situacao, clientes, df.lotacao || '', df.placa || '', df.anoModelo || '', df.chassi || '', df.renavam || ''];
+      return [d.frota, d.filial, situacao, clientes, df.lotacao || '', df.placa || '', df.anoModelo || '', df.chassi || '', formatarRenavam(df.renavam)];
     });
     return [cabecalho, ...linhas];
   }
@@ -1072,7 +1080,7 @@
       { lbl: 'Placa',      val: dadosFrota.placa },
       { lbl: 'Ano/Modelo', val: dadosFrota.anoModelo },
       { lbl: 'Chassi',     val: dadosFrota.chassi },
-      { lbl: 'Renavam',    val: dadosFrota.renavam },
+      { lbl: 'Renavam',    val: formatarRenavam(dadosFrota.renavam) },
     ].filter(c => c.val);
     if(campos.length === 0) return '';
     return `<div class="frota-meta">${campos.map(c =>
@@ -1083,30 +1091,53 @@
   els.divList.addEventListener('change', async (e) => {
     const cb = e.target.closest('input[data-enviado-cliente]');
     if(!cb) return;
+
     const [filial, frota, cliente] = cb.dataset.enviadoCliente.split('|');
     const marcar = cb.checked;
-    cb.disabled = true;
-    try{
-      const item = ultimaComparacao && ultimaComparacao.find(d => d.filial === filial && String(d.frota) === String(frota));
-      if(!item) throw new Error('Frota não encontrada localmente. Atualize a página e tente novamente.');
 
-      const clienteNorm = normalizarCliente(cliente);
-      let enviadosAtuais = (item.enviados || []).slice();
-      if (marcar) {
-        if (!enviadosAtuais.some(c => saoClientesEquivalentes(normalizarCliente(c), clienteNorm))) {
-          enviadosAtuais.push(cliente);
-        }
-      } else {
-        enviadosAtuais = enviadosAtuais.filter(c => !saoClientesEquivalentes(normalizarCliente(c), clienteNorm));
-      }
+    const item = ultimaComparacao && ultimaComparacao.find(
+      d => d.filial === filial && String(d.frota) === String(frota)
+    );
 
-      await apiPost({ action: 'atualizarEnviados', filial, frota, clientesEnviados: enviadosAtuais });
-      item.enviados = enviadosAtuais;
-      render();
-    }catch(err){
-      alert('Erro ao atualizar status de envio: ' + err.message);
+    if(!item){
       cb.checked = !marcar;
-      cb.disabled = false;
+      alert('Frota não encontrada localmente. Atualize a página e tente novamente.');
+      return;
+    }
+
+    const clienteNorm = normalizarCliente(cliente);
+
+    // Guarda o estado anterior para desfazer a alteração se a gravação falhar.
+    const enviadosAnteriores = (item.enviados || []).slice();
+    let enviadosAtuais = enviadosAnteriores.slice();
+
+    if (marcar) {
+      if (!enviadosAtuais.some(c => saoClientesEquivalentes(normalizarCliente(c), clienteNorm))) {
+        enviadosAtuais.push(cliente);
+      }
+    } else {
+      enviadosAtuais = enviadosAtuais.filter(
+        c => !saoClientesEquivalentes(normalizarCliente(c), clienteNorm)
+      );
+    }
+
+    // Atualização otimista: a interface muda imediatamente.
+    item.enviados = enviadosAtuais;
+    render();
+
+    try{
+      await apiPost({
+        action: 'atualizarEnviados',
+        filial,
+        frota,
+        clientesEnviados: enviadosAtuais
+      });
+      // Não renderiza novamente no sucesso: evita trabalho visual desnecessário.
+    }catch(err){
+      // Se o Apps Script falhar, volta ao estado anterior.
+      item.enviados = enviadosAnteriores;
+      render();
+      alert('Erro ao atualizar status de envio: ' + err.message);
     }
   });
 
