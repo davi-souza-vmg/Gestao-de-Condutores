@@ -701,19 +701,26 @@
           <span id="exportPickerFilterInfo"></span>
           <button type="button" class="btn-chip" id="exportPickerClearFilters" style="flex:none;">Limpar filtros</button>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px;align-items:start;">
           <select id="exportPickerFilial"><option value="">Todas as filiais</option></select>
-          <select id="exportPickerSituacao">
-            <option value="">Todas as situações</option>
-            <option value="pendente">Vencendo + vencido (DER ou CNH)</option>
-            <option value="der-pendente">DER vencendo ou vencido</option>
-            <option value="cnh-pendente">CNH vencendo ou vencida</option>
-            <option value="der-vencendo">Somente DER vencendo</option>
-            <option value="der-vencido">Somente DER vencido</option>
-            <option value="cnh-vencida">Somente CNH vencida</option>
-            <option value="der-ativo">DER regular</option>
-            <option value="cnh-ativa">CNH ativa</option>
-          </select>
+          <fieldset class="export-status-filter" style="border:1px solid var(--border,#d8deea);border-radius:9px;padding:9px 11px;margin:0;min-width:0;">
+            <legend style="padding:0 5px;font-size:12px;font-weight:700;">Situação do DER</legend>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;font-size:12.5px;">
+              <label><input type="checkbox" data-export-der="VENCENDO"> Vencendo</label>
+              <label><input type="checkbox" data-export-der="VENCIDO"> Vencido</label>
+              <label><input type="checkbox" data-export-der="SEM_CADASTRO"> Sem cadastro</label>
+              <label><input type="checkbox" data-export-der="ATIVO"> Ativo</label>
+            </div>
+          </fieldset>
+          <fieldset class="export-status-filter" style="border:1px solid var(--border,#d8deea);border-radius:9px;padding:9px 11px;margin:0;min-width:0;">
+            <legend style="padding:0 5px;font-size:12px;font-weight:700;">Situação da CNH</legend>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;font-size:12.5px;">
+              <label><input type="checkbox" data-export-cnh="VENCENDO"> Vencendo</label>
+              <label><input type="checkbox" data-export-cnh="VENCIDO"> Vencida</label>
+              <label><input type="checkbox" data-export-cnh="SEM_CADASTRO"> Sem cadastro</label>
+              <label><input type="checkbox" data-export-cnh="ATIVO"> Ativa</label>
+            </div>
+          </fieldset>
         </div>
         <div class="search-wrap" style="margin-bottom:10px;">
           <input type="text" id="exportPickerSearch" placeholder="Buscar por nome, filial ou matrícula…">
@@ -856,6 +863,8 @@ function tempoRelativo(data) {
   let exportPickerSearchQ = '';
   let exportPickerFilialQ = '';
   let exportPickerSituacaoQ = '';
+  const exportDerStatuses = new Set();
+  const exportCnhStatuses = new Set();
   let exportPickerUseFilters = true; // true = picker começa mostrando só quem bate com os filtros atuais da tela
 
   function isEnviadoAguardando(r){
@@ -889,11 +898,14 @@ function tempoRelativo(data) {
   els.exportModeManual.addEventListener('change', updateExportModeUI);
   els.exportPickerSearch.addEventListener('input', () => { exportPickerSearchQ = els.exportPickerSearch.value.trim().toLowerCase(); renderExportPickerList(); });
   els.exportPickerFilial.addEventListener('change', () => { exportPickerFilialQ = els.exportPickerFilial.value; renderExportPickerList(); });
-  els.exportPickerSituacao.addEventListener('change', () => { exportPickerSituacaoQ = els.exportPickerSituacao.value; renderExportPickerList(); });
+  document.querySelectorAll('[data-export-der]').forEach(cb => cb.addEventListener('change', () => { cb.checked ? exportDerStatuses.add(cb.dataset.exportDer) : exportDerStatuses.delete(cb.dataset.exportDer); renderExportPickerList(); }));
+  document.querySelectorAll('[data-export-cnh]').forEach(cb => cb.addEventListener('change', () => { cb.checked ? exportCnhStatuses.add(cb.dataset.exportCnh) : exportCnhStatuses.delete(cb.dataset.exportCnh); renderExportPickerList(); }));
   els.exportPickerClearFilters.addEventListener('click', () => {
     exportPickerUseFilters = false;
     exportPickerFilialQ = ''; exportPickerSituacaoQ = '';
-    els.exportPickerFilial.value = ''; els.exportPickerSituacao.value = '';
+    exportDerStatuses.clear(); exportCnhStatuses.clear();
+    document.querySelectorAll('[data-export-der], [data-export-cnh]').forEach(cb => cb.checked = false);
+    els.exportPickerFilial.value = '';
     renderExportPickerList();
     els.exportPickerSearch.focus();
   });
@@ -1667,7 +1679,9 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     exportPickedCpf.clear();
     exportPickerSearchQ = '';
     exportPickerFilialQ = ''; exportPickerSituacaoQ = '';
-    els.exportPickerFilial.value = ''; els.exportPickerSituacao.value = '';
+    exportDerStatuses.clear(); exportCnhStatuses.clear();
+    document.querySelectorAll('[data-export-der], [data-export-cnh]').forEach(cb => cb.checked = false);
+    els.exportPickerFilial.value = '';
     exportPickerUseFilters = false;
     els.exportPickerSearch.value = '';
     els.exportFiltroResumo.textContent = `${lastFilteredRows.length} condutor${lastFilteredRows.length===1?'':'es'} com os filtros de agora — ${currentFilterSummaryText()}`;
@@ -1692,15 +1706,9 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     const base = exportPickerUseFilters ? lastFilteredRows : rawRows;
     let list = base.slice().sort((a,b)=> (a.motorista||'').localeCompare(b.motorista||'', 'pt-BR'));
     if(exportPickerFilialQ) list = list.filter(r => (r.filial||'') === exportPickerFilialQ);
-    const st = exportPickerSituacaoQ;
-    if(st === 'pendente') list = list.filter(r => ['VENCENDO','VENCIDO'].includes(r.derStatus) || ['VENCENDO','VENCIDO'].includes(r.cnhStatus));
-    else if(st === 'der-pendente') list = list.filter(r => ['VENCENDO','VENCIDO'].includes(r.derStatus));
-    else if(st === 'cnh-pendente') list = list.filter(r => ['VENCENDO','VENCIDO'].includes(r.cnhStatus));
-    else if(st === 'der-vencendo') list = list.filter(r => r.derStatus === 'VENCENDO');
-    else if(st === 'der-vencido') list = list.filter(r => r.derStatus === 'VENCIDO');
-    else if(st === 'cnh-vencida') list = list.filter(r => r.cnhStatus === 'VENCIDO');
-    else if(st === 'der-ativo') list = list.filter(r => r.derStatus === 'ATIVO');
-    else if(st === 'cnh-ativa') list = list.filter(r => r.cnhStatus === 'ATIVO');
+    // Dentro de cada grupo, os status marcados funcionam como OU; entre DER e CNH, como E.
+    if(exportDerStatuses.size) list = list.filter(r => exportDerStatuses.has(r.derStatus));
+    if(exportCnhStatuses.size) list = list.filter(r => exportCnhStatuses.has(r.cnhStatus));
     if(q){
       list = list.filter(r =>
         (r.motorista||'').toLowerCase().includes(q) ||
