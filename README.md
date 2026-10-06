@@ -1,21 +1,17 @@
-# Gestão de Condutores — ATF Unificado
+# Gestão de Condutores — ATF Unificado v3
 
-## Gestão de ATF's
+## Regra das bases
 
-O `Html/frota.html` é o painel único de controle de ATF's.
+- **Relação de Frota VMG 2026 / aba Frota:** fonte oficial do veículo. PREF., PLACA, LOTAÇÃO, ANO/MODELO, CHASSI, RENAVAN e UNIDADE vêm daqui.
+- **Aba ATFs da base oficial:** contém somente as ATFs já existentes e é usada para controle de validade.
+- **Planilha/área ATFS de apoio:** serve apenas para indicar novos clientes/frotas que ainda receberão uma ATF. Esses registros aparecem como **ATF a emitir** / **Pré-ATF** e não são contados como ATFs cadastradas.
 
-### ATF's cadastradas
-- Cruza a aba **Frota** com a aba **ATFs** da planilha principal.
-- Mostra as ATFs já cadastradas individualmente, inclusive quando a mesma frota possui vários clientes ou itinerários.
-- Frotas sem ATF também podem aparecer no controle como **Sem ATF**.
-- A situação de vencimento é calculada pelo registro da ATF.
+## ATF's cadastradas
+Mostra o controle completo: frotas oficiais sem ATF, ATFs existentes e pré-ATFs. Os contadores de vencido/vencendo/regular consideram apenas ATFs já cadastradas.
 
-### Frotas por cliente
-- Agrupa os registros por frota.
-- Cada cliente/itinerário/ATF permanece como uma seção independente dentro do card.
-- Registros que ainda estão no processo de cadastro na planilha de apoio **ATFS** aparecem como **Em cadastro**, sem substituir uma ATF já existente.
-- Ao clicar em uma seção, abre o painel com os dados do veículo e botões copiáveis para **PREF.**, **PLACA**, **LOTAÇÃO**, **ANO / MODELO**, **CHASSI** e **RENAVAN**.
+## Frotas por cliente
+Agrupa por frota. Todos os clientes/itinerários ligados à mesma frota aparecem dentro do mesmo card, sem repetir os dados físicos do veículo. Como os dados do veículo são os mesmos para todos os clientes daquela frota, eles são exibidos uma única vez no cabeçalho.
 
-A planilha **ATFS** não é usada como banco das ATFs existentes nem sobrescreve os registros oficiais. Ela serve apenas como fila de novos cadastros enquanto a ATF está sendo preparada.
+Ao clicar em uma ATF/itinerário abre um painel compacto com os dados da ATF e botões copiáveis para **PREF.**, **PLACA**, **LOTAÇÃO**, **ANO / MODELO**, **CHASSI** e **RENAVAN**.
 
-`Html/atfs_clientes.html` permanece apenas como compatibilidade com links antigos e redireciona para o painel unificado.
+Não existe mais o conceito genérico de “Em cadastro”. O termo usado para a fila de apoio é **ATF a emitir**.
