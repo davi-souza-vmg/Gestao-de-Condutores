@@ -1,84 +1,1044 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestão de ATF's — Viação Minas Gerais</title>
-<link rel="icon" type="image/jpeg" href="../Img/favicon.jpg">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de ATF's</title>
+<link rel="icon" type="image/jpeg" href="Img/favicon.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--navy-950:#0a1930;--navy-900:#0f2544;--navy-800:#16335f;--navy-700:#1e4278;--amber:#f2a93b;--amber-soft:#fdf1dd;--green:#2bad7d;--green-soft:#e4f7ef;--red:#e5484d;--red-soft:#fde9ea;--blue-soft:#e6f0fe;--slate-900:#1b2433;--slate-600:#5b6577;--slate-400:#93a0b3;--line:#e4e8f0;--bg:#f4f6fb;--card:#fff;--radius:14px;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--slate-900);font-family:var(--font-body);-webkit-font-smoothing:antialiased}.hidden{display:none!important}
-.road{background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));color:#fff;padding:28px 40px 26px;position:relative}.road:after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px,transparent 34px 60px)}
-.road-top{max-width:1320px;margin:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}.eyebrow{font:11px var(--font-mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}.road h1{font:700 29px var(--font-display);margin:0}.road p{margin:5px 0 0;color:var(--slate-400);font-size:13px}.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.top-actions select{background:var(--navy-800);color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:9px;padding:9px 11px;font:13px var(--font-body)}.top-actions select option{background:#fff;color:var(--slate-900)}
-.tabs{max-width:1320px;margin:auto;display:flex;gap:6px;padding:0 40px;background:var(--navy-950)}.tab{border:0;background:transparent;color:#aeb8c8;padding:13px 17px;font-weight:700;font-size:12px;cursor:pointer;border-bottom:3px solid transparent}.tab.active{color:#fff;border-color:var(--amber)}
-main{max-width:1320px;margin:auto;padding:26px 40px 60px}.notice{background:var(--blue-soft);border:1px solid #cbdcf7;border-radius:12px;padding:12px 15px;margin-bottom:18px;font-size:12.5px;color:#28558e}.notice strong{color:var(--navy-900)}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}.stat{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;box-shadow:0 8px 22px rgba(15,37,68,.06);cursor:pointer}.stat.active{box-shadow:0 0 0 3px rgba(30,66,120,.13);border-color:var(--navy-700)}.stat .k{font:10px var(--font-mono);letter-spacing:.5px;text-transform:uppercase;color:var(--slate-600)}.stat .v{font:700 25px var(--font-display);margin-top:5px}.stat.red .v{color:var(--red)}.stat.amber .v{color:#c07f16}.stat.green .v{color:var(--green)}.stat.blue .v{color:var(--navy-700)}
-.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.search{position:relative;flex:1;min-width:250px}.search input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 35px 11px 13px;font:13px var(--font-body);outline:none}.search input:focus{border-color:var(--navy-700)}.search button{position:absolute;right:5px;top:5px;border:0;background:transparent;font-size:18px;color:var(--slate-400);cursor:pointer}.toolbar select,.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 12px;font:600 12px var(--font-body);color:var(--slate-900)}.btn{cursor:pointer}.count{font:11px var(--font-mono);color:var(--slate-600);margin-left:auto}
-.table-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:auto;box-shadow:0 8px 22px rgba(15,37,68,.05)}table{width:100%;min-width:1160px;border-collapse:collapse;font-size:12.5px}th{text-align:left;background:var(--navy-950);color:#aeb8c8;padding:12px 13px;font:10px var(--font-mono);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}td{padding:11px 13px;border-top:1px solid var(--line);vertical-align:top}tbody tr{cursor:pointer}tbody tr:hover{background:#f8faff}.frota,.atf{font-family:var(--font-mono);font-weight:700;white-space:nowrap}.route{font-weight:600}.muted{color:var(--slate-600)}
-.badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 9px;font-size:10.5px;font-weight:700;white-space:nowrap}.badge.green{background:var(--green-soft);color:var(--green)}.badge.amber{background:var(--amber-soft);color:#b47713}.badge.red{background:var(--red-soft);color:var(--red)}.badge.gray{background:#eef1f7;color:var(--slate-600)}.badge.blue{background:var(--blue-soft);color:var(--navy-700)}
-.group-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}.group-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:0 8px 22px rgba(15,37,68,.05)}.group-head{padding:15px 16px;background:#f8faff;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.group-frota{font:700 17px var(--font-display)}.group-sub{font-size:11px;color:var(--slate-600);margin-top:3px}.route-list{padding:8px 12px}.route-item{padding:12px 5px;border-bottom:1px solid var(--line);cursor:pointer;transition:.15s}.route-item:last-child{border-bottom:0}.route-item:hover{background:#fafcff;padding-left:9px;border-radius:9px}.route-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.route-client{font-weight:700;font-size:12px}.route-name{font-size:12px;font-weight:600;margin:5px 0}.route-meta{display:flex;gap:6px;flex-wrap:wrap;color:var(--slate-600);font-size:10.5px}.route-copy-hint{font-size:10px;color:var(--navy-700);margin-top:7px;font-weight:700}
-.empty{text-align:center;padding:55px 20px;color:var(--slate-600)}.empty strong{display:block;color:var(--slate-900);font:700 18px var(--font-display);margin-bottom:6px}.pagination{display:flex;justify-content:center;align-items:center;gap:12px;padding:18px}.pagination button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 12px;cursor:pointer}.pagination button:disabled{opacity:.4;cursor:not-allowed}.page-info{font:11px var(--font-mono);color:var(--slate-600)}
-.modal-backdrop{position:fixed;inset:0;background:rgba(10,25,48,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}.modal-backdrop.open{display:flex}.modal{background:#fff;border-radius:16px;max-width:760px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.28)}.modal-head{background:var(--navy-900);color:#fff;padding:17px 20px;display:flex;justify-content:space-between;gap:12px}.modal-head h2{margin:0;font:700 18px var(--font-display)}.modal-head p{margin:4px 0 0;color:var(--slate-400);font-size:12px}.close{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer}.modal-body{padding:20px}.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.field{min-width:0}.field label{display:block;font:9.5px var(--font-mono);text-transform:uppercase;letter-spacing:.5px;color:var(--slate-600);margin-bottom:3px}.field div{font-size:13px;font-weight:600;word-break:break-word}.full{grid-column:1/-1}
-.copy-title{font:700 12px var(--font-display);margin:20px 0 9px;color:var(--navy-900)}.copy-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.copy-chip{border:1px solid var(--line);background:#f8faff;border-radius:10px;padding:10px 11px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:center;transition:.15s}.copy-chip:hover{border-color:#b9c8df;background:#f3f7fd}.copy-chip.copiado{background:var(--green-soft);border-color:#b8e5d1}.copy-chip .lbl{display:block;font:9px var(--font-mono);text-transform:uppercase;color:var(--slate-600);margin-bottom:3px}.copy-chip .val{font-size:13px;font-weight:700;word-break:break-all}.copy-icon{font-size:14px;color:var(--navy-700)}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:15px;border-top:1px solid var(--line)}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}.dot.off{background:var(--slate-400)}.dot.err{background:var(--red)}
-@media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.road{padding:22px 18px}.tabs{padding:0 18px;overflow:auto}.tab{white-space:nowrap}main{padding:20px 18px 45px}.stats{grid-template-columns:repeat(2,1fr)}.group-grid{grid-template-columns:1fr}.detail-grid,.copy-grid{grid-template-columns:1fr}.road h1{font-size:24px}.top-actions{width:100%}.top-actions select{flex:1;min-width:0}.count{width:100%;margin-left:0}}
+  :root{
+    --navy-950:#0a1930;
+    --navy-900:#0f2544;
+    --navy-800:#16335f;
+    --navy-700:#1e4278;
+    --amber:#f2a93b;
+    --amber-soft:#fdf1dd;
+    --green:#2bad7d;
+    --green-soft:#e4f7ef;
+    --red:#e5484d;
+    --red-soft:#fde9ea;
+    --slate-900:#1b2433;
+    --slate-600:#5b6577;
+    --slate-400:#93a0b3;
+    --line:#e4e8f0;
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --radius:14px;
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--slate-900);font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
 
-/* v3 — interface mais limpa */
-.modal{max-width:820px;border-radius:20px;overflow:hidden}.modal-head{padding:20px 22px;background:linear-gradient(135deg,var(--navy-950),var(--navy-800));align-items:flex-start}.modal-kicker{font:9px var(--font-mono);letter-spacing:1.4px;text-transform:uppercase;color:var(--amber);margin-bottom:4px}.modal-head h2{font-size:22px;letter-spacing:-.2px}.modal-head p{font-size:12px;color:#c3ccda}.modal-head-right{display:flex;align-items:flex-start;gap:10px}.modal-body{padding:22px}.detail-section,.vehicle-section{border:1px solid var(--line);border-radius:14px;padding:16px;background:#fff}.vehicle-section{margin-top:12px;background:#f8faff}.section-title{font:700 12px var(--font-display);color:var(--navy-900);margin-bottom:13px}.section-title span{font:500 10px var(--font-body);color:var(--slate-600);margin-left:5px}.detail-grid{gap:15px 22px}.field label{font-size:8.5px;color:#77839a}.field div{font-size:12.5px}.copy-grid{grid-template-columns:repeat(3,1fr);gap:9px}.copy-chip{background:#fff;border-color:#dce3ef;padding:12px 12px;border-radius:11px}.copy-chip .lbl{font-size:8px}.copy-chip .val{font-size:12.5px}.copy-chip:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(15,37,68,.06)}.modal-actions{margin-top:14px;padding-top:14px}.group-grid{grid-template-columns:repeat(auto-fill,minmax(390px,1fr));gap:16px}.group-card{border-radius:16px;box-shadow:0 7px 20px rgba(15,37,68,.045)}.group-head{padding:17px 18px;background:linear-gradient(180deg,#fbfcff,#f6f8fc);align-items:center}.group-frota{font-size:20px}.group-sub{font-size:11px}.route-list{padding:5px 9px}.route-item{padding:11px 9px;border-bottom:1px solid #edf0f5}.route-item:hover{padding-left:12px;background:#f8faff}.route-top{align-items:center}.route-client{font-size:12.5px}.route-name{font-size:11.5px;color:var(--slate-600);margin:3px 0}.route-meta{font-size:10px}.route-copy-hint{display:none}.badge{font-size:9.5px;padding:4px 8px}
-@media(max-width:700px){.copy-grid{grid-template-columns:repeat(2,1fr)}.group-grid{grid-template-columns:1fr}.modal-head h2{font-size:19px}.modal-body{padding:15px}.detail-section,.vehicle-section{padding:13px}.section-title span{display:block;margin:3px 0 0}}
+  /* ---------- topo / faixa de rodovia ---------- */
+  .road{
+    position:relative;
+    background:linear-gradient(120deg,var(--navy-950),var(--navy-900) 55%,var(--navy-800));
+    color:#fff;
+    padding:34px 40px 30px;
+    overflow:hidden;
+  }
+  .road::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:0;
+    height:6px;
+    background-image:repeating-linear-gradient(90deg,var(--amber) 0 34px, transparent 34px 60px);
+    opacity:.9;
+  }
+  .road.tab-clientes-active{padding-top:14px;padding-bottom:0;}
+  .road.tab-clientes-active::after{display:none;}
+  .road.tab-clientes-active .tabbar{margin-bottom:8px;}
+  .road-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;}
+  .road-title h1{font-family:var(--font-display);font-size:28px;margin:0 0 4px;letter-spacing:.2px;}
+  .road-title p{margin:0;color:var(--slate-400);font-size:14px;}
+  .road-title .eyebrow{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--amber);margin-bottom:8px;display:block;
+  }
+  .road-status{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--slate-400);flex-wrap:wrap;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px rgba(43,173,125,.2);}
+  .dot.off{background:var(--slate-400);box-shadow:none;}
+  .dot.err{background:var(--red);box-shadow:0 0 0 4px rgba(229,72,77,.2);}
+
+  #filterUnidade, #filterStatus, #filterCliente{
+    background:var(--navy-800);
+    color:#fff;
+    border:1.5px solid rgba(255,255,255,.3);
+    border-radius:9px;
+    padding:8px 12px;
+    font-size:13px;
+    font-family:var(--font-body);
+    cursor:pointer;
+  }
+  #filterUnidade:hover, #filterStatus:hover, #filterCliente:hover{border-color:rgba(255,255,255,.55);}
+  #filterUnidade option, #filterStatus option, #filterCliente option{
+    background:#ffffff;
+    color:var(--slate-900);
+  }
+
+  /* ---------- seletor de abas (sistemas) ---------- */
+  .tabbar{
+    display:flex;gap:6px;margin:0 0 22px;position:relative;z-index:2;
+  }
+  .tab-btn{
+    background:rgba(255,255,255,.06);
+    color:var(--slate-400);
+    border:1.5px solid rgba(255,255,255,.18);
+    border-radius:9px;
+    padding:9px 18px;
+    font-size:13px;font-weight:600;font-family:var(--font-body);
+    cursor:pointer;
+    transition:background .12s ease, color .12s ease;
+  }
+  .tab-btn:hover{color:#fff;background:rgba(255,255,255,.1);}
+  .tab-btn.active{background:#fff;color:var(--navy-900);border-color:#fff;}
+
+
+  /* ---------- skeleton loader ---------- */
+  @keyframes shimmer{
+    0%{background-position:-400px 0;}
+    100%{background-position:400px 0;}
+  }
+  .skel{
+    background:linear-gradient(90deg,#e9edf5 25%,#f5f7fb 37%,#e9edf5 63%);
+    background-size:800px 100%;
+    animation:shimmer 1.4s linear infinite;
+    border-radius:8px;
+  }
+  .skel-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px;}
+  .skel-stat{height:92px;border-radius:var(--radius);}
+  .skel-panels{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:26px;}
+  .skel-panel{height:260px;border-radius:var(--radius);}
+  .skel-row{height:42px;border-radius:8px;margin-bottom:8px;}
+  @media (max-width:1100px){ .skel-stats{grid-template-columns:repeat(2,1fr);} .skel-panels{grid-template-columns:1fr;} }
+
+  /* ---------- layout geral ---------- */
+  main{max-width:1320px;margin:0 auto;padding:28px 40px 60px;}
+  .state-msg{
+    text-align:center;padding:60px 20px;color:var(--slate-600);font-size:14px;
+  }
+  .state-msg strong{display:block;font-family:var(--font-display);font-size:18px;color:var(--slate-900);margin-bottom:8px;}
+  .hidden{display:none !important;}
+
+  /* ---------- cards de estatística ---------- */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:-18px auto 26px;max-width:1320px;position:relative;z-index:2;}
+  .stat{
+    background:var(--card);border-radius:var(--radius);padding:16px 16px 14px;
+    border:1px solid var(--line);position:relative;overflow:hidden;
+    box-shadow:0 12px 30px rgba(15,37,68,.10);
+  }
+  .stat .k{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--slate-600);}
+  .stat .v{font-family:var(--font-display);font-size:26px;font-weight:700;margin-top:6px;color:var(--slate-900);}
+  .stat .bar{height:4px;border-radius:2px;background:var(--line);margin-top:10px;overflow:hidden;}
+  .stat .bar i{display:block;height:100%;border-radius:2px;}
+  .stat.total .bar i{background:var(--navy-700);width:100%;}
+  .stat.green .v{color:var(--green);}
+  .stat.green .bar i{background:var(--green);}
+  .stat.red .v{color:var(--red);}
+  .stat.red .bar i{background:var(--red);}
+  .stat.amber .v{color:#c07f16;}
+  .stat.amber .bar i{background:var(--amber);}
+  
+  .stat{cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;}
+  .stat:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(15,37,68,.1);}
+  .stat.active{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(30,66,120,.14);}
+  .stat.active .k{color:var(--navy-700);}
+
+  .pagination{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 0 4px;}
+  .pagination button{
+    border:1.5px solid var(--line);background:#fff;color:var(--slate-900);
+    border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .pagination button:disabled{opacity:.4;cursor:not-allowed;}
+  .pagination button:not(:disabled):hover{border-color:var(--navy-700);color:var(--navy-700);}
+  .pagination .p-info{font-family:var(--font-mono);font-size:12.5px;color:var(--slate-600);}
+
+  /* ---------- painel gráficos ---------- */
+  .panels{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:26px;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;flex-wrap:wrap;}
+  .panel h3{font-family:var(--font-display);font-size:15px;margin:0 0 4px;}
+  .panel .sub{font-size:12px;color:var(--slate-600);margin:0 0 14px;}
+  .panel canvas{max-height:230px;}
+  .btn{
+    border:none;border-radius:9px;padding:10px 18px;font-weight:600;font-size:13px;cursor:pointer;
+    font-family:var(--font-body);transition:transform .1s, box-shadow .15s;white-space:nowrap;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-ghost{background:transparent;color:var(--slate-600);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--navy-700);color:var(--navy-900);}
+  .btn-chip{
+    flex:none;border:1.5px solid var(--line);background:#fff;color:var(--navy-700);
+    font-family:var(--font-body);font-size:11.5px;font-weight:600;border-radius:20px;
+    padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .12s, border-color .12s;
+  }
+  .btn-chip:hover{background:var(--amber-soft);border-color:var(--amber);}
+
+  /* ---------- filtros e tabela ---------- */
+  .toolbar{
+    display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;
+  }
+  .search-wrap{position:relative;flex:1;min-width:220px;}
+  .search-wrap input[type="text"]{
+    width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 34px 10px 14px;
+    font-size:13px;font-family:var(--font-body);outline:none;box-sizing:border-box;
+  }
+  .search-wrap input[type="text"]:focus{border-color:var(--navy-700);}
+  .search-clear{
+    display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    border:none;background:var(--line);color:var(--slate-600);width:20px;height:20px;
+    border-radius:50%;font-size:13px;line-height:1;cursor:pointer;align-items:center;justify-content:center;
+  }
+  .search-clear:hover{background:var(--slate-400);color:#fff;}
+  select{
+    border:1.5px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;
+    font-family:var(--font-body);background:#fff;color:var(--slate-900);outline:none;
+  }
+  .table-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;min-width:980px;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;padding:12px 14px;background:var(--navy-950);color:var(--slate-400);
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;
+    position:sticky;top:0;white-space:nowrap;
+  }
+  thead th[data-key]{cursor:pointer;user-select:none;}
+  thead th[data-key]:hover{color:#fff;}
+  thead th span.arrow{margin-left:4px;opacity:.35;display:inline-block;font-size:10px;}
+  thead th.sorted{color:#fff;}
+  thead th.sorted span.arrow{opacity:1;color:var(--amber);}
+  tbody tr{border-top:1px solid var(--line);cursor:pointer;}
+  tbody tr:hover{background:#f8faff;}
+  td{padding:11px 14px;color:var(--slate-900);white-space:nowrap;}
+  td.name{font-weight:600;}
+  td.name a{color:var(--navy-700);text-decoration:none;border-bottom:1.5px dashed var(--navy-700);}
+  td.name a:hover{color:var(--amber);border-color:var(--amber);}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;
+    font-size:11.5px;font-weight:600;white-space:nowrap;
+  }
+  .badge.ok{background:var(--green-soft);color:var(--green);}
+  .badge.vencendo{background:var(--amber-soft);color:#c07f16;}
+  .badge.vencido{background:var(--red-soft);color:var(--red);}
+  .badge.outro{background:#eef1f7;color:var(--slate-600);}
+  tfoot td{padding:14px;text-align:center;color:var(--slate-400);font-size:12px;}
+
+  /* ---------- cards mobile (telas < 768px) ---------- */
+  .mobile-cards{display:none;flex-direction:column;gap:10px;}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .12s;}
+  .mcard:hover{border-color:var(--navy-700);}
+  .mcard-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:4px;}
+  .mcard-name{font-weight:700;font-size:14px;color:var(--slate-900);}
+  .mcard-unidade{font-size:10.5px;color:var(--slate-600);font-family:var(--font-mono);white-space:nowrap;text-transform:uppercase;}
+  .mcard-sub{font-size:11.5px;color:var(--slate-600);margin:0 0 10px;}
+  .mcard-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  @media (max-width:768px){
+    .table-wrap{display:none;}
+    .mobile-cards{display:flex;}
+  }
+
+  /* ---------- modal de detalhes ---------- */
+  .val.copyable{cursor:pointer;border-bottom:1.5px dashed var(--slate-400);}
+  .val.copyable:hover{color:var(--navy-700);border-color:var(--navy-700);}
+
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(10,25,48,.55);display:none;
+    align-items:center;justify-content:center;z-index:50;padding:20px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal-card{
+    background:#fff;border-radius:var(--radius);max-width:600px;width:100%;
+    max-height:92vh;overflow:hidden;box-shadow:0 24px 60px rgba(10,25,48,.35);
+    display:flex;flex-direction:column;
+  }
+  .modal-head{
+    background:var(--navy-900);color:#fff;padding:16px 22px;border-radius:var(--radius) var(--radius) 0 0;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex:none;
+  }
+  .modal-head h2{font-family:var(--font-display);margin:0 0 3px;font-size:17px;}
+  .modal-head p{margin:0;color:var(--slate-400);font-size:12px;}
+  .modal-head-right{display:flex;align-items:center;gap:10px;}
+  .modal-close{
+    background:rgba(255,255,255,.12);border:none;color:#fff;width:26px;height:26px;
+    border-radius:50%;font-size:14px;cursor:pointer;flex:none;
+  }
+  .modal-close:hover{background:rgba(255,255,255,.24);}
+  .modal-body{padding:20px 22px;overflow-y:auto;}
+  .modal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 16px;}
+  .modal-field{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .modal-field .lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--slate-600);}
+  .modal-field .val{font-size:13px;color:var(--slate-900);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  
+  @media (max-width:600px){ .modal-grid{grid-template-columns:1fr;} }
+  .count-pill{font-family:var(--font-mono);font-size:12px;color:var(--slate-600);}
+
+  @media (max-width:1100px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .panels{grid-template-columns:1fr;}
+  }
+  @media (max-width:700px){
+    .road{padding:26px 20px 26px;}
+    main{padding:22px 16px 50px;}
+  }
 </style>
 </head>
 <body>
-<header class="road"><div class="road-top"><div><span class="eyebrow">Viação Minas Gerais · Controle operacional</span><h1>Gestão de ATF's</h1><p>Controle unificado de frotas, clientes, itinerários e vencimentos.</p></div><div class="top-actions"><span id="connection"><span class="dot off"></span>Carregando…</span><select id="filterUnit"><option value="">Todas as unidades</option></select><button class="btn" id="refresh" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff">Atualizar</button></div></div></header>
-<nav class="tabs"><button class="tab active">ATFs</button></nav>
-<main>
-<div class="notice"><strong>Como funciona:</strong> esta tela reúne em um único lugar a frota oficial, as ATFs já existentes e as novas combinações que estão em preparação. A <b>Relação de Frota VMG 2026</b> é a base oficial do veículo. A planilha <b>ATFS</b> serve somente como apoio para novas frotas/clientes que ainda receberão uma ATF.</div>
-<section id="atfPanel">
-<div class="stats"><div class="stat" data-status=""><div class="k">ATFs cadastradas</div><div class="v" id="total">0</div></div><div class="stat red" data-status="vencido"><div class="k">Vencidos</div><div class="v" id="vencidos">0</div></div><div class="stat amber" data-status="vencendo"><div class="k">Vencendo · 30 dias</div><div class="v" id="vencendo">0</div></div><div class="stat green" data-status="regular"><div class="k">Regulares</div><div class="v" id="regulares">0</div></div><div class="stat blue" data-status="pre-atf"><div class="k">A emitir</div><div class="v" id="preAtf">0</div></div></div>
-<div class="toolbar"><div class="search"><input id="search" placeholder="Buscar frota, cliente, placa, ATF ou itinerário…"><button id="clear">×</button></div><select id="client"><option value="">Todos os clientes</option></select><select id="status"><option value="">Todos os registros</option><option value="vencido">Vencido</option><option value="vencendo">Vencendo</option><option value="regular">Regular</option><option value="sem-atf">Sem ATF</option><option value="pre-atf">ATF a emitir</option></select><span class="count" id="count">0 frotas</span></div>
-<div id="groupGrid" class="group-grid"></div><div id="atfEmpty" class="empty hidden"><strong>Nenhum registro encontrado</strong><span>Ajuste os filtros ou a busca.</span></div>
-</section>
+
+<header class="road" id="roadHeader">
+  <nav class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-tab="painel" id="tabBtnPainel">Painel de ATF's</button>
+    <button class="tab-btn" data-tab="clientes" id="tabBtnClientes">Clientes por Frota</button>
+  </nav>
+  <div class="road-top" id="roadTop">
+    <div class="road-title">
+      <span class="eyebrow">Viação · Gestão de ATF's</span>
+      <h1>Painel de ATF's</h1>
+    </div>
+    <div class="road-status" id="topBarControls">
+      <span class="dot off" id="statusDot"></span>
+      <span id="statusText">Aguardando conexão…</span>
+      <select id="filterUnidade">
+        <option value="">Todas as unidades</option>
+      </select>
+      <select id="filterCliente">
+        <option value="">Todos os clientes</option>
+      </select>
+      <button class="btn btn-ghost" id="btnRefresh" style="border-color:rgba(255,255,255,.25);color:#fff;">Atualizar agora</button>
+    </div>
+  </div>
+</header>
+
+<main id="tabPainel">
+  <div id="emptyState" class="state-msg" style="text-align:left;padding:28px 0;">
+    <div class="skel-stats">
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+      <div class="skel skel-stat"></div><div class="skel skel-stat"></div>
+    </div>
+    <div class="skel-panels">
+      <div class="skel skel-panel"></div>
+      <div class="skel skel-panel"></div>
+    </div>
+    <div class="skel skel-row" style="width:100%;height:44px;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:100%;"></div>
+    <div class="skel skel-row" style="width:70%;"></div>
+  </div>
+
+  <div id="errorState" class="state-msg hidden">
+    <strong>Não foi possível ler a planilha</strong>
+    <span id="errorDetail">Verifique se o link de compartilhamento está liberado e se a aba chama-se "ATFs".</span>
+  </div>
+
+  <div id="dashboard" class="hidden">
+    <section class="stats" id="statsSection">
+      <div class="stat total" data-flag="">
+        <div class="k">Total de ATF's</div>
+        <div class="v" id="stTotal">0</div>
+        <div class="bar"><i></i></div>
+      </div>
+      <div class="stat red" data-flag="vencido">
+        <div class="k">Vencidos</div>
+        <div class="v" id="stVencidos">0</div>
+        <div class="bar"><i id="barVencidos" style="width:0%"></i></div>
+      </div>
+      <div class="stat amber" data-flag="vencendo">
+        <div class="k">Vencendo (Próx. 30 dias)</div>
+        <div class="v" id="stVencendo">0</div>
+        <div class="bar"><i id="barVencendo" style="width:0%"></i></div>
+      </div>
+      <div class="stat green" data-flag="regular">
+        <div class="k">Regulares</div>
+        <div class="v" id="stRegular">0</div>
+        <div class="bar"><i id="barRegular" style="width:0%"></i></div>
+      </div>
+    </section>
+
+    <section class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h3>ATF's por Unidade</h3>
+            <p class="sub">Distribuição dos documentos filtrados</p>
+          </div>
+          <button type="button" class="btn-chip hidden" id="btnAllUnidades">Ver todas</button>
+        </div>
+        <canvas id="chartUnidade"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Situação dos ATF's</h3>
+        <p class="sub">Visão geral do status de validade</p>
+        <canvas id="chartStatus"></canvas>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="search" placeholder="Buscar por cliente, frota, placa, origem ou destino…">
+        <button type="button" class="search-clear" id="searchClear">×</button>
+      </div>
+      <select id="filterStatus">
+        <option value="">Status — todos</option>
+        <option value="vencido">Vencido</option>
+        <option value="vencendo">Vencendo</option>
+        <option value="regular">Regular</option>
+      </select>
+      <span class="count-pill" id="countPill">0 registros</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-key="cliente">Cliente <span class="arrow"></span></th>
+            <th data-key="frota">Frota <span class="arrow"></span></th>
+            <th data-key="placa">Placa <span class="arrow"></span></th>
+            <th data-key="unidade">Unidade <span class="arrow"></span></th>
+            <th data-key="origemDestino">Origem x Destino <span class="arrow"></span></th>
+            <th data-key="periodoValidade">Validade <span class="arrow"></span></th>
+            <th data-key="dias">Dias <span class="arrow"></span></th>
+            <th data-key="status">Status <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr><td colspan="8" id="tfootMsg"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="mobile-cards" id="mobileCards"></div>
+
+    <div class="pagination" id="pagination">
+      <button id="pgPrev">‹ Anterior</button>
+      <span class="p-info" id="pgInfo">Página 1 de 1</span>
+      <button id="pgNext">Próxima ›</button>
+    </div>
+  </div>
 </main>
-<div class="modal-backdrop" id="detailModal"><div class="modal"><div class="modal-head"><div><div class="modal-kicker" id="mKicker">ATF</div><h2 id="mTitle">Frota 0000</h2><p id="mSub">—</p></div><div class="modal-head-right"><div id="mStatus"></div><button class="close" data-close>×</button></div></div><div class="modal-body"><section class="detail-section"><div class="section-title">Dados da ATF</div><div class="detail-grid" id="detailGrid"></div></section><section class="vehicle-section"><div class="section-title">Dados do veículo <span>iguais para todos os clientes desta frota</span></div><div class="copy-grid" id="copyGrid"></div></section><div class="modal-actions"><button class="btn" data-close>Fechar</button></div></div></div></div>
+
+<main id="tabClientes" class="hidden" style="padding:0;max-width:none;">
+  <iframe
+    id="iframeClientes"
+    title="Clientes por Frota"
+    style="display:block;width:100%;height:calc(100vh - 120px);min-height:640px;border:0;background:#fff;"
+  ></iframe>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2 id="mdFrota">—</h2>
+        <p id="mdSub">—</p>
+      </div>
+      <div class="modal-head-right">
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field"><span class="lbl">Cliente</span><span class="val" id="mdFieldCliente">—</span></div>
+        <div class="modal-field"><span class="lbl">Unidade</span><span class="val" id="mdFieldUnidade">—</span></div>
+        <div class="modal-field"><span class="lbl">Frota</span><span class="val copyable" id="mdFieldFrota">—</span></div>
+        <div class="modal-field"><span class="lbl">Placa</span><span class="val copyable" id="mdFieldPlaca">—</span></div>
+        <div class="modal-field"><span class="lbl">Origem x Destino</span><span class="val" id="mdFieldOrigem">—</span></div>
+        <div class="modal-field"><span class="lbl">Status</span><span class="val" id="mdFieldStatus">—</span></div>
+        <div class="modal-field"><span class="lbl">Data Emissão</span><span class="val" id="mdFieldEmissao">—</span></div>
+        <div class="modal-field"><span class="lbl">Período Validade</span><span class="val" id="mdFieldValidade">—</span></div>
+        <div class="modal-field"><span class="lbl">Dias Restantes</span><span class="val" id="mdFieldDias">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
-const SHEET_ID='1Ifls95c7CWJujD16v-1Iq5y3lJtH7gC6o3JQmbM1TB4';
-const API_URL='https://script.google.com/macros/s/AKfycbz_wWa_BIqF63_44CuisihgdHp4-4OfoZc7M9ZZsZVIUI2Zxd3xS8CTBY1bzYk-gkvUvw/exec',TOKEN='TROQUE-ESTA-CHAVE-SECRETA';
-let rows=[],fleetRows=[],stagingRows=[],activeStatus='';
-const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const norm=s=>(s??'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
-function cellText(c){if(!c)return '';if(c.f!=null)return String(c.f);if(c.v==null)return '';return String(c.v)}
-function parseDays(v){let n=parseInt(String(v??'').replace(',','.'),10);return Number.isFinite(n)?n:null}
-function parseEnd(period){let m=String(period||'').match(/(\d{1,2}\/\d{1,2}\/\d{2,4})\s*[AaÀà]\s*(\d{1,2}\/\d{1,2}\/\d{2,4})/);if(!m)return null;let [d,mo,y]=m[2].split('/').map(Number);if(y<100)y+=2000;return new Date(y,mo-1,d)}
-function situation(days,status){let s=norm(status);if(s.includes('VENCIDO'))return 'vencido';if(s.includes('VENCENDO'))return 'vencendo';if(days!=null){if(days<0)return 'vencido';if(days<=30)return 'vencendo'}return 'regular'}
-function getGviz(sheet,range){return fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}&range=${encodeURIComponent(range)}&headers=1&_=${Date.now()}`).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.text()}).then(t=>JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1)))}
-function parseFleet(data){let cols=data.table.cols.map(c=>norm(c.label)),idx=n=>{let x=norm(n),i=cols.indexOf(x);return i>=0?i:cols.findIndex(c=>c.includes(x))};let ix={frota:idx('PREF.'),placa:idx('PLACA'),unidade:idx('UNIDADE'),lotacao:idx('LOTAÇÃO'),anoModelo:idx('ANO / MODELO'),chassi:idx('CHASSI'),renavam:idx('RENAVAN')};return data.table.rows.map((r,i)=>{let c=r.c||[],g=k=>cellText(c[ix[k]]);return {id:'f'+i,frota:g('frota'),placa:g('placa'),unidade:g('unidade'),lotacao:g('lotacao'),anoModelo:g('anoModelo'),chassi:g('chassi'),renavam:formatRenavam(g('renavam'))}}).filter(r=>r.frota)}
-function parseATFs(data){let cols=data.table.cols.map(c=>norm(c.label)),idx=n=>{let x=norm(n),i=cols.indexOf(x);return i>=0?i:cols.findIndex(c=>c.includes(x))};let ix={frota:idx('FROTA'),placa:idx('PLACA'),unidade:idx('UNIDADE'),atf:idx('Nº ATF'),tipo:idx('TIPO ATF'),emissao:idx('DATA EMISSÃO'),validade:idx('PERÍODO VALIDADE'),dias:idx('DIAS'),status:idx('STATUS'),cliente:idx('CLIENTE'),rota:idx('ORIGEM X DESTINO')};return data.table.rows.map((r,i)=>{let c=r.c||[],g=k=>cellText(c[ix[k]]),valid=g('validade'),dias=parseDays(g('dias'));if(dias==null){let end=parseEnd(valid);if(end) dias=Math.ceil((end-new Date())/86400000)}return {id:'a'+i,frota:g('frota'),placa:g('placa'),unidade:g('unidade'),atf:g('atf'),tipo:g('tipo'),emissao:g('emissao'),validade:valid,dias,rawStatus:g('status'),cliente:g('cliente'),rota:g('rota'),situacao:situation(dias,g('status')),source:'atf'}}).filter(r=>r.frota||r.atf||r.cliente)}
-function formatRenavam(v){let d=String(v??'').replace(/\D/g,'');return d?d.padStart(11,'0').slice(-11):''}
-function fleetFor(r){return fleetRows.find(f=>norm(f.frota)===norm(r.frota))||{frota:r.frota,placa:r.placa,unidade:r.unidade}}
-function enrich(r){let f=fleetFor(r);return {...f,...r,placa:r.placa||f.placa,unidade:r.unidade||f.unidade}}
-function badge(r){if(r.situacao==='sem-atf')return '<span class="badge gray">Sem ATF</span>';if(r.situacao==='pre-atf')return '<span class="badge blue">ATF a emitir</span>';return `<span class="badge ${r.situacao==='vencido'?'red':r.situacao==='vencendo'?'amber':'green'}">${r.situacao==='vencido'?'Vencido':r.situacao==='vencendo'?'Vencendo':'Regular'}</span>`}
-function setConn(type,text){$('connection').innerHTML=`<span class="dot ${type==='ok'?'':type==='err'?'err':'off'}"></span>${esc(text)}`}
-async function apiGet(action,extra={}){let p=new URLSearchParams({action,token:TOKEN,...extra}),res=await fetch(API_URL+'?'+p);let d=await res.json();if(!d.ok)throw Error(d.message||'Erro desconhecido');return d}
-function makeStaging(comp){let out=[];(comp.divergencias||[]).forEach(d=>{let clients=[...(d.clientesAtfs||[])];clients.forEach(c=>{if(!c)return;out.push({id:'s'+norm(d.filial)+'-'+norm(d.frota)+'-'+norm(c),frota:String(d.frota||''),cliente:String(c),filial:d.filial,source:'pre-atf',situacao:'pre-atf',placa:d.placa||'',unidade:d.filial||'',rota:'ATF ainda não emitida',atf:'',tipo:'',validade:'',dias:null})})});return out}
-async function load(){setConn('off','Carregando dados…');try{let [f,a,comp]=await Promise.all([getGviz('Frota','A3:AZ10000'),getGviz('ATFs','A3:Z10000'),apiGet('comparar')]);fleetRows=parseFleet(f);let actual=parseATFs(a);stagingRows=makeStaging(comp);rows=[];actual.forEach(r=>rows.push(enrich(r)));
-// Toda frota sem ATF também aparece no controle, mas não é contada como ATF.
-fleetRows.forEach(f=>{let has=actual.some(a=>norm(a.frota)===norm(f.frota));if(!has)rows.push({...f,id:'fonly-'+f.id,cliente:'',atf:'',tipo:'',rota:'Nenhuma ATF cadastrada',validade:'',dias:null,situacao:'sem-atf',source:'fleet'})});
-// A fila da planilha ATFS aparece junto apenas quando ainda não há ATF correspondente para aquele cliente.
-stagingRows.forEach(s=>{let exists=actual.some(a=>norm(a.frota)===norm(s.frota)&&norm(a.cliente)===norm(s.cliente));if(!exists)rows.push(enrich(s))});
-setConn('ok',`Atualizado · ${new Date().toLocaleTimeString('pt-BR')}`);renderAll()}catch(e){console.error(e);setConn('err','Falha ao carregar dados');$('atfEmpty').classList.remove('hidden');$('atfEmpty').innerHTML=`<strong>Não foi possível carregar os dados</strong><span>${esc(e.message)}</span>`}}
-function fillSelects(){let clients=[...new Set(rows.map(r=>r.cliente).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));$('client').innerHTML='<option value="">Todos os clientes</option>'+clients.map(x=>`<option>${esc(x)}</option>`).join('')}
-function filtered(){let q=norm($('search').value),c=$('client').value;return rows.filter(r=>(!c||r.cliente===c)&&(!activeStatus||r.situacao===activeStatus)&&(!q||[r.frota,r.placa,r.unidade,r.atf,r.cliente,r.rota,r.tipo].some(v=>norm(v).includes(q))))}
-function renderGroups(){let base=filtered(),map=new Map();base.forEach(r=>{let key=norm(r.frota)||'—';if(!map.has(key)){let f=fleetFor(r);map.set(key,{frota:f.frota||r.frota,placa:f.placa||r.placa,unidade:f.unidade||r.unidade,items:[]})}map.get(key).items.push(r)});let gs=[...map.values()];$('count').textContent=`${gs.length} frota${gs.length===1?'':'s'}`;$('groupGrid').innerHTML=gs.map(g=>{let uniqueClients=[...new Set(g.items.map(r=>r.cliente).filter(Boolean))];let actualCount=g.items.filter(r=>r.source==='atf').length;return `<div class="group-card"><div class="group-head"><div><div class="group-frota">Frota ${esc(g.frota||'—')}</div><div class="group-sub">${esc(g.placa||'—')} · ${esc(g.unidade||'—')}${actualCount>1?` · ${actualCount} ATFs`:''}</div></div><span class="badge blue">${uniqueClients.length?`${uniqueClients.length} cliente${uniqueClients.length===1?'':'s'}`:'Sem cliente'}</span></div><div class="route-list">${g.items.sort((a,b)=>(a.cliente||'').localeCompare(b.cliente||'')||(a.rota||'').localeCompare(b.rota||'')).map(r=>`<div class="route-item" data-id="${esc(r.id)}"><div class="route-top"><div class="route-client">${esc(r.cliente||'Frota sem ATF')}</div>${badge(r)}</div><div class="route-name">${esc(r.rota||'Nenhuma ATF cadastrada')}</div><div class="route-meta">${r.atf?`<span>ATF ${esc(r.atf)}</span>`:`<span>${r.source==='pre-atf'?'ATF a emitir':'Sem ATF'}</span>`}${r.validade?`<span>·</span><span>${esc(r.validade)}</span>`:''}${r.dias!=null?`<span>·</span><span>${esc(r.dias)} dias</span>`:''}</div>${r.source==='atf'||r.source==='pre-atf'?'<div class="route-copy-hint">Clique para abrir os dados e copiar informações do veículo</div>':''}</div>`).join('')}</div></div>`}).join('');$('atfEmpty').classList.toggle('hidden',gs.length>0);document.querySelectorAll('.route-item').forEach(x=>x.onclick=()=>openDetail(rows.find(r=>r.id===x.dataset.id)))}
-function renderATFs(){let actual=rows.filter(r=>r.source==='atf');$('total').textContent=actual.length;$('vencidos').textContent=actual.filter(r=>r.situacao==='vencido').length;$('vencendo').textContent=actual.filter(r=>r.situacao==='vencendo').length;$('regulares').textContent=actual.filter(r=>r.situacao==='regular').length;$('preAtf').textContent=rows.filter(r=>r.source==='pre-atf').length;renderGroups()}
-function copyFields(r){let fields=[['PREF.',r.frota],['PLACA',r.placa],['LOTAÇÃO',r.lotacao],['ANO / MODELO',r.anoModelo],['CHASSI',r.chassi],['RENAVAN',r.renavam]].filter(x=>x[1]);$('copyGrid').innerHTML=fields.length?fields.map(([l,v])=>`<button class="copy-chip" data-copy="${esc(v)}"><span><span class="lbl">${esc(l)}</span><span class="val">${esc(v)}</span></span><span class="copy-icon">⧉</span></button>`).join(''):'<div class="muted">Não há dados de veículo disponíveis.</div>'}
-function openDetail(r){if(!r)return;r=enrich(r);$('mKicker').textContent=r.source==='pre-atf'?'PRÉ-ATF · NOVO PROCESSO':(r.atf?'ATF CADASTRADA':'FROTA SEM ATF');$('mTitle').textContent=`Frota ${r.frota||'—'}`;$('mSub').textContent=[r.cliente,r.rota].filter(Boolean).join(' · ')||'Dados da frota';$('mStatus').innerHTML=badge(r);let fields=[['Nº ATF',r.atf],['Tipo ATF',r.tipo],['Data emissão',r.emissao],['Validade',r.validade],['Dias restantes',r.dias==null?'':r.dias],['Unidade',r.unidade]];$('detailGrid').innerHTML=fields.map(([k,v])=>`<div class="field"><label>${esc(k)}</label><div>${esc(v||'—')}</div></div>`).join('');copyFields(r);$('detailModal').classList.add('open')}
-function renderAll(){fillSelects();renderATFs()}
-function closeModal(){ $('detailModal').classList.remove('open') }
-document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeModal);$('detailModal').onclick=e=>{if(e.target===$('detailModal'))closeModal()};$('copyGrid').onclick=e=>{let chip=e.target.closest('[data-copy]');if(!chip)return;let value=chip.dataset.copy;if(!value)return;let val=chip.querySelector('.val'),old=val.textContent;let done=()=>{chip.classList.add('copiado');val.textContent='Copiado!';setTimeout(()=>{chip.classList.remove('copiado');val.textContent=old},1000)};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(value).then(done).catch(()=>alert('Não foi possível copiar automaticamente. Valor: '+value));else alert('Não foi possível copiar automaticamente. Valor: '+value)};
-$('search').oninput=renderATFs;$('clear').onclick=()=>{$('search').value='';renderATFs()};$('filterUnit').onchange=renderATFs;$('client').onchange=renderATFs;$('status').onchange=()=>{activeStatus=$('status').value;document.querySelectorAll('.stat[data-status]').forEach(x=>x.classList.toggle('active',x.dataset.status===activeStatus));renderATFs()};$('refresh').onclick=load;
-document.querySelectorAll('.stat[data-status]').forEach(s=>s.onclick=()=>{activeStatus=s.dataset.status||'';$('status').value=activeStatus;document.querySelectorAll('.stat[data-status]').forEach(x=>x.classList.toggle('active',x.dataset.status===activeStatus));renderATFs()});
-load();
+  // Link da planilha mantido conforme solicitação
+  const SHEET_ID = '1Ifls95c7CWJujD16v-1Iq5y3lJtH7gC6o3JQmbM1TB4';
+  const SHEET_TAB = "ATFs";
+
+  const els = {
+    btnRefresh: document.getElementById('btnRefresh'),
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
+    empty: document.getElementById('emptyState'),
+    error: document.getElementById('errorState'),
+    errorDetail: document.getElementById('errorDetail'),
+    dash: document.getElementById('dashboard'),
+    search: document.getElementById('search'),
+    filterUnidade: document.getElementById('filterUnidade'),
+    filterCliente: document.getElementById('filterCliente'),
+    filterStatus: document.getElementById('filterStatus'),
+    tbody: document.getElementById('tbody'),
+    mobileCards: document.getElementById('mobileCards'),
+    countPill: document.getElementById('countPill'),
+    tfootMsg: document.getElementById('tfootMsg'),
+    pgPrev: document.getElementById('pgPrev'),
+    pgNext: document.getElementById('pgNext'),
+    pgInfo: document.getElementById('pgInfo'),
+    searchClear: document.getElementById('searchClear'),
+    modalBackdrop: document.getElementById('modalBackdrop'),
+    modalClose: document.getElementById('modalClose'),
+    btnAllUnidades: document.getElementById('btnAllUnidades'),
+  };
+
+  let rawRows = [];
+  let allUnidades = [];
+  let allClientes = [];
+
+  // Unidades que devem ser totalmente desconsideradas pelo painel (como se não existissem)
+  const UNIDADES_EXCLUIDAS = ['PARAUAPEBAS', 'PATOS DE MINAS', 'PATROCÍNIO', 'TAPIRA', 'TUCUMÃ'];
+  const unidadesExcluidasNorm = new Set(UNIDADES_EXCLUIDAS.map(normalizeHeader));
+  let currentPageRows = [];
+  let sortState = {key:'cliente', dir:1};
+  let charts = {unidade:null, status:null};
+  let refreshTimer = null;
+  const PAGE_SIZE = 100;
+  let currentPage = 1;
+  let activeFlag = ''; // '' | 'vencido' | 'vencendo' | 'regular'
+
+  els.btnRefresh.addEventListener('click', () => loadData());
+  els.search.addEventListener('input', () => {
+    els.searchClear.style.display = els.search.value ? 'flex' : 'none';
+    currentPage = 1;
+    render();
+  });
+  els.searchClear.addEventListener('click', () => {
+    els.search.value = '';
+    els.searchClear.style.display = 'none';
+    currentPage = 1;
+    els.search.focus();
+    render();
+  });
+  els.modalClose.addEventListener('click', closeModal);
+  els.modalBackdrop.addEventListener('click', (e) => { if(e.target === els.modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeModal(); });
+  
+  els.filterUnidade.addEventListener('change', () => { currentPage = 1; render(true); });
+  els.filterCliente.addEventListener('change', () => { currentPage = 1; render(true); });
+  
+  els.btnAllUnidades.addEventListener('click', () => {
+    els.filterUnidade.value = '';
+    currentPage = 1;
+    render(true);
+  });
+  els.filterStatus.addEventListener('change', () => {
+    activeFlag = els.filterStatus.value;
+    currentPage = 1;
+    syncActiveCards();
+    render(true);
+  });
+  els.pgPrev.addEventListener('click', () => { if(currentPage > 1){ currentPage--; render(); } });
+  els.pgNext.addEventListener('click', () => { currentPage++; render(); });
+  
+  document.querySelectorAll('.stat[data-flag]').forEach(card => {
+    card.addEventListener('click', () => {
+      const flag = card.dataset.flag;
+      activeFlag = (activeFlag === flag) ? '' : flag;
+      els.filterStatus.value = activeFlag;
+      currentPage = 1;
+      syncActiveCards();
+      render(true);
+    });
+  });
+
+  function syncActiveCards(){
+    document.querySelectorAll('.stat[data-flag]').forEach(card => {
+      card.classList.toggle('active', card.dataset.flag === activeFlag);
+    });
+  }
+
+  document.querySelectorAll('thead th[data-key]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const key = th.dataset.key;
+      sortState.dir = (sortState.key === key) ? -sortState.dir : 1;
+      sortState.key = key;
+      currentPage = 1;
+      render();
+    });
+  });
+
+  function setStatus(state, text){
+    els.statusDot.className = 'dot' + (state==='ok' ? '' : state==='err' ? ' err' : ' off');
+    els.statusText.textContent = text;
+  }
+
+  function cellText(cell){
+    if(!cell) return '';
+    if(cell.v !== undefined && cell.v !== null && typeof cell.v === 'string' && cell.v.startsWith('Date(')){
+       const parts = cell.v.replace('Date(','').replace(')','').split(',').map(Number);
+       const d = new Date(parts[0], parts[1], parts[2]);
+       return d.toLocaleDateString('pt-BR');
+    }
+    return (cell.f !== undefined && cell.f !== null) ? String(cell.f) : (cell.v ?? '');
+  }
+
+  function normText(s){ return (s||'').toString().trim().toUpperCase(); }
+
+  // Janela (em dias) considerada "Vencendo"
+  const VENCENDO_JANELA_DIAS = 30;
+
+  // Converte "DD/MM/AAAA" (ou "DD/MM/AA") em objeto Date
+  function parseBRDate(str){
+    if(!str) return null;
+    const m = str.toString().trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if(!m) return null;
+    let [, d, mo, y] = m;
+    if(y.length === 2) y = '20' + y;
+    const dt = new Date(Number(y), Number(mo) - 1, Number(d));
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+
+  // Calcula quantos dias faltam (ou já passaram, negativo) até a data final de validade
+  function calcularDiasRestantes(dataFimStr){
+    const fim = parseBRDate(dataFimStr);
+    if(!fim) return NaN;
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    fim.setHours(0,0,0,0);
+    return Math.round((fim - hoje) / 86400000);
+  }
+
+  // Função para inferir estado baseado em dias ou no texto do status
+  function getATFState(dias, statusText){
+    const txt = normText(statusText);
+    const numDias = parseInt(dias, 10);
+    
+    if(txt.includes('VENCID')) return 'vencido';
+    if(txt.includes('VENCENDO') || txt.includes('A VENCER')) return 'vencendo';
+    if(txt.includes('ATIVO') || txt.includes('OK') || txt.includes('REGULAR')) return 'regular';
+    
+    // Se o texto não for claro, avalia pelos dias
+    if(!isNaN(numDias)){
+        if(numDias < 0) return 'vencido';
+        if(numDias >= 0 && numDias <= VENCENDO_JANELA_DIAS) return 'vencendo';
+        return 'regular';
+    }
+    return 'regular'; // Padrão
+  }
+
+  // Remove acentos e normaliza espaços para comparação de cabeçalhos mais tolerante
+  function normalizeHeader(s){
+    return (s || '').toString()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  function parseATFRows(data){
+    const cols = data.table.cols.map(c => normalizeHeader(c.label || ''));
+    
+    const idx = (name) => {
+        const n = normalizeHeader(name);
+        let i = cols.findIndex(c => c === n);
+        if(i === -1) i = cols.findIndex(c => c.includes(n));
+        return i;
+    };
+
+    const iFrota = idx('FROTA');
+    const iPlaca = idx('PLACA');
+    const iUnidade = idx('UNIDADE');
+    const iEmissao = idx('EMISSÃO');
+    const iValidade = idx('VALIDADE');
+    const iDias = idx('DIAS');
+    const iStatus = idx('STATUS');
+    const iCliente = idx('CLIENTE');
+    const iOrigemDestino = idx('ORIGEM');
+
+    // Diagnóstico: avisa no console (F12) se alguma coluna esperada não foi encontrada na planilha
+    const colunasEsperadas = { FROTA:iFrota, PLACA:iPlaca, UNIDADE:iUnidade, CLIENTE:iCliente, VALIDADE:iValidade };
+    Object.entries(colunasEsperadas).forEach(([nome, i]) => {
+      if(i === -1) console.warn(`[Painel ATF] Coluna "${nome}" não encontrada no cabeçalho da planilha. Cabeçalhos lidos:`, cols);
+    });
+
+    return data.table.rows
+      .map(r => r.c)
+      .filter(c => c && (iFrota > -1 && cellText(c[iFrota])) || (iPlaca > -1 && cellText(c[iPlaca]))) // Precisa ter Frota ou Placa
+      .map(c => {
+        const frota = iFrota > -1 ? cellText(c[iFrota]) : '';
+        const placa = iPlaca > -1 ? cellText(c[iPlaca]) : '';
+        const unidade = iUnidade > -1 ? cellText(c[iUnidade]) : '';
+        const dataEmissao = iEmissao > -1 ? cellText(c[iEmissao]) : '';
+        let dias = iDias > -1 ? cellText(c[iDias]) : '';
+        const status = iStatus > -1 ? cellText(c[iStatus]) : '';
+        const cliente = iCliente > -1 ? cellText(c[iCliente]) : '';
+        const origemDestino = iOrigemDestino > -1 ? cellText(c[iOrigemDestino]) : '';
+        
+        let periodoValidadeFull = iValidade > -1 ? cellText(c[iValidade]) : '';
+        let periodoValidadeCurto = periodoValidadeFull;
+        
+        // Expressão inteligente: separa o texto se encontrar " a ", " A ", " à " ou " À " envolto por espaços
+        const valParts = periodoValidadeFull.split(/\s+[aAàÀ]\s+/);
+        if(valParts.length > 1){
+            periodoValidadeCurto = valParts[valParts.length - 1].trim();
+        }
+
+        // Se a coluna DIAS estiver vazia/inválida (caso comum na planilha atual),
+        // calcula os dias restantes a partir da data final do PERÍODO VALIDADE.
+        if(dias === '' || dias === null || dias === undefined || isNaN(parseInt(dias, 10))){
+            const diasCalc = calcularDiasRestantes(periodoValidadeCurto);
+            if(!isNaN(diasCalc)) dias = String(diasCalc);
+        }
+
+        const situacao = getATFState(dias, status);
+
+        return {
+          frota, placa, unidade, dataEmissao, periodoValidadeFull, periodoValidadeCurto, dias, status, cliente, origemDestino, situacao,
+          flagVencido: situacao === 'vencido',
+          flagVencendo: situacao === 'vencendo',
+          flagRegular: situacao === 'regular'
+        };
+      });
+  }
+
+  async function loadData(){
+    setStatus('off','Carregando…');
+    try{
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}&range=A3:Z10000&headers=1&_=${Date.now()}`;
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const text = await res.text();
+      const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+      const data = JSON.parse(jsonStr);
+      if(!data.table || !data.table.rows) throw new Error('Formato inesperado recebido da planilha');
+
+      rawRows = parseATFRows(data).filter(r => !unidadesExcluidasNorm.has(normalizeHeader(r.unidade)));
+      if(rawRows.length === 0) throw new Error('Nenhum ATF encontrado na leitura.');
+      
+      // Carrega as listas mestras de Unidades e Clientes
+      allUnidades = [...new Set(rawRows.map(r=>r.unidade).filter(Boolean))].sort();
+      allClientes = [...new Set(rawRows.map(r=>r.cliente).filter(Boolean))].sort();
+
+      els.empty.classList.add('hidden');
+      els.error.classList.add('hidden');
+      els.dash.classList.remove('hidden');
+      const ts = new Date().toLocaleTimeString('pt-BR');
+      setStatus('ok', `Conectado · ${ts}`);
+
+      syncActiveCards();
+      render(true);
+
+      if(refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(() => loadData(), 5 * 60 * 1000);
+
+    }catch(err){
+      els.dash.classList.add('hidden');
+      els.empty.classList.add('hidden');
+      els.error.classList.remove('hidden');
+      els.errorDetail.textContent = 'Detalhe: ' + err.message + '. Confirme se a planilha compartilhada está liberada e se a aba realmente se chama "ATFs".';
+      setStatus('err','Falha ao carregar');
+    }
+  }
+
+  // Atualiza as opções dinamicamente baseada nas seleções cruzadas
+  function updateDropdowns(currU, currC) {
+    const validU = new Set(rawRows.filter(r => !currC || r.cliente === currC).map(r => r.unidade).filter(Boolean));
+    const validC = new Set(rawRows.filter(r => !currU || r.unidade === currU).map(r => r.cliente).filter(Boolean));
+
+    els.filterUnidade.innerHTML = '<option value="">Todas as unidades</option>' +
+      allUnidades.filter(u => validU.has(u)).map(u => `<option value="${u}" ${u===currU?'selected':''}>${u}</option>`).join('');
+
+    els.filterCliente.innerHTML = '<option value="">Todos os clientes</option>' +
+      allClientes.filter(c => validC.has(c)).map(c => `<option value="${c}" ${c===currC?'selected':''}>${c}</option>`).join('');
+  }
+
+  function badgeStatus(r){
+    if(r.situacao === 'regular') return `<span class="badge ok">${escapeHtml(r.status || 'OK')}</span>`;
+    if(r.situacao === 'vencendo') return `<span class="badge vencendo">${escapeHtml(r.status || 'Vencendo')}</span>`;
+    if(r.situacao === 'vencido') return `<span class="badge vencido">${escapeHtml(r.status || 'Vencido')}</span>`;
+    return `<span class="badge outro">${escapeHtml(r.status || '—')}</span>`;
+  }
+
+  function escapeHtml(s){
+    return (s??'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function render(updateCharts){
+    const q = els.search.value.trim().toLowerCase();
+    const fUnidade = els.filterUnidade.value;
+    const fCliente = els.filterCliente.value;
+    els.btnAllUnidades.classList.toggle('hidden', !fUnidade);
+    
+    // Atualiza os dropdowns para refletirem a ligação entre Unidade e Cliente
+    updateDropdowns(fUnidade, fCliente);
+
+    function matchesSearch(r){
+      if(!q) return true;
+      if(r.frota && r.frota.toLowerCase().includes(q)) return true;
+      if(r.placa && r.placa.toLowerCase().includes(q)) return true;
+      if(r.cliente && r.cliente.toLowerCase().includes(q)) return true;
+      if(r.origemDestino && r.origemDestino.toLowerCase().includes(q)) return true;
+      return false;
+    }
+    
+    function matchesFlag(r){
+      if(!activeFlag) return true;
+      if(activeFlag === 'vencido') return r.flagVencido;
+      if(activeFlag === 'vencendo') return r.flagVencendo;
+      if(activeFlag === 'regular') return r.flagRegular;
+      return true;
+    }
+
+    // `rows` contém as linhas completamente filtradas (usadas na lista e no gráfico de Unidades)
+    let rows = rawRows.filter(r=>{
+      if(fUnidade && r.unidade !== fUnidade) return false;
+      if(fCliente && r.cliente !== fCliente) return false;
+      if(!matchesFlag(r)) return false;
+      if(!matchesSearch(r)) return false;
+      return true;
+    });
+
+    // `statsBase` não é afetado pelo clique nos cartões de status, mantendo as contagens numéricas coerentes e o gráfico de rosca completo
+    let statsBase = rawRows.filter(r=>{
+      if(fUnidade && r.unidade !== fUnidade) return false;
+      if(fCliente && r.cliente !== fCliente) return false;
+      if(!matchesSearch(r)) return false;
+      return true;
+    });
+
+    rows.sort((a,b)=>{
+      let va = a[sortState.key], vb = b[sortState.key];
+      // Tratamento especial para números na coluna de dias
+      if(sortState.key === 'dias'){
+          va = parseFloat(va) || 0;
+          vb = parseFloat(vb) || 0;
+      } else {
+          if(va === null || va === undefined) va = '';
+          if(vb === null || vb === undefined) vb = '';
+          if(typeof va === 'string') va = va.toLowerCase();
+          if(typeof vb === 'string') vb = vb.toLowerCase();
+      }
+      if(va < vb) return -1*sortState.dir;
+      if(va > vb) return 1*sortState.dir;
+      return 0;
+    });
+    
+    updateSortIndicators();
+
+    const total = statsBase.length;
+    const cVencido = statsBase.filter(r=>r.flagVencido).length;
+    const cVencendo = statsBase.filter(r=>r.flagVencendo).length;
+    const cRegular = statsBase.filter(r=>r.flagRegular).length;
+
+    document.getElementById('stTotal').textContent = total;
+    document.getElementById('stVencidos').textContent = cVencido;
+    document.getElementById('stVencendo').textContent = cVencendo;
+    document.getElementById('stRegular').textContent = cRegular;
+
+    document.getElementById('barVencidos').style.width = total? (cVencido/total*100)+'%':'0%';
+    document.getElementById('barVencendo').style.width = total? (cVencendo/total*100)+'%':'0%';
+    document.getElementById('barRegular').style.width = total? (cRegular/total*100)+'%':'0%';
+
+    els.countPill.textContent = `${rows.length} registro${rows.length===1?'':'s'} (de ${total})`;
+
+    const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    if(currentPage > totalPages) currentPage = totalPages;
+    if(currentPage < 1) currentPage = 1;
+    const pageRows = rows.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+    currentPageRows = pageRows;
+    els.pgInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    els.pgPrev.disabled = currentPage <= 1;
+    els.pgNext.disabled = currentPage >= totalPages;
+    document.getElementById('pagination').style.display = rows.length > PAGE_SIZE ? 'flex' : 'none';
+
+    els.tbody.innerHTML = pageRows.map((r,i)=>{
+      return `<tr data-i="${i}">
+        <td class="name">${escapeHtml(r.cliente || '—')}</td>
+        <td>${escapeHtml(r.frota)}</td>
+        <td>${escapeHtml(r.placa)}</td>
+        <td>${escapeHtml(r.unidade)}</td>
+        <td>${escapeHtml(r.origemDestino)}</td>
+        <td>${escapeHtml(r.periodoValidadeCurto)}</td> <!-- Usando formato curto -->
+        <td>${escapeHtml(r.dias)}</td>
+        <td>${badgeStatus(r)}</td>
+      </tr>`;
+    }).join('');
+
+    document.querySelectorAll('#tbody tr').forEach(tr=>{
+      tr.addEventListener('click', () => openModal(currentPageRows[Number(tr.dataset.i)]));
+    });
+
+    els.mobileCards.innerHTML = pageRows.map((r,i)=>{
+      return `<div class="mcard" data-i="${i}">
+        <div class="mcard-top">
+          <span class="mcard-name">${escapeHtml(r.cliente || '—')}</span>
+          <span class="mcard-unidade">${escapeHtml(r.unidade)}</span>
+        </div>
+        <div class="mcard-sub">Frota: ${escapeHtml(r.frota)} · Placa: ${escapeHtml(r.placa)}</div>
+        <div class="mcard-chips">
+          ${badgeStatus(r)}
+        </div>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('#mobileCards .mcard').forEach(card=>{
+      card.addEventListener('click', () => openModal(currentPageRows[Number(card.dataset.i)]));
+    });
+    if(rows.length===0){
+      els.mobileCards.innerHTML = '<div class="state-msg">Nenhum registro encontrado com os filtros atuais.</div>';
+    }
+
+    els.tfootMsg.textContent = rows.length===0 ? 'Nenhum registro encontrado com os filtros atuais.' : '';
+
+    // Envia 'rows' (dados completamente filtrados) para o gráfico de Unidades para pular os que zeram.
+    if(updateCharts) renderCharts(rows, statsBase);
+  }
+
+  function updateSortIndicators(){
+    document.querySelectorAll('thead th[data-key]').forEach(th=>{
+      const span = th.querySelector('span.arrow');
+      const active = th.dataset.key === sortState.key;
+      th.classList.toggle('sorted', active);
+      if(span) span.textContent = active ? (sortState.dir === 1 ? '▲' : '▼') : '↕';
+    });
+  }
+
+  function copyToClipboard(text, el){
+    if(!text) return;
+    const restore = el.textContent;
+    const done = () => { el.textContent = 'Copiado ✓'; setTimeout(() => { el.textContent = restore; }, 1100); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(done);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+      done();
+    }
+  }
+
+  function openModal(r){
+    if(!r) return;
+    document.getElementById('mdFrota').textContent = r.frota ? ('Frota ' + r.frota) : '—';
+    document.getElementById('mdSub').textContent = [r.placa, r.unidade].filter(Boolean).join(' · ') || '—';
+
+    const frotaEl = document.getElementById('mdFieldFrota');
+    const placaEl = document.getElementById('mdFieldPlaca');
+    
+    frotaEl.textContent = r.frota || '—';
+    placaEl.textContent = r.placa || '—';
+    
+    frotaEl.onclick = () => copyToClipboard(r.frota, frotaEl);
+    placaEl.onclick = () => copyToClipboard(r.placa, placaEl);
+
+    document.getElementById('mdFieldUnidade').textContent = r.unidade || '—';
+    document.getElementById('mdFieldCliente').textContent = r.cliente || '—';
+    document.getElementById('mdFieldOrigem').textContent = r.origemDestino || '—';
+    document.getElementById('mdFieldEmissao').textContent = r.dataEmissao || '—';
+    document.getElementById('mdFieldValidade').textContent = r.periodoValidadeFull || '—'; // Retorna a Data Extensa Original
+    document.getElementById('mdFieldDias').textContent = r.dias || '—';
+    
+    const mStatus = document.getElementById('mdFieldStatus');
+    mStatus.innerHTML = badgeStatus(r);
+    
+    els.modalBackdrop.classList.add('open');
+  }
+
+  function closeModal(){
+    els.modalBackdrop.classList.remove('open');
+  }
+
+  function renderCharts(rowsForUnits, statsBase){
+    // Grafico de Unidades: processa apenas "rowsForUnits" que sofrem influência de TUDO (incluindo clicks nos cartões de status)
+    const byUnidade = {};
+    rowsForUnits.forEach(r=>{ if(r.unidade) byUnidade[r.unidade] = (byUnidade[r.unidade]||0)+1; });
+    
+    // Se a unidade tem 0 itens para os filtros atuais, ela nem sequer entra no objeto 'byUnidade'
+    const unidades = Object.keys(byUnidade).sort((a,b)=>byUnidade[b]-byUnidade[a]);
+    const unidadeVals = unidades.map(u=>byUnidade[u]);
+
+    if(charts.unidade) charts.unidade.destroy();
+    charts.unidade = new Chart(document.getElementById('chartUnidade'), {
+      type:'bar',
+      data:{ labels: unidades, datasets:[{ data: unidadeVals, backgroundColor: '#1e4278', borderRadius:6, maxBarThickness:34 }]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        onClick:(evt, elements)=>{
+          if(!elements.length) return;
+          const clicked = unidades[elements[0].index];
+          if(els.filterUnidade.value === clicked) return;
+          els.filterUnidade.value = clicked;
+          currentPage = 1;
+          render(true);
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{ticks:{font:{family:'Inter', size:10}}, grid:{display:false}},
+          y:{beginAtZero:true, ticks:{font:{family:'Inter', size:11}}, grid:{color:'#eef1f7'}}
+        }
+      }
+    });
+
+    // Gráfico de situação usa o "statsBase" mantendo a consistência geral
+    const labels = ['Regulares', 'Vencendo', 'Vencidos'];
+    const cReg = statsBase.filter(r=>r.flagRegular).length;
+    const cVencendo = statsBase.filter(r=>r.flagVencendo).length;
+    const cVenc = statsBase.filter(r=>r.flagVencido).length;
+    
+    const data = [cReg, cVencendo, cVenc];
+    const colors = ['#2bad7d', '#f2a93b', '#e5484d'];
+    const keys = ['regular', 'vencendo', 'vencido'];
+
+    if(charts.status) charts.status.destroy();
+    charts.status = new Chart(document.getElementById('chartStatus'), {
+      type:'doughnut',
+      data:{ labels, datasets:[{ data, backgroundColor: colors, borderWidth:0 }] },
+      options:{
+        responsive:true, maintainAspectRatio:false, cutout:'62%',
+        onClick:(evt, elements)=>{
+          if(!elements.length) return;
+          const flag = keys[elements[0].index];
+          activeFlag = (activeFlag === flag) ? '' : flag;
+          els.filterStatus.value = activeFlag;
+          currentPage = 1;
+          syncActiveCards();
+          render(true);
+        },
+        onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        plugins:{legend:{position:'bottom', labels:{font:{family:'Inter', size:10}, boxWidth:10, padding:12}}}
+      }
+    });
+  }
+
+  // ---------------- Seletor de abas (Painel de ATF's / Clientes por Frota) ----------------
+  const URL_SISTEMA_CLIENTES = 'https://davi-souza-vmg.github.io/Gestao-de-Condutores/Html/atfs_clientes.html';
+
+  const tabPainel = document.getElementById('tabPainel');
+  const tabClientes = document.getElementById('tabClientes');
+  const roadTop = document.getElementById('roadTop');
+  const roadHeader = document.getElementById('roadHeader');
+  const tabBtnPainel = document.getElementById('tabBtnPainel');
+  const tabBtnClientes = document.getElementById('tabBtnClientes');
+  const iframeClientes = document.getElementById('iframeClientes');
+  let iframeClientesCarregado = false;
+
+  function ativarTab(nome){
+    const isPainel = nome === 'painel';
+    tabPainel.classList.toggle('hidden', !isPainel);
+    tabClientes.classList.toggle('hidden', isPainel);
+    roadTop.style.display = isPainel ? '' : 'none';
+    roadHeader.classList.toggle('tab-clientes-active', !isPainel);
+    tabBtnPainel.classList.toggle('active', isPainel);
+    tabBtnClientes.classList.toggle('active', !isPainel);
+
+    if(!isPainel && !iframeClientesCarregado){
+      iframeClientes.src = URL_SISTEMA_CLIENTES;
+      iframeClientesCarregado = true;
+    }
+  }
+
+  tabBtnPainel.addEventListener('click', () => ativarTab('painel'));
+  tabBtnClientes.addEventListener('click', () => ativarTab('clientes'));
+
+  loadData();
 })();
 </script>
-</body></html>
+</body>
+</html>
