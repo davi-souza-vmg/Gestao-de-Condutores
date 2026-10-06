@@ -63,7 +63,7 @@
   .section-head span{font-size:13px;color:var(--slate-600);}
 
   /* Painéis: cards principais */
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(270px, 1fr));gap:22px;}
   .card{
     background:var(--card);border-radius:var(--radius);border:1px solid var(--line);
     box-shadow:0 10px 26px rgba(15,37,68,.06);
@@ -77,6 +77,7 @@
     font-size:22px;background:var(--amber-soft);
   }
   .card.frota .icon{background:#e4f7ef;}
+  .card.multas .icon{background:#fef3c7;}
   .card h3{font-family:var(--font-display);font-size:19px;margin:0;}
   .card p{margin:0;color:var(--slate-600);font-size:13.5px;line-height:1.55;flex:1;}
   .card .go{
@@ -104,9 +105,6 @@
     width:38px;height:38px;border-radius:10px;flex:none;
     display:flex;align-items:center;justify-content:center;font-size:18px;
     background:#fbe9e4;
-  }
-  .tool-row.multas .icon{
-    background:#fef3c7;
   }
   .tool-row .text h3{font-family:var(--font-display);font-size:15px;margin:0 0 3px;}
   .tool-row .text p{margin:0;color:var(--slate-600);font-size:13px;}
@@ -153,6 +151,12 @@
         <p>Acompanhe a situação de todas as Autorizações de Tráfego (ATFs) emitidas, verifique os períodos de validade e consulte os clientes vinculados a cada frota.</p>
         <span class="go">Acessar →</span>
       </a>
+      <a class="card multas" href="Html/frota_multas_contagem.html">
+        <div class="icon">🚨</div>
+        <h3>Conferência de Multas</h3>
+        <p>Consulte e acompanhe o lançamento, relatórios e conferências de multas e infrações da frota em Contagem.</p>
+        <span class="go">Acessar →</span>
+      </a>
     </div>
   </section>
 
@@ -167,14 +171,6 @@
         <div class="text">
           <h3>Editor de PDF</h3>
           <p>Edite, preencha e ajuste documentos em PDF direto pelo navegador, sem instalar nada.</p>
-        </div>
-        <span class="arrow">→</span>
-      </a>
-      <a class="tool-row multas" href="Html/frota_multas_contagem.html">
-        <div class="icon">🚨</div>
-        <div class="text">
-          <h3>Conferência de Multas (Contagem)</h3>
-          <p>Consulte e acompanhe o lançamento, relatórios e conferências de multas da frota.</p>
         </div>
         <span class="arrow">→</span>
       </a>
