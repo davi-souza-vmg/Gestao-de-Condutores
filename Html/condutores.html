@@ -306,11 +306,22 @@
   /* ---------- situação operacional: afastado / férias ---------- */
   .person-status-icon{
     display:inline-flex;align-items:center;justify-content:center;
-    width:22px;height:22px;border-radius:7px;font-size:14px;
-    vertical-align:middle;cursor:help;flex:none;
+    width:24px;height:24px;border-radius:8px;font-size:14px;
+    vertical-align:middle;cursor:pointer;flex:none;position:relative;
+    box-shadow:0 1px 2px rgba(15,37,68,.08);
   }
-  .afastado-icon{background:#eef1f5;border:1px solid #d7dde6;}
-  .ferias-icon{background:#fff4d8;border:1px solid #f0d18a;}
+  .person-status-icon[data-tooltip]::after{
+    content:attr(data-tooltip);position:absolute;left:50%;bottom:calc(100% + 8px);
+    transform:translateX(-50%) translateY(3px);opacity:0;pointer-events:none;
+    background:var(--navy-950);color:#fff;border-radius:7px;padding:6px 9px;
+    font-size:11px;font-weight:600;line-height:1.25;white-space:nowrap;z-index:30;
+    box-shadow:0 6px 16px rgba(10,25,48,.2);transition:opacity .12s ease,transform .12s ease;
+  }
+  .person-status-icon[data-tooltip]:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
+  .afastado-icon{background:#eef1f5;border:1px solid #c9d1dc;}
+  .ferias-icon{background:#fff3d0;border:1px solid #e8c46d;}
+  .afastado-icon::before{content:'↘';position:absolute;font-size:9px;right:3px;bottom:1px;font-weight:800;color:#687587;}
+  .ferias-icon::before{content:'✦';position:absolute;font-size:8px;right:3px;top:1px;font-weight:800;color:#d39a18;}
   .mcard-name-wrap{display:flex;align-items:center;flex-wrap:wrap;gap:5px;}
   .mcard-name-wrap .mcard-name{margin-right:1px;}
   .badge.afastado{background:#eef1f5;color:#687587;}
@@ -396,6 +407,10 @@
   .epr-afastado-tag{display:inline-block;margin-left:7px;padding:2px 6px;border-radius:5px;background:#f4cf55;color:#654900;font-size:10px;font-weight:800;letter-spacing:.25px;vertical-align:middle;}
   .export-picker-row .epr-meta{color:var(--slate-600);font-size:11.5px;margin-left:auto;text-align:right;white-space:nowrap;}
   .export-empty-hint{padding:16px;text-align:center;color:var(--slate-400);font-size:12.5px;}
+  .operational-status{display:flex;align-items:center;gap:9px;padding:10px 12px;margin-bottom:12px;border-radius:10px;font-size:12.5px;font-weight:700;}
+  .operational-status.afastado{background:#eef1f5;color:#59687a;border:1px solid #d7dde6;}
+  .operational-status.ferias{background:#fff4d8;color:#8a6512;border:1px solid #efd58f;}
+  .operational-status-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:rgba(255,255,255,.7);font-size:15px;}
   .modal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;}
   .modal-field{display:flex;flex-direction:column;gap:2px;min-width:0;}
   .modal-field .lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--slate-600);}
@@ -567,14 +582,12 @@
         <option value="ATIVO">DER ativo</option>
         <option value="VENCENDO">DER vencendo (&lt;30d)</option>
         <option value="VENCIDO">DER vencido</option>
-        <option value="AFASTADO">DER afastado</option>
         <option value="SEM_CADASTRO">DER sem cadastro</option>
       </select>
       <select id="filterStatusCnh">
         <option value="">CNH — todos</option>
         <option value="ATIVO">CNH ativa</option>
         <option value="VENCIDO">CNH vencida</option>
-        <option value="AFASTADO">CNH afastado</option>
         <option value="SEM_CADASTRO">CNH sem cadastro</option>
       </select>
       <span class="count-pill" id="countPill">0 registros</span>
@@ -621,6 +634,7 @@
       <button class="modal-close" id="modalClose">✕</button>
     </div>
     <div class="modal-body">
+      <div id="mdSituacaoOperacional" class="operational-status hidden"></div>
       <div class="modal-grid">
         <div class="modal-field"><span class="lbl">Matrícula</span><span class="val copyable" id="mdMat">—</span></div>
         <div class="modal-field"><span class="lbl">CPF</span><span class="val copyable" id="mdCpf">—</span></div>
@@ -1639,10 +1653,11 @@ function tempoRelativo(data) {
     const parts = [];
     if(r.afastado){
       const fim = r.afastadoInfo && r.afastadoInfo.fim ? ` até ${fmtDate(r.afastadoInfo.fim)}` : '';
-      parts.push(`<span class="person-status-icon afastado-icon" title="Motorista afastado${fim}">⏸️</span>`);
+      parts.push(`<span class="person-status-icon afastado-icon" data-tooltip="Afastado${fim}" aria-label="Motorista afastado${fim}">⏸</span>`);
     }
     if(r.emFerias && r.ferias){
-      parts.push(`<span class="person-status-icon ferias-icon" title="Férias de ${fmtDate(r.ferias.inicio)} a ${fmtDate(r.ferias.fim)}">🏖️</span>`);
+      const periodo = `Férias: ${fmtDate(r.ferias.inicio)} a ${fmtDate(r.ferias.fim)}`;
+      parts.push(`<span class="person-status-icon ferias-icon" data-tooltip="${periodo}" aria-label="${periodo}">🏝️</span>`);
     }
     return parts.join('');
   }
@@ -1707,10 +1722,6 @@ function tempoRelativo(data) {
     const byCpf = {};
     const byName = {};
     condutorRows.forEach(r => {
-      // Motoristas afastados ficam fora da Conferência do relCondutores.xlsx.
-      // Eles continuam normalmente no painel principal, mas não geram
-      // divergências enquanto estiverem marcados como afastados.
-      if(r.afastado) return;
       const k = normalizeCpf(r.cpf);
       if(k){
         const atual = byCpf[k];
@@ -2187,8 +2198,6 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           const originais = Array.isArray(r.docsPendentes) ? r.docsPendentes : [];
           const pendentes = docsPendentesRelatorio(r);
           const temOcultas = modoConfidencial && originais.some(tag => TAGS_OCULTAS_NO_RELATORIO.includes(tag));
-          const observacao = (r.docsObservacao || '').trim();
-
           let texto;
           if(pendentes.length){
             texto = pendentes.join(', ');
@@ -2198,8 +2207,21 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           } else {
             texto = 'Nenhuma pendência';
           }
+          return {texto};
+        }
 
-          return {texto, observacao: observacao || '—'};
+        // A informação operacional passa a vir da planilha complementar
+        // resultado_conferencia.xlsx, mantendo afastamentos e férias no mesmo
+        // relatório, sem depender do antigo campo de observações.
+        function situacaoOperacionalRelatorio(r){
+          if(r.afastado){
+            const status = r.afastadoInfo && r.afastadoInfo.status ? ` · ${r.afastadoInfo.status}` : '';
+            return {texto:'Afastado' + status, tipo:'AFASTADO'};
+          }
+          if(r.emFerias && r.ferias){
+            return {texto:`Férias · ${fmtDate(r.ferias.inicio)} a ${fmtDate(r.ferias.fim)}`, tipo:'FERIAS'};
+          }
+          return {texto:'—', tipo:''};
         }
 
         // Resumo operacional do relatório. O card de documentação só aparece
@@ -2222,15 +2244,17 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         // documentação pendente visível. Condutores sem pendência ficam sem essa coluna.
         const pdfRows = rowsToExport.map(r => {
           const docs = docsInfoRelatorio(r);
+          const operacional = situacaoOperacionalRelatorio(r);
           const row = [
             r.motorista || '—',
             r.filial || '—',
             statusDerRelatorio(r.derStatus),
+            operacional.texto,
           ];
           if(temDocumentacaoPendente){
-            row.push(docs.texto === 'Nenhuma pendência' ? '—' : docs.texto, docs.observacao === '—' ? '—' : docs.observacao);
+            row.push(docs.texto === 'Nenhuma pendência' ? '—' : docs.texto);
           }
-          return {row, source:r};
+          return {row, source:r, operacional};
         });
 
         function drawSummary(){
@@ -2267,8 +2291,8 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
 
         const tableStartY = 61;
         const tableHead = temDocumentacaoPendente
-          ? ['Motorista','Filial','Situação DER','Documentação','Observação']
-          : ['Motorista','Filial','Situação DER'];
+          ? ['Motorista','Filial','Situação DER','Situação especial','Documentação']
+          : ['Motorista','Filial','Situação DER','Situação especial'];
         let firstPage = true;
         doc.autoTable({
           startY: tableStartY,
@@ -2291,15 +2315,16 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           },
           alternateRowStyles: {fillColor:[250,251,253]},
           columnStyles: temDocumentacaoPendente ? {
-            0:{cellWidth:58},
-            1:{cellWidth:38},
-            2:{cellWidth:48},
-            3:{cellWidth:78},
+            0:{cellWidth:52},
+            1:{cellWidth:35},
+            2:{cellWidth:45},
+            3:{cellWidth:58},
             4:{cellWidth:'auto'},
           } : {
-            0:{cellWidth:70},
-            1:{cellWidth:48},
-            2:{cellWidth:'auto'},
+            0:{cellWidth:65},
+            1:{cellWidth:42},
+            2:{cellWidth:48},
+            3:{cellWidth:'auto'},
           },
           margin:{left:14,right:14,top:61,bottom:16},
           didDrawPage:function(){
@@ -2310,14 +2335,20 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
             }
           },
           didParseCell:function(data){
-            if(data.section !== 'body' || data.column.index !== 2) return;
+            if(data.section !== 'body') return;
             const meta = pdfRows[data.row.index];
             if(!meta) return;
-            const style = statusDerStyle(meta.source.derStatus);
-            data.cell.styles.fillColor = style.fill;
-            data.cell.styles.textColor = style.text;
-            data.cell.styles.fontStyle = 'bold';
-            data.cell.styles.halign = 'center';
+            if(data.column.index === 2){
+              const style = statusDerStyle(meta.source.derStatus);
+              data.cell.styles.fillColor = style.fill;
+              data.cell.styles.textColor = style.text;
+              data.cell.styles.fontStyle = 'bold';
+              data.cell.styles.halign = 'center';
+            } else if(data.column.index === 3 && meta.operacional && meta.operacional.tipo){
+              data.cell.styles.fillColor = meta.operacional.tipo === 'AFASTADO' ? [238,241,245] : [255,244,216];
+              data.cell.styles.textColor = meta.operacional.tipo === 'AFASTADO' ? [89,104,122] : [138,101,18];
+              data.cell.styles.fontStyle = 'bold';
+            }
           },
         });
 
@@ -2356,7 +2387,10 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
   async function runConferencia(condutorRows){
     try{
       const relatorio = await fetchRelatorioXlsx();
-      const divergencias = compararRelatorio(relatorio, condutorRows);
+      // Motoristas afastados permanecem no painel e nos gráficos, mas não
+      // participam da conferência mensal do relCondutores.xlsx.
+      const condutoresConferencia = condutorRows.filter(r => !r.afastado);
+      const divergencias = compararRelatorio(relatorio, condutoresConferencia);
       ultimaConferencia = divergencias;
 
       els.confBadge.textContent = divergencias.length;
@@ -2565,6 +2599,20 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     if(!r) return;
     document.getElementById('mdNome').textContent = r.motorista || '—';
     document.getElementById('mdSub').textContent = [r.funcao, r.filial].filter(Boolean).join(' · ') || '—';
+    const opStatus = document.getElementById('mdSituacaoOperacional');
+    if(r.afastado){
+      const detalhe = r.afastadoInfo && r.afastadoInfo.status ? ` · ${r.afastadoInfo.status}` : '';
+      opStatus.className = 'operational-status afastado';
+      opStatus.innerHTML = `<span class="operational-status-badge">⏸</span><span>Motorista afastado${detalhe}</span>`;
+      opStatus.classList.remove('hidden');
+    } else if(r.emFerias && r.ferias){
+      opStatus.className = 'operational-status ferias';
+      opStatus.innerHTML = `<span class="operational-status-badge">🏝️</span><span>Motorista de férias · ${fmtDate(r.ferias.inicio)} a ${fmtDate(r.ferias.fim)}</span>`;
+      opStatus.classList.remove('hidden');
+    } else {
+      opStatus.className = 'operational-status hidden';
+      opStatus.innerHTML = '';
+    }
     const matEl = document.getElementById('mdMat');
     const cpfEl = document.getElementById('mdCpf');
     matEl.textContent = r.matricula || '—';
