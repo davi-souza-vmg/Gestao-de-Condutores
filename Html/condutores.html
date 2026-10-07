@@ -303,6 +303,18 @@
   .days span.n{font-family:var(--font-mono);font-size:12px;color:var(--slate-600);}
   tfoot td{padding:14px;text-align:center;color:var(--slate-400);font-size:12px;}
 
+  /* ---------- situação operacional: afastado / férias ---------- */
+  .person-status-icon{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:7px;font-size:14px;
+    vertical-align:middle;cursor:help;flex:none;
+  }
+  .afastado-icon{background:#eef1f5;border:1px solid #d7dde6;}
+  .ferias-icon{background:#fff4d8;border:1px solid #f0d18a;}
+  .mcard-name-wrap{display:flex;align-items:center;flex-wrap:wrap;gap:5px;}
+  .mcard-name-wrap .mcard-name{margin-right:1px;}
+  .badge.afastado{background:#eef1f5;color:#687587;}
+  
   /* ---------- cards mobile (telas < 768px) ---------- */
   .mobile-cards{display:none;flex-direction:column;gap:10px;}
   .mcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .12s;}
@@ -555,12 +567,14 @@
         <option value="ATIVO">DER ativo</option>
         <option value="VENCENDO">DER vencendo (&lt;30d)</option>
         <option value="VENCIDO">DER vencido</option>
+        <option value="AFASTADO">DER afastado</option>
         <option value="SEM_CADASTRO">DER sem cadastro</option>
       </select>
       <select id="filterStatusCnh">
         <option value="">CNH — todos</option>
         <option value="ATIVO">CNH ativa</option>
         <option value="VENCIDO">CNH vencida</option>
+        <option value="AFASTADO">CNH afastado</option>
         <option value="SEM_CADASTRO">CNH sem cadastro</option>
       </select>
       <span class="count-pill" id="countPill">0 registros</span>
@@ -838,6 +852,9 @@
   // O arquivo fica na raiz do repositório (ao lado do index.html) — por isso o "../".
   // Se você mover o .html ou o .xlsx de pasta, ajuste este caminho.
   const XLSX_PATH = '../relCondutores.xlsx';
+  // Controle complementar de afastamentos e férias.
+  // O arquivo fica na raiz do repositório, junto do relCondutores.xlsx.
+  const RESULTADO_CONFERENCIA_PATH = '../resultado_conferencia.xlsx';
   let ultimaConferencia = []; // Já existe no seu código
 let dataUltimoArquivo = null; // Crie esta variável
 
@@ -854,6 +871,7 @@ function tempoRelativo(data) {
 
   let rawRows = [];      
   let rawMultas = [];    
+  let afastamentosFerias = { afastados: [], ferias: [] };
   let currentPageRows = []; 
   let sortState = {key:'motorista', dir:1};
   let charts = {filial:null, status:null};
@@ -1376,6 +1394,21 @@ function tempoRelativo(data) {
         console.warn('Não foi possível carregar a planilha de documentação:', errDocs);
       }
 
+      try{
+        afastamentosFerias = await fetchResultadoConferencia();
+        attachAfastamentosFerias(merged, afastamentosFerias);
+      }catch(errComplementar){
+        console.warn('Não foi possível carregar resultado_conferencia.xlsx:', errComplementar);
+        afastamentosFerias = { afastados: [], ferias: [] };
+        // O painel principal continua funcionando mesmo sem o arquivo complementar.
+        merged.forEach(r => {
+          r.afastado = false;
+          r.afastadoInfo = null;
+          r.emFerias = false;
+          r.ferias = null;
+        });
+      }
+
       rawRows = merged;
       els.empty.classList.add('hidden');
       els.error.classList.add('hidden');
@@ -1440,6 +1473,190 @@ function tempoRelativo(data) {
     return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
   }
 
+
+  // ---------- Afastados / férias — resultado_conferencia.xlsx ----------
+
+  function parseComplementarDate(value){
+    if(value instanceof Date && !isNaN(value.getTime())) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    const t = (value ?? '').toString().trim();
+    if(!t) return null;
+    let d = parseBrDateStr(t);
+    if(d) return d;
+    let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m){
+      d = new Date(+m[1], +m[2]-1, +m[3]);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    return null;
+  }
+
+  function normalizeMatricula(text){
+    return (text||'').toString().replace(/\D/g,'').replace(/^0+(?=\d)/,'');
+  }
+
+  function parseResultadoConferenciaWorkbook(wb){
+    const out = { afastados: [], ferias: [] };
+
+    function readSheet(sheetName){
+      const ws = wb.Sheets[sheetName];
+      if(!ws) return [];
+      return XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''});
+    }
+
+    // AFASTADOS: FILIAL | Nome | Matrícula | Data de admissão | Status | ...
+    const afastRows = readSheet('AFASTADOS');
+    if(afastRows.length){
+      const header = afastRows[0].map(c => (c||'').toString().trim().toUpperCase());
+      const idx = (...names) => {
+        for(const name of names){
+          const i = header.indexOf(name);
+          if(i > -1) return i;
+        }
+        return -1;
+      };
+      const iFilial = idx('FILIAL');
+      const iNome = idx('NOME');
+      const iMat = idx('MATRÍCULA','MAT.','MAT');
+      const iStatus = idx('STATUS');
+
+      for(let i=1;i<afastRows.length;i++){
+        const row = afastRows[i] || [];
+        const nome = (iNome>-1 ? row[iNome] : '').toString().trim();
+        const mat = (iMat>-1 ? row[iMat] : '').toString().trim();
+        const status = (iStatus>-1 ? row[iStatus] : '').toString().trim().toUpperCase();
+        if(!nome && !mat) continue;
+        if(status && !status.includes('AFAST')) continue;
+        out.afastados.push({
+          nome,
+          matricula: mat,
+          matriculaKey: normalizeMatricula(mat),
+          filial: (iFilial>-1 ? row[iFilial] : '').toString().trim(),
+          status: status || 'AFASTADO'
+        });
+      }
+    }
+
+    // FERIAS: FILIAL | Nome | Matrícula | Data de admissão | Início das férias | Fim das férias
+    const feriasRows = readSheet('FERIAS');
+    if(feriasRows.length){
+      const header = feriasRows[0].map(c => (c||'').toString().trim().toUpperCase());
+      const idx = (...names) => {
+        for(const name of names){
+          const i = header.indexOf(name);
+          if(i > -1) return i;
+        }
+        return -1;
+      };
+      const iFilial = idx('FILIAL');
+      const iNome = idx('NOME');
+      const iMat = idx('MATRÍCULA','MAT.','MAT');
+      const iInicio = idx('INÍCIO DAS FÉRIAS','INICIO DAS FERIAS');
+      const iFim = idx('FIM DAS FÉRIAS','FIM DAS FERIAS');
+
+      for(let i=1;i<feriasRows.length;i++){
+        const row = feriasRows[i] || [];
+        const nome = (iNome>-1 ? row[iNome] : '').toString().trim();
+        const mat = (iMat>-1 ? row[iMat] : '').toString().trim();
+        const inicio = parseComplementarDate(iInicio>-1 ? row[iInicio] : '');
+        const fim = parseComplementarDate(iFim>-1 ? row[iFim] : '');
+        if(!nome && !mat) continue;
+        if(!inicio || !fim) continue;
+        out.ferias.push({
+          nome,
+          matricula: mat,
+          matriculaKey: normalizeMatricula(mat),
+          filial: (iFilial>-1 ? row[iFilial] : '').toString().trim(),
+          inicio,
+          fim
+        });
+      }
+    }
+
+    return out;
+  }
+
+  async function fetchResultadoConferencia(){
+    const res = await fetch(RESULTADO_CONFERENCIA_PATH + '?_=' + Date.now());
+    if(!res.ok) throw new Error('Arquivo resultado_conferencia.xlsx não encontrado em ' + RESULTADO_CONFERENCIA_PATH);
+    const buf = await res.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array'});
+    return parseResultadoConferenciaWorkbook(wb);
+  }
+
+  function attachAfastamentosFerias(condutorRows, complemento){
+    const afastByMat = new Map();
+    const afastByName = new Map();
+    (complemento.afastados || []).forEach(a => {
+      if(a.matriculaKey) afastByMat.set(a.matriculaKey, a);
+      const nameKey = normalizeName(a.nome);
+      if(nameKey) afastByName.set(nameKey, a);
+    });
+
+    const feriasByMat = new Map();
+    const feriasByName = new Map();
+    (complemento.ferias || []).forEach(f => {
+      if(f.matriculaKey){
+        const list = feriasByMat.get(f.matriculaKey) || [];
+        list.push(f); feriasByMat.set(f.matriculaKey, list);
+      }
+      const nameKey = normalizeName(f.nome);
+      if(nameKey){
+        const list = feriasByName.get(nameKey) || [];
+        list.push(f); feriasByName.set(nameKey, list);
+      }
+    });
+
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+
+    condutorRows.forEach(r => {
+      const matKey = normalizeMatricula(r.matricula);
+      const nameKey = normalizeName(r.motorista);
+
+      const afastado = (matKey && afastByMat.get(matKey)) || afastByName.get(nameKey) || null;
+      r.afastado = !!afastado;
+      r.afastadoInfo = afastado || null;
+
+      const feriasCandidates = (matKey && feriasByMat.get(matKey)) || feriasByName.get(nameKey) || [];
+      // Só consideramos férias vigentes hoje. Férias futuras não exibem ícone;
+      // férias encerradas deixam de aparecer automaticamente.
+      const feriasAtivas = feriasCandidates.filter(f => hoje >= f.inicio && hoje <= f.fim);
+      feriasAtivas.sort((a,b) => b.fim - a.fim);
+      r.ferias = feriasAtivas.length ? feriasAtivas[0] : null;
+      r.emFerias = !!r.ferias;
+
+      // Afastado tem precedência sobre vencido/vencendo para DER e CNH.
+      // As datas originais permanecem no registro, mas o status operacional
+      // passa a ser AFASTADO enquanto o afastamento estiver marcado.
+      if(r.afastado){
+        r.derStatus = 'AFASTADO';
+        r.cnhStatus = 'AFASTADO';
+      }
+    });
+  }
+
+  function situacaoIconsHtml(r){
+    const parts = [];
+    if(r.afastado){
+      const fim = r.afastadoInfo && r.afastadoInfo.fim ? ` até ${fmtDate(r.afastadoInfo.fim)}` : '';
+      parts.push(`<span class="person-status-icon afastado-icon" title="Motorista afastado${fim}">⏸️</span>`);
+    }
+    if(r.emFerias && r.ferias){
+      parts.push(`<span class="person-status-icon ferias-icon" title="Férias de ${fmtDate(r.ferias.inicio)} a ${fmtDate(r.ferias.fim)}">🏖️</span>`);
+    }
+    return parts.join('');
+  }
+
+  function statusLabel(status){
+    if(status === 'ATIVO') return 'Ativo';
+    if(status === 'VENCENDO') return 'Vencendo (< 30 dias)';
+    if(status === 'VENCIDO') return 'Vencido';
+    if(status === 'SEM_CADASTRO') return 'Sem cadastro';
+    if(status === 'AGUARDANDO') return 'Aguardando DER';
+    if(status === 'AFASTADO') return 'Afastado';
+    return '—';
+  }
+
   async function fetchRelatorioXlsx(){
   const res = await fetch(XLSX_PATH + '?_=' + Date.now()); // Essa linha já existe
   if(!res.ok) throw new Error('Arquivo relCondutores.xlsx não encontrado em ' + XLSX_PATH); // Já existe
@@ -1490,6 +1707,10 @@ function tempoRelativo(data) {
     const byCpf = {};
     const byName = {};
     condutorRows.forEach(r => {
+      // Motoristas afastados ficam fora da Conferência do relCondutores.xlsx.
+      // Eles continuam normalmente no painel principal, mas não geram
+      // divergências enquanto estiverem marcados como afastados.
+      if(r.afastado) return;
       const k = normalizeCpf(r.cpf);
       if(k){
         const atual = byCpf[k];
@@ -1739,7 +1960,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     els.exportPickerList.innerHTML = list.map(r => {
       const key = exportRowKey(r);
       const checked = exportPickedCpf.has(key) ? 'checked' : '';
-      const afastado = /\bAFASTADO\b/i.test((r.observacao || r.docsObservacao || '').toString());
+      const afastado = !!r.afastado || /\bAFASTADO\b/i.test((r.observacao || r.docsObservacao || '').toString());
       return `<label class="export-picker-row${afastado ? ' is-afastado' : ''}">
         <input type="checkbox" data-key="${escapeHtml(key)}" ${checked}>
         <span class="epr-name">${escapeHtml(r.motorista)}${afastado ? '<span class="epr-afastado-tag">AFASTADO</span>' : ''}</span>
@@ -1949,10 +2170,12 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           if(status === 'VENCENDO') return 'Vencendo';
           if(status === 'ATIVO') return 'Regular';
           if(status === 'SEM_CADASTRO') return 'Sem cadastro';
+          if(status === 'AFASTADO') return 'Afastado';
           return '—';
         }
 
         function statusDerStyle(status){
+          if(status === 'AFASTADO') return {fill:[238,241,245], text:[104,117,135]};
           if(status === 'AGUARDANDO') return {fill:[232,239,250], text:[30,66,120]};
           if(status === 'VENCIDO') return {fill:[253,235,235], text:[190,53,58]};
           if(status === 'VENCENDO') return {fill:[255,246,228], text:[170,106,18]};
@@ -2144,6 +2367,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
   }
 
   function daysBar(days, status){
+    if(status === 'AFASTADO') return {pct:100, color:'#7b8798', label:'Afastado'};
     if(status === 'AGUARDANDO') return {pct:100, color:'var(--navy-700)', label:'Aguard. DER'};
     if(status === 'SEM_CADASTRO' || days === null || isNaN(days)) return {pct:0, color:'var(--slate-400)', label:'—'};
     let color = 'var(--green)';
@@ -2264,7 +2488,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const cnh = daysBar(r.cnhDias, r.cnhStatus);
       const multaTag = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
       return `<tr data-i="${i}">
-        <td class="name">${escapeHtml(r.motorista)}${multaTag}</td>
+        <td class="name"><span class="mcard-name-wrap">${escapeHtml(r.motorista)}${situacaoIconsHtml(r)}</span>${multaTag}</td>
         <td>${escapeHtml(r.filial)}</td>
         <td>${escapeHtml(r.funcao)}</td>
         <td>${fmtDateEstHtml(r.derVal, r.derValEstimado)}</td>
@@ -2284,7 +2508,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const multaTagM = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
       return `<div class="mcard" data-i="${i}">
         <div class="mcard-top">
-          <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${multaTagM}</span>
+          <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${situacaoIconsHtml(r)}${multaTagM}</span>
           <span class="mcard-filial">${escapeHtml(r.filial)}</span>
         </div>
         <div class="mcard-func">${escapeHtml(r.funcao || '—')}</div>
@@ -2320,15 +2544,6 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
   function fmtDateTime(d){
     if(!d) return '—';
     return d.toLocaleDateString('pt-BR');
-  }
-
-  function statusLabel(status){
-    if(status === 'ATIVO') return 'Ativo';
-    if(status === 'VENCENDO') return 'Vencendo (< 30 dias)';
-    if(status === 'VENCIDO') return 'Vencido';
-    if(status === 'SEM_CADASTRO') return 'Sem cadastro';
-    if(status === 'AGUARDANDO') return 'Aguardando DER';
-    return '—';
   }
 
   function copyToClipboard(text, el){
@@ -2523,28 +2738,31 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       cnhVencida:  '#9457d1',
       semCadastro: '#98a3b3',
       aguardando:  '#0e9490',
+      afastado:    '#687587',
     };
     let labels, data, colors, subtitle, targets;
     if(mode === 'der'){
-      labels = ['DER ativo','DER vencendo','DER vencido', 'Aguardando'];
+      labels = ['DER ativo','DER vencendo','DER vencido', 'Afastado', 'Aguardando'];
       data = [
         statusRows.filter(r=>r.derStatus==='ATIVO').length,
         statusRows.filter(r=>r.derStatus==='VENCENDO').length,
         statusRows.filter(r=>r.derStatus==='VENCIDO').length,
+        statusRows.filter(r=>r.derStatus==='AFASTADO').length,
         statusRows.filter(r=>r.derStatus==='AGUARDANDO').length
       ];
-      colors = [COL.derAtivo, COL.derVencendo, COL.derVencido, COL.aguardando];
-      targets = [{type:'der',value:'ATIVO'},{type:'der',value:'VENCENDO'},{type:'der',value:'VENCIDO'},{type:'enviado',value:'AGUARDANDO'}];
-      subtitle = 'DER — ativos, vencendo, vencidos e aguardando';
+      colors = [COL.derAtivo, COL.derVencendo, COL.derVencido, COL.afastado, COL.aguardando];
+      targets = [{type:'der',value:'ATIVO'},{type:'der',value:'VENCENDO'},{type:'der',value:'VENCIDO'},{type:'der',value:'AFASTADO'},{type:'enviado',value:'AGUARDANDO'}];
+      subtitle = 'DER — ativos, vencendo, vencidos, afastados e aguardando';
     } else if(mode === 'cnh'){
-      labels = ['CNH ativa','CNH vencida'];
+      labels = ['CNH ativa','CNH vencida','Afastado'];
       data = [
         statusRows.filter(r=>r.cnhStatus==='ATIVO').length,
-        statusRows.filter(r=>r.cnhStatus==='VENCIDO').length
+        statusRows.filter(r=>r.cnhStatus==='VENCIDO').length,
+        statusRows.filter(r=>r.cnhStatus==='AFASTADO').length
       ];
-      colors = [COL.cnhAtiva, COL.cnhVencida];
-      targets = [{type:'cnh',value:'ATIVO'},{type:'cnh',value:'VENCIDO'}];
-      subtitle = 'CNH — ativas e vencidas';
+      colors = [COL.cnhAtiva, COL.cnhVencida, COL.afastado];
+      targets = [{type:'cnh',value:'ATIVO'},{type:'cnh',value:'VENCIDO'},{type:'cnh',value:'AFASTADO'}];
+      subtitle = 'CNH — ativas, vencidas e afastados';
     } else if(mode === 'cadastro'){
       labels = ['Sem cadastro','Aguardando DER'];
       data = [
@@ -2555,19 +2773,20 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       targets = [{type:'cadastro',value:'SEM_CADASTRO'},{type:'enviado',value:'AGUARDANDO'}];
       subtitle = 'Sem cadastro x Enviados aguardando confirmação do DER';
     } else {
-      labels = ['DER ativo','DER vencendo','DER vencido','CNH ativa','CNH vencida','Sem cadastro', 'Aguardando'];
+      labels = ['DER ativo','DER vencendo','DER vencido','Afastados','CNH ativa','CNH vencida','Sem cadastro','Aguardando'];
       data = [
         statusRows.filter(r=>r.derStatus==='ATIVO').length,
         statusRows.filter(r=>r.derStatus==='VENCENDO').length,
         statusRows.filter(r=>r.derStatus==='VENCIDO').length,
+        statusRows.filter(r=>r.derStatus==='AFASTADO').length,
         statusRows.filter(r=>r.cnhStatus==='ATIVO').length,
         statusRows.filter(r=>r.cnhStatus==='VENCIDO').length,
         statusRows.filter(r=>(r.derStatus==='SEM_CADASTRO' || r.cnhStatus==='SEM_CADASTRO') && r.derStatus !== 'AGUARDANDO').length,
         statusRows.filter(r=>r.derStatus==='AGUARDANDO').length
       ];
-      colors = [COL.derAtivo, COL.derVencendo, COL.derVencido, COL.cnhAtiva, COL.cnhVencida, COL.semCadastro, COL.aguardando];
-      targets = [{type:'der',value:'ATIVO'},{type:'der',value:'VENCENDO'},{type:'der',value:'VENCIDO'},{type:'cnh',value:'ATIVO'},{type:'cnh',value:'VENCIDO'},{type:'cadastro',value:'SEM_CADASTRO'},{type:'enviado',value:'AGUARDANDO'}];
-      subtitle = 'DER x CNH — visão geral completa (inclui sem cadastro)';
+      colors = [COL.derAtivo, COL.derVencendo, COL.derVencido, COL.afastado, COL.cnhAtiva, COL.cnhVencida, COL.semCadastro, COL.aguardando];
+      targets = [{type:'der',value:'ATIVO'},{type:'der',value:'VENCENDO'},{type:'der',value:'VENCIDO'},{type:'der',value:'AFASTADO'},{type:'cnh',value:'ATIVO'},{type:'cnh',value:'VENCIDO'},{type:'cadastro',value:'SEM_CADASTRO'},{type:'enviado',value:'AGUARDANDO'}];
+      subtitle = 'DER x CNH — visão geral completa (inclui afastados e sem cadastro)';
     }
     document.getElementById('chartStatusSub').textContent = subtitle;
 
