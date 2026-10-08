@@ -332,8 +332,6 @@
   .mcard:hover{border-color:var(--navy-700);}
   .mcard-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;}
   .mcard-name{font-weight:700;font-size:14px;color:var(--slate-900);}
-  .mcard-filial{font-size:10.5px;color:var(--slate-600);font-family:var(--font-mono);white-space:nowrap;text-transform:uppercase;}
-  .mcard-func{font-size:11.5px;color:var(--slate-600);margin:-6px 0 10px;}
   .mcard-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--slate-600);padding:5px 0;border-top:1px solid var(--line);}
   .mcard-row:first-of-type{border-top:none;}
   .mcard-pill{padding:3px 10px;border-radius:12px;font-size:11.5px;font-weight:700;}
@@ -455,6 +453,27 @@
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;}
   }
+
+  /* ---------- assistente IA ---------- */
+  .ai-fab{position:fixed;right:24px;bottom:24px;z-index:80;width:58px;height:58px;border-radius:50%;border:0;background:var(--navy-900);color:#fff;font-size:24px;cursor:pointer;box-shadow:0 12px 30px rgba(10,25,48,.28);transition:transform .15s,box-shadow .15s;}
+  .ai-fab:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(10,25,48,.34);}
+  .ai-panel{position:fixed;right:24px;bottom:92px;z-index:79;width:min(430px,calc(100vw - 32px));height:min(650px,calc(100vh - 120px));background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(10,25,48,.25);display:none;overflow:hidden;flex-direction:column;}
+  .ai-panel.open{display:flex;}
+  .ai-head{padding:15px 17px;background:linear-gradient(120deg,var(--navy-950),var(--navy-900));color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .ai-head strong{font-family:var(--font-display);font-size:15px}.ai-head small{display:block;color:var(--slate-400);font-size:11px;margin-top:2px}
+  .ai-close{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer}
+  .ai-body{flex:1;overflow:auto;padding:14px;background:var(--bg)}
+  .ai-presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .ai-preset{border:1px solid var(--line);background:#fff;color:var(--slate-900);border-radius:10px;padding:9px 10px;text-align:left;font-size:11.5px;font-weight:600;cursor:pointer}
+  .ai-preset:hover{border-color:var(--navy-700);background:#f8faff}
+  .ai-msg{max-width:88%;padding:10px 12px;border-radius:12px;margin:7px 0;font-size:12.5px;line-height:1.45;white-space:pre-wrap}
+  .ai-msg.user{margin-left:auto;background:var(--navy-900);color:#fff;border-bottom-right-radius:4px}
+  .ai-msg.bot{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+  .ai-foot{padding:10px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px}
+  .ai-input{flex:1;resize:none;border:1px solid var(--line);border-radius:10px;padding:10px;font:12.5px var(--font-body);outline:none;min-height:42px;max-height:100px}
+  .ai-send{width:44px;border:0;border-radius:10px;background:var(--navy-900);color:#fff;cursor:pointer;font-size:17px}
+  .ai-send:disabled{opacity:.5;cursor:progress}
+  @media(max-width:600px){.ai-fab{right:16px;bottom:16px}.ai-panel{right:16px;bottom:84px;height:calc(100vh - 110px)}}
 </style>
 </head>
 <body>
@@ -599,8 +618,6 @@
         <thead>
           <tr>
             <th data-key="motorista">Motorista <span class="arrow"></span></th>
-            <th data-key="filial">Filial <span class="arrow"></span></th>
-            <th data-key="funcao">Função <span class="arrow"></span></th>
             <th data-key="derVal">DER validade <span class="arrow"></span></th>
             <th data-key="derDias">Dias rest. DER <span class="arrow"></span></th>
             <th data-key="cnhVal">CNH validade <span class="arrow"></span></th>
@@ -609,7 +626,7 @@
         </thead>
         <tbody id="tbody"></tbody>
         <tfoot>
-          <tr><td colspan="7" id="tfootMsg"></td></tr>
+          <tr><td colspan="5" id="tfootMsg"></td></tr>
         </tfoot>
       </table>
     </div>
@@ -638,7 +655,6 @@
       <div class="modal-grid">
         <div class="modal-field"><span class="lbl">Matrícula</span><span class="val copyable" id="mdMat">—</span></div>
         <div class="modal-field"><span class="lbl">CPF</span><span class="val copyable" id="mdCpf">—</span></div>
-        <div class="modal-field"><span class="lbl">Sexo</span><span class="val" id="mdSexo">—</span></div>
         <div class="modal-field"><span class="lbl">Admissão</span><span class="val" id="mdAdmissao">—</span></div>
         <div class="modal-field"><span class="lbl">DER validade</span><span class="val" id="mdDerVal">—</span></div>
         <div class="modal-field"><span class="lbl">Status DER</span><span class="val" id="mdDerStatus">—</span></div>
@@ -765,13 +781,6 @@
         <div class="export-picker-list" id="exportPickerList"></div>
       </div>
 
-      <label class="export-mode-opt" id="exportOptConfidencial" style="margin-top:6px;">
-        <input type="checkbox" id="exportModoConfidencial">
-        <div>
-          <strong>Modo confidencial</strong>
-          <span class="export-mode-sub">Oculta no PDF os documentos internos do setor (Certidão Criminal e Certidão de Bons Antecedentes)</span>
-        </div>
-      </label>
     </div>
     <div class="modal-foot">
       <button type="button" class="btn btn-ghost" id="exportModalCancel">Cancelar</button>
@@ -779,6 +788,28 @@
     </div>
   </div>
 </div>
+
+
+<button type="button" class="ai-fab" id="aiFab" aria-label="Abrir assistente">✦</button>
+<section class="ai-panel" id="aiPanel" aria-label="Assistente do sistema">
+  <header class="ai-head">
+    <div><strong>Assistente do sistema</strong><small>Consulte os dados e tire dúvidas sobre o sistema</small></div>
+    <button type="button" class="ai-close" id="aiClose">×</button>
+  </header>
+  <div class="ai-body" id="aiBody">
+    <div class="ai-presets">
+      <button class="ai-preset" data-ai-prompt="Quantos condutores estão aguardando DER?">Aguardando DER</button>
+      <button class="ai-preset" data-ai-prompt="Quais condutores estão com DER vencido?">DER vencido</button>
+      <button class="ai-preset" data-ai-prompt="Quais são as principais pendências documentais?">Pendências</button>
+      <button class="ai-preset" data-ai-prompt="Faça um resumo da situação atual dos condutores.">Resumo geral</button>
+    </div>
+    <div class="ai-msg bot">Olá! Posso consultar os dados carregados no painel e explicar como o sistema funciona. O que você quer saber?</div>
+  </div>
+  <div class="ai-foot">
+    <textarea class="ai-input" id="aiInput" placeholder="Pergunte qualquer coisa…" rows="1"></textarea>
+    <button type="button" class="ai-send" id="aiSend">➤</button>
+  </div>
+</section>
 
 <script>
 (function(){
@@ -791,6 +822,44 @@
   // Planilha de Multas (separada da planilha de condutores)
   const SHEET_ID_MULTAS = '1cTmy2i0nc201sVVv67U19-NzFBHbWjLjRyGg8c_g3m0';
   const MULTAS_TAB = 'Página1';
+
+  // O endpoint é um Web App do Google Apps Script. A chave do Gemini fica
+  // somente nas Script Properties do Apps Script, nunca neste HTML.
+  const AI_ENDPOINT = ''; // cole aqui a URL /exec do seu Web App
+
+  function aiAppend(role, text){
+    const el=document.createElement('div'); el.className='ai-msg '+role; el.textContent=text;
+    els.aiBody.appendChild(el); els.aiBody.scrollTop=els.aiBody.scrollHeight;
+  }
+  function aiContext(){
+    const base=lastFilteredRows.length?lastFilteredRows:rawRows;
+    return {
+      filtros:{filial:els.filterFilial.value||'todas',der:els.filterStatusDer.value||'todos',cnh:els.filterStatusCnh.value||'todos',busca:els.search.value||''},
+      resumo:{
+        total:rawRows.length,visiveis:base.length,
+        aguardandoDer:rawRows.filter(r=>r.derStatus==='AGUARDANDO').length,
+        derAtivo:rawRows.filter(r=>r.derStatus==='ATIVO').length,
+        derVencendo:rawRows.filter(r=>r.derStatus==='VENCENDO').length,
+        derVencido:rawRows.filter(r=>r.derStatus==='VENCIDO').length,
+        cnhAtiva:rawRows.filter(r=>r.cnhStatus==='ATIVO').length,
+        cnhVencida:rawRows.filter(r=>r.cnhStatus==='VENCIDO').length,
+        multas:rawRows.filter(r=>(r.multasPendentes||0)>0).length
+      },
+      registros:base.slice(0,300).map(r=>({motorista:r.motorista,matricula:r.matricula,filial:r.filial,derStatus:r.derStatus,derVal:r.derVal?fmtDate(r.derVal):null,cnhStatus:r.cnhStatus,cnhVal:r.cnhVal?fmtDate(r.cnhVal):null,problemas:r.problemas||'',observacao:r.observacao||'',multasPendentes:r.multasPendentes||0,afastado:!!r.afastado,emFerias:!!r.emFerias}))
+    };
+  }
+  async function askAI(prompt){
+    if(!AI_ENDPOINT){ aiAppend('user',prompt); aiAppend('bot','O assistente está instalado, mas falta configurar o AI_ENDPOINT com a URL /exec do Web App do Google Apps Script. A chave do Gemini deve ficar somente no servidor.'); return; }
+    const btn=els.aiSend; btn.disabled=true; aiAppend('user',prompt);
+    const wait=document.createElement('div'); wait.className='ai-msg bot'; wait.textContent='Consultando…'; els.aiBody.appendChild(wait);
+    try{
+      const res=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({message:prompt,context:aiContext()})});
+      const data=await res.json(); wait.remove();
+      if(!res.ok||data.error) throw new Error(data.error||'Falha na IA');
+      aiAppend('bot',data.answer||'Não consegui obter uma resposta.');
+    }catch(err){ wait.textContent='Não consegui consultar a IA agora. Verifique a implantação do Apps Script.'; }
+    finally{btn.disabled=false;}
+  }
 
   // Planilha de Controle de Documentação (separada, também dividida por filial)
   const SHEET_ID_DOCS = '1ywn1NLRrqC5oj3Ir3mbg9tYwNejHyO5SIHd98hi9t-4';
@@ -845,7 +914,6 @@
     exportModalGenerate: document.getElementById('exportModalGenerate'),
     exportOptFiltro: document.getElementById('exportOptFiltro'),
     exportOptManual: document.getElementById('exportOptManual'),
-    exportModoConfidencial: document.getElementById('exportModoConfidencial'),
     exportModeFiltro: document.getElementById('exportModeFiltro'),
     exportModeManual: document.getElementById('exportModeManual'),
     exportFiltroResumo: document.getElementById('exportFiltroResumo'),
@@ -860,6 +928,12 @@
     exportPickerFilterBar: document.getElementById('exportPickerFilterBar'),
     exportPickerFilterInfo: document.getElementById('exportPickerFilterInfo'),
     exportPickerClearFilters: document.getElementById('exportPickerClearFilters'),
+    aiFab: document.getElementById('aiFab'),
+    aiClose: document.getElementById('aiClose'),
+    aiPanel: document.getElementById('aiPanel'),
+    aiBody: document.getElementById('aiBody'),
+    aiInput: document.getElementById('aiInput'),
+    aiSend: document.getElementById('aiSend'),
   };
 
   // Caminho do relCondutores.xlsx a partir de Html/condutores.html.
@@ -908,6 +982,11 @@ function tempoRelativo(data) {
   }
 
   els.btnRefresh.addEventListener('click', () => loadData());
+  els.aiFab.addEventListener('click',()=>{els.aiPanel.classList.toggle('open');if(els.aiPanel.classList.contains('open'))els.aiInput.focus();});
+  els.aiClose.addEventListener('click',()=>els.aiPanel.classList.remove('open'));
+  document.querySelectorAll('.ai-preset').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.aiPrompt)));
+  els.aiSend.addEventListener('click',()=>{const q=els.aiInput.value.trim();if(q){els.aiInput.value='';askAI(q);}});
+  els.aiInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();els.aiSend.click();}});
   els.search.addEventListener('input', () => {
     els.searchClear.style.display = els.search.value ? 'flex' : 'none';
     currentPage = 1;
@@ -1134,9 +1213,6 @@ function tempoRelativo(data) {
     const iCpf = idx('CPF');
     const iMat = idxAny('MAT.', 'MATRÍCULA', 'MAT');
     const iAdmissao = idx('ADMISSÃO');
-    const iFuncao = idx('FUNÇÃO');
-    const iFilial = idx('FILIAL');
-    const iSexo = idx('SEXO');
     const iDerVal = idx('DER VALIDADE');
     const iDerDias = idx('DIAS REST');
     const iDerStatus = idx('STATUS DEER');
@@ -1191,9 +1267,8 @@ function tempoRelativo(data) {
           cpf: iCpf>-1 ? cellText(c[iCpf]) : '',
           matricula: iMat>-1 ? cellText(c[iMat]) : '',
           admissao: admissaoDate,
-          funcao: iFuncao>-1 ? cellText(c[iFuncao]) : '',
+          // A filial é o nome da aba; a coluna FILIAL não é mais necessária.
           filial: tabName,
-          sexo: iSexo>-1 ? cellText(c[iSexo]) : '',
           derVal: derValFinal,
           derValEstimado: derValEstimado,
           derDias: isNaN(derDiasCalc) ? null : derDiasCalc,
@@ -2132,7 +2207,6 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
   // Popup "Exportar lista" (ao lado do filtro CNH): PDF com a tabela de condutores.
   function generateListPdf(){
     const manual = els.exportModeManual.checked;
-    const modoConfidencial = els.exportModoConfidencial.checked;
     let rowsToExport;
     let subtitulo;
 
@@ -2166,20 +2240,15 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         // O relatório foi simplificado para uso operacional:
         // não exibe validade/dias restantes de CNH nem validade/dias restantes do DER.
         // Mostra somente a situação do DER e as pendências documentais.
-        const TAGS_OCULTAS_NO_RELATORIO = ['Criminal', 'Antecedentes'];
-
         function docsPendentesRelatorio(r){
-          const pendentes = Array.isArray(r.docsPendentes) ? r.docsPendentes : [];
-          return modoConfidencial
-            ? pendentes.filter(tag => !TAGS_OCULTAS_NO_RELATORIO.includes(tag))
-            : pendentes;
+          return Array.isArray(r.docsPendentes) ? r.docsPendentes : [];
         }
 
         function statusDerRelatorio(status){
-          if(status === 'AGUARDANDO') return 'Aguardando retorno do DER';
+          if(status === 'AGUARDANDO') return 'Aguardando DER';
           if(status === 'VENCIDO') return 'Vencido';
           if(status === 'VENCENDO') return 'Vencendo';
-          if(status === 'ATIVO') return 'Regular';
+          if(status === 'ATIVO') return 'Aguardando DER';
           if(status === 'SEM_CADASTRO') return 'Sem cadastro';
           if(status === 'AFASTADO') return 'Afastado';
           return '—';
@@ -2230,10 +2299,10 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         const totalPendencias = rowsToExport.reduce((n,r)=>n + docsPendentesRelatorio(r).length, 0);
         const temDocumentacaoPendente = totalPendencias > 0;
         const resumo = [
-          {label:'Regular', value:rowsToExport.filter(r=>r.derStatus==='ATIVO').length, color:[43,173,125]},
+          {label:'Aguardando DER', value:rowsToExport.filter(r=>r.derStatus==='ATIVO').length, color:[43,173,125]},
           {label:'Vencendo', value:rowsToExport.filter(r=>r.derStatus==='VENCENDO').length, color:[242,169,59]},
           {label:'Vencido', value:rowsToExport.filter(r=>r.derStatus==='VENCIDO').length, color:[229,72,77]},
-          {label:'Aguardando retorno do DER', value:rowsToExport.filter(r=>r.derStatus==='AGUARDANDO').length, color:[30,66,120]},
+          {label:'Aguardando DER', value:rowsToExport.filter(r=>r.derStatus==='AGUARDANDO').length, color:[30,66,120]},
           {label:'Sem cadastro', value:rowsToExport.filter(r=>r.derStatus==='SEM_CADASTRO').length, color:[147,160,179]},
         ];
         if(temDocumentacaoPendente){
@@ -2523,8 +2592,6 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const multaTag = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
       return `<tr data-i="${i}">
         <td class="name"><span class="mcard-name-wrap">${escapeHtml(r.motorista)}${situacaoIconsHtml(r)}</span>${multaTag}</td>
-        <td>${escapeHtml(r.filial)}</td>
-        <td>${escapeHtml(r.funcao)}</td>
         <td>${fmtDateEstHtml(r.derVal, r.derValEstimado)}</td>
         <td><div class="days"><div class="track"><i style="width:${der.pct}%;background:${der.color}"></i></div><span class="n">${der.label}</span></div></td>
         <td>${fmtDateEstHtml(r.cnhVal, r.cnhValEstimado)}</td>
@@ -2543,9 +2610,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       return `<div class="mcard" data-i="${i}">
         <div class="mcard-top">
           <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${situacaoIconsHtml(r)}${multaTagM}</span>
-          <span class="mcard-filial">${escapeHtml(r.filial)}</span>
         </div>
-        <div class="mcard-func">${escapeHtml(r.funcao || '—')}</div>
         <div class="mcard-row"><span>DER · ${fmtDateEstHtml(r.derVal, r.derValEstimado)}</span><span class="mcard-pill" style="background:${der.color}22;color:${der.color}">${der.label}</span></div>
         <div class="mcard-row"><span>CNH · ${fmtDateEstHtml(r.cnhVal, r.cnhValEstimado)}</span><span class="mcard-pill" style="background:${cnh.color}22;color:${cnh.color}">${cnh.label}</span></div>
       </div>`;
@@ -2598,7 +2663,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
   function openModal(r){
     if(!r) return;
     document.getElementById('mdNome').textContent = r.motorista || '—';
-    document.getElementById('mdSub').textContent = [r.funcao, r.filial].filter(Boolean).join(' · ') || '—';
+    document.getElementById('mdSub').textContent = r.filial || '—';
     const opStatus = document.getElementById('mdSituacaoOperacional');
     if(r.afastado){
       const detalhe = r.afastadoInfo && r.afastadoInfo.status ? ` · ${r.afastadoInfo.status}` : '';
@@ -2619,7 +2684,6 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     cpfEl.textContent = r.cpf || '—';
     matEl.onclick = () => copyToClipboard(r.matricula, matEl);
     cpfEl.onclick = () => copyToClipboard(r.cpf, cpfEl);
-    document.getElementById('mdSexo').textContent = r.sexo || '—';
     document.getElementById('mdAdmissao').textContent = fmtDateTime(r.admissao);
     const mdDerValEl = document.getElementById('mdDerVal');
     mdDerValEl.textContent = fmtDateTime(r.derVal) + (r.derValEstimado ? ' ≈' : '');
