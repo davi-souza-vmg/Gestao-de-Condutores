@@ -466,6 +466,103 @@
   .ai-presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
   .ai-preset{border:1px solid var(--line);background:#fff;color:var(--slate-900);border-radius:10px;padding:9px 10px;text-align:left;font-size:11.5px;font-weight:600;cursor:pointer}
   .ai-preset:hover{border-color:var(--navy-700);background:#f8faff}.ai-preset-primary{background:var(--navy-900);color:#fff;border-color:var(--navy-900);grid-column:1/-1}.ai-preset-primary:hover{background:var(--navy-800);color:#fff}.ai-choice-row{display:flex;gap:8px;margin-top:8px}.ai-choice{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px;font-weight:700;cursor:pointer}.ai-choice.yes{background:var(--green-soft);color:var(--green);border-color:rgba(43,173,125,.35)}.ai-choice.no{background:var(--red-soft);color:var(--red);border-color:rgba(229,72,77,.35)}.ai-driver-ok{border-left:3px solid var(--green);padding-left:9px}.ai-driver-error{border-left:3px solid var(--red);padding-left:9px}
+  
+  /* ---------- assistente IA: visual de conversa ---------- */
+  .ai-panel{overflow:hidden;}
+  .ai-body{background:linear-gradient(180deg,#f8faff 0%,#f4f6fb 100%);padding:16px;}
+  .ai-msg{
+    max-width:88%;
+    padding:11px 14px;
+    border-radius:14px;
+    margin:8px 0;
+    font-size:13px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    word-break:break-word;
+    box-shadow:0 2px 8px rgba(15,37,68,.05);
+  }
+  .ai-msg.bot{
+    background:#fff;
+    border:1px solid #e2e7f0;
+    color:var(--slate-900);
+    margin-right:auto;
+    border-top-left-radius:5px;
+  }
+  .ai-msg.user{
+    background:var(--navy-900);
+    color:#fff;
+    margin-left:auto;
+    border-top-right-radius:5px;
+  }
+  .ai-msg strong{font-weight:800;}
+  .ai-msg .ai-title{
+    display:block;
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:14px;
+    margin-bottom:5px;
+    color:var(--navy-900);
+  }
+  .ai-msg .ai-highlight{
+    display:inline-block;
+    padding:2px 7px;
+    border-radius:6px;
+    background:var(--amber-soft);
+    color:#9b6510;
+    font-weight:800;
+  }
+  .ai-msg.ai-loading{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    color:var(--slate-600);
+  }
+  .ai-dots{display:inline-flex;gap:3px;}
+  .ai-dots i{
+    width:5px;height:5px;border-radius:50%;
+    background:var(--navy-700);
+    animation:aiDot 1.2s infinite ease-in-out;
+  }
+  .ai-dots i:nth-child(2){animation-delay:.15s;}
+  .ai-dots i:nth-child(3){animation-delay:.3s;}
+  @keyframes aiDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+  .ai-msg.ai-system-error{
+    background:#fff9ef;
+    border:1px solid #f0d39b;
+    color:#70531b;
+  }
+  .ai-error-title{
+    display:flex;align-items:center;gap:8px;
+    font-weight:800;color:#8a5b0a;margin-bottom:4px;
+  }
+  .ai-error-icon{
+    width:25px;height:25px;border-radius:8px;
+    display:inline-flex;align-items:center;justify-content:center;
+    background:#fdf1dd;color:#b8780d;font-weight:900;
+  }
+  .ai-error-help{font-size:12px;color:#7b6a4b;margin-top:5px;}
+  .ai-retry{
+    margin-top:9px;
+    border:1px solid #e3c27f;
+    background:#fff;
+    color:#8a5b0a;
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:11.5px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .ai-retry:hover{background:#fff8e8;border-color:#c99a3d;}
+  .ai-choice-row{display:flex;gap:8px;margin:9px 0 12px;}
+  .ai-choice{
+    border:1px solid var(--line);background:#fff;color:var(--slate-900);
+    border-radius:9px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;
+  }
+  .ai-choice.yes{background:var(--green);border-color:var(--green);color:#fff;}
+  .ai-choice.no{background:#fff;border-color:#e5a7aa;color:var(--red);}
+  .ai-choice:disabled{opacity:.55;cursor:not-allowed;}
+
   .ai-msg{max-width:88%;padding:10px 12px;border-radius:12px;margin:7px 0;font-size:12.5px;line-height:1.45;white-space:pre-wrap}
   .ai-msg.user{margin-left:auto;background:var(--navy-900);color:#fff;border-bottom-right-radius:4px}
   .ai-msg.bot{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
@@ -825,8 +922,62 @@
   const AI_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec';
 
   function aiAppend(role, text){
-    const el=document.createElement('div'); el.className='ai-msg '+role; el.textContent=text;
-    els.aiBody.appendChild(el); els.aiBody.scrollTop=els.aiBody.scrollHeight;
+    const el=document.createElement('div');
+    el.className='ai-msg '+role;
+    if(role==='bot'){
+      // Markdown leve e seguro: negrito, títulos e destaque sem permitir HTML vindo da IA.
+      let s=String(text||'');
+      s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+      s=s.replace(/^###\s*(.+)$/gm,'<span class="ai-title">$1</span>');
+      s=s.replace(/`([^`]+)`/g,'<span class="ai-highlight">$1</span>');
+      s=s.replace(/\n/g,'<br>');
+      el.innerHTML=s;
+    }else{
+      el.textContent=text;
+    }
+    els.aiBody.appendChild(el);
+    els.aiBody.scrollTop=els.aiBody.scrollHeight;
+    return el;
+  }
+  function aiLoading(){
+    const el=document.createElement('div');
+    el.className='ai-msg bot ai-loading';
+    el.innerHTML='<span class="ai-dots"><i></i><i></i><i></i></span><span>Consultando o assistente…</span>';
+    els.aiBody.appendChild(el);
+    els.aiBody.scrollTop=els.aiBody.scrollHeight;
+    return el;
+  }
+  function aiFriendlyError(err){
+    const raw=String(err && err.message || err || '');
+    const lower=raw.toLowerCase();
+    let title='O assistente está indisponível no momento';
+    let help='Isso pode acontecer por uma instabilidade temporária. Tente novamente em alguns instantes.';
+    if(lower.includes('503') || lower.includes('high demand') || lower.includes('overloaded')){
+      title='A IA está recebendo muitas solicitações';
+      help='O serviço está temporariamente com alta demanda. Seus dados continuam seguros e nada foi alterado.';
+    }else if(lower.includes('401') || lower.includes('403') || lower.includes('api key') || lower.includes('permission')){
+      title='O assistente não conseguiu se autenticar';
+      help='A configuração da IA precisa ser verificada pelo administrador do sistema.';
+    }else if(lower.includes('404') || lower.includes('model')){
+      title='O modelo de IA está temporariamente indisponível';
+      help='O sistema já tentou uma alternativa. Se o problema continuar, tente novamente mais tarde.';
+    }else if(lower.includes('429') || lower.includes('quota') || lower.includes('rate')){
+      title='O assistente atingiu o limite temporário de uso';
+      help='Aguarde um pouco e tente novamente.';
+    }
+    const el=document.createElement('div');
+    el.className='ai-msg bot ai-system-error';
+    el.innerHTML='<div class="ai-error-title"><span class="ai-error-icon">!</span>'+title+'</div>'
+      +'<div>'+help+'</div>'
+      +'<div class="ai-error-help">Nenhuma alteração foi feita nos dados.</div>';
+    const retry=document.createElement('button');
+    retry.type='button'; retry.className='ai-retry'; retry.textContent='Tentar novamente';
+    retry.onclick=()=>{ el.remove(); if(lastAIPrompt) askAI(lastAIPrompt,true); };
+    el.appendChild(retry);
+    els.aiBody.appendChild(el);
+    els.aiBody.scrollTop=els.aiBody.scrollHeight;
+    return el;
   }
   function aiContext(){
     const base=lastFilteredRows.length?lastFilteredRows:rawRows;
@@ -852,18 +1003,29 @@
     return data;
   }
 
-  async function askAI(prompt){
-    if(!AI_ENDPOINT){ aiAppend('user',prompt); aiAppend('bot','O endpoint do assistente não está configurado.'); return; }
-    const btn=els.aiSend; btn.disabled=true; aiAppend('user',prompt);
-    const wait=document.createElement('div'); wait.className='ai-msg bot'; wait.textContent='Consultando…'; els.aiBody.appendChild(wait);
+  let lastAIPrompt='';
+  async function askAI(prompt, retry=false){
+    if(!AI_ENDPOINT){
+      aiAppend('user',prompt);
+      aiFriendlyError(new Error('endpoint ausente'));
+      return;
+    }
+    lastAIPrompt=prompt;
+    const btn=els.aiSend;
+    btn.disabled=true;
+    if(!retry) aiAppend('user',prompt);
+    const wait=aiLoading();
     try{
       const data=await postAssistant({action:'ai',message:prompt,context:aiContext()});
-      wait.remove(); aiAppend('bot',data.answer||'Não consegui obter uma resposta.');
+      wait.remove();
+      if(data.answer) aiAppend('bot',data.answer);
+      else aiFriendlyError(new Error('A resposta da IA veio vazia.'));
     }catch(err){
-      const msg = err && err.message ? err.message : 'Erro desconhecido.';
-      wait.textContent='Não consegui consultar a IA.\n\nDetalhes: '+msg;
+      wait.remove();
+      aiFriendlyError(err);
+    }finally{
+      btn.disabled=false;
     }
-    finally{btn.disabled=false;}
   }
 
   let petFlow = null;
