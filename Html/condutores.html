@@ -453,124 +453,89 @@
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important;}
   }
+  /* ---------- ações rápidas ---------- */
+  .action-fab{
+    position:fixed;right:24px;bottom:24px;z-index:80;
+    width:60px;height:60px;border:0;border-radius:18px;
+    background:linear-gradient(145deg,var(--navy-900),var(--navy-950));
+    color:#fff;font-size:25px;cursor:pointer;
+    box-shadow:0 14px 34px rgba(10,25,48,.28);
+    transition:transform .18s,box-shadow .18s,border-radius .18s;
+  }
+  .action-fab:hover{transform:translateY(-3px);box-shadow:0 18px 42px rgba(10,25,48,.34)}
+  .action-panel{
+    position:fixed;right:24px;bottom:96px;z-index:79;
+    width:min(430px,calc(100vw - 32px));height:min(620px,calc(100vh - 120px));
+    background:#fff;border:1px solid var(--line);border-radius:20px;
+    box-shadow:0 26px 80px rgba(10,25,48,.24);
+    display:none;overflow:hidden;flex-direction:column;
+  }
+  .action-panel.open{display:flex}
+  .action-head{
+    padding:18px 18px 16px;
+    background:linear-gradient(135deg,var(--navy-950),var(--navy-900));
+    color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  }
+  .action-head-main{display:flex;align-items:center;gap:11px}
+  .action-head-icon{
+    width:38px;height:38px;border-radius:12px;
+    background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:19px;
+  }
+  .action-head strong{font-family:var(--font-display);font-size:16px}
+  .action-head small{display:block;color:var(--slate-400);font-size:11px;margin-top:3px}
+  .action-close{
+    border:0;background:rgba(255,255,255,.12);color:#fff;
+    border-radius:10px;width:32px;height:32px;cursor:pointer;font-size:19px;
+  }
+  .action-body{flex:1;overflow:auto;padding:16px;background:var(--bg)}
+  .action-intro{
+    margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);
+    border-radius:13px;background:#fff;color:var(--slate-600);font-size:12px;line-height:1.45;
+  }
+  .action-grid{display:grid;gap:10px}
+  .action-card{
+    width:100%;display:grid;grid-template-columns:42px 1fr 24px;align-items:center;
+    gap:11px;text-align:left;border:1px solid var(--line);border-radius:15px;
+    background:#fff;padding:13px;cursor:pointer;
+    box-shadow:0 3px 12px rgba(10,25,48,.05);
+    transition:transform .15s,border-color .15s,box-shadow .15s,background .15s;
+  }
+  .action-card:hover{transform:translateY(-2px);border-color:rgba(28,64,105,.28);box-shadow:0 9px 24px rgba(10,25,48,.10)}
+  .action-card.primary{border-color:rgba(28,64,105,.20);background:linear-gradient(135deg,#fff,#f7faff)}
+  .action-card-icon{
+    width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    background:#eef3fa;color:var(--navy-900);font-size:19px;
+  }
+  .action-card strong{display:block;color:var(--slate-900);font-size:13px;margin-bottom:3px}
+  .action-card span{display:block;color:var(--slate-600);font-size:11px;line-height:1.35}
+  .action-arrow{color:var(--slate-400)!important;font-size:19px!important;text-align:right}
+  .action-msg{
+    max-width:90%;padding:10px 12px;border-radius:12px;margin:7px 0;
+    font-size:12.5px;line-height:1.45;white-space:pre-wrap;
+  }
+  .action-msg.user{margin-left:auto;background:var(--navy-900);color:#fff;border-bottom-right-radius:4px}
+  .action-msg.system{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+  .action-choice-row{display:flex;gap:8px;margin-top:10px}
+  .action-choice{
+    flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;
+    font-weight:700;cursor:pointer;background:#fff;
+  }
+  .action-choice.yes{background:var(--green-soft);color:var(--green);border-color:rgba(43,173,125,.35)}
+  .action-choice.no{background:var(--red-soft);color:var(--red);border-color:rgba(229,72,77,.35)}
+  .action-foot{padding:10px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px}
+  .action-input{
+    flex:1;resize:none;border:1px solid var(--line);border-radius:10px;
+    padding:10px;font:12.5px var(--font-body);outline:none;min-height:42px;max-height:100px;
+  }
+  .action-send{
+    width:44px;border:0;border-radius:10px;background:var(--navy-900);
+    color:#fff;cursor:pointer;font-size:17px;
+  }
+  @media(max-width:600px){
+    .action-fab{right:16px;bottom:16px}
+    .action-panel{right:16px;bottom:84px;height:calc(100vh - 110px)}
+  }
 
-  /* ---------- assistente IA ---------- */
-  .ai-fab{position:fixed;right:24px;bottom:24px;z-index:80;width:58px;height:58px;border-radius:50%;border:0;background:var(--navy-900);color:#fff;font-size:24px;cursor:pointer;box-shadow:0 12px 30px rgba(10,25,48,.28);transition:transform .15s,box-shadow .15s;}
-  .ai-fab:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(10,25,48,.34);}
-  .ai-panel{position:fixed;right:24px;bottom:92px;z-index:79;width:min(430px,calc(100vw - 32px));height:min(650px,calc(100vh - 120px));background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 70px rgba(10,25,48,.25);display:none;overflow:hidden;flex-direction:column;}
-  .ai-panel.open{display:flex;}
-  .ai-head{padding:15px 17px;background:linear-gradient(120deg,var(--navy-950),var(--navy-900));color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-  .ai-head strong{font-family:var(--font-display);font-size:15px}.ai-head small{display:block;color:var(--slate-400);font-size:11px;margin-top:2px}
-  .ai-close{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:50%;width:28px;height:28px;cursor:pointer}
-  .ai-body{flex:1;overflow:auto;padding:14px;background:var(--bg)}
-  .ai-presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-  .ai-preset{border:1px solid var(--line);background:#fff;color:var(--slate-900);border-radius:10px;padding:9px 10px;text-align:left;font-size:11.5px;font-weight:600;cursor:pointer}
-  .ai-preset:hover{border-color:var(--navy-700);background:#f8faff}.ai-preset-primary{background:var(--navy-900);color:#fff;border-color:var(--navy-900);grid-column:1/-1}.ai-preset-primary:hover{background:var(--navy-800);color:#fff}.ai-choice-row{display:flex;gap:8px;margin-top:8px}.ai-choice{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px;font-weight:700;cursor:pointer}.ai-choice.yes{background:var(--green-soft);color:var(--green);border-color:rgba(43,173,125,.35)}.ai-choice.no{background:var(--red-soft);color:var(--red);border-color:rgba(229,72,77,.35)}.ai-driver-ok{border-left:3px solid var(--green);padding-left:9px}.ai-driver-error{border-left:3px solid var(--red);padding-left:9px}
-  
-  /* ---------- assistente IA: visual de conversa ---------- */
-  .ai-panel{overflow:hidden;}
-  .ai-body{background:linear-gradient(180deg,#f8faff 0%,#f4f6fb 100%);padding:16px;}
-  .ai-msg{
-    max-width:88%;
-    padding:11px 14px;
-    border-radius:14px;
-    margin:8px 0;
-    font-size:13px;
-    line-height:1.55;
-    white-space:pre-wrap;
-    word-break:break-word;
-    box-shadow:0 2px 8px rgba(15,37,68,.05);
-  }
-  .ai-msg.bot{
-    background:#fff;
-    border:1px solid #e2e7f0;
-    color:var(--slate-900);
-    margin-right:auto;
-    border-top-left-radius:5px;
-  }
-  .ai-msg.user{
-    background:var(--navy-900);
-    color:#fff;
-    margin-left:auto;
-    border-top-right-radius:5px;
-  }
-  .ai-msg strong{font-weight:800;}
-  .ai-msg .ai-title{
-    display:block;
-    font-family:var(--font-display);
-    font-weight:800;
-    font-size:14px;
-    margin-bottom:5px;
-    color:var(--navy-900);
-  }
-  .ai-msg .ai-highlight{
-    display:inline-block;
-    padding:2px 7px;
-    border-radius:6px;
-    background:var(--amber-soft);
-    color:#9b6510;
-    font-weight:800;
-  }
-  .ai-msg.ai-loading{
-    display:flex;
-    align-items:center;
-    gap:9px;
-    color:var(--slate-600);
-  }
-  .ai-dots{display:inline-flex;gap:3px;}
-  .ai-dots i{
-    width:5px;height:5px;border-radius:50%;
-    background:var(--navy-700);
-    animation:aiDot 1.2s infinite ease-in-out;
-  }
-  .ai-dots i:nth-child(2){animation-delay:.15s;}
-  .ai-dots i:nth-child(3){animation-delay:.3s;}
-  @keyframes aiDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
-
-  .ai-msg.ai-system-error{
-    background:#fff9ef;
-    border:1px solid #f0d39b;
-    color:#70531b;
-  }
-  .ai-error-title{
-    display:flex;align-items:center;gap:8px;
-    font-weight:800;color:#8a5b0a;margin-bottom:4px;
-  }
-  .ai-error-icon{
-    width:25px;height:25px;border-radius:8px;
-    display:inline-flex;align-items:center;justify-content:center;
-    background:#fdf1dd;color:#b8780d;font-weight:900;
-  }
-  .ai-error-help{font-size:12px;color:#7b6a4b;margin-top:5px;}
-  .ai-retry{
-    margin-top:9px;
-    border:1px solid #e3c27f;
-    background:#fff;
-    color:#8a5b0a;
-    border-radius:8px;
-    padding:6px 10px;
-    font-size:11.5px;
-    font-weight:700;
-    cursor:pointer;
-  }
-  .ai-retry:hover{background:#fff8e8;border-color:#c99a3d;}
-  .ai-choice-row{display:flex;gap:8px;margin:9px 0 12px;}
-  .ai-choice{
-    border:1px solid var(--line);background:#fff;color:var(--slate-900);
-    border-radius:9px;padding:8px 12px;font-weight:700;font-size:12px;cursor:pointer;
-  }
-  .ai-choice.yes{background:var(--green);border-color:var(--green);color:#fff;}
-  .ai-choice.no{background:#fff;border-color:#e5a7aa;color:var(--red);}
-  .ai-choice:disabled{opacity:.55;cursor:not-allowed;}
-
-  .ai-msg{max-width:88%;padding:10px 12px;border-radius:12px;margin:7px 0;font-size:12.5px;line-height:1.45;white-space:pre-wrap}
-  .ai-msg.user{margin-left:auto;background:var(--navy-900);color:#fff;border-bottom-right-radius:4px}
-  .ai-msg.bot{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
-  .ai-foot{padding:10px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px}
-  .ai-input{flex:1;resize:none;border:1px solid var(--line);border-radius:10px;padding:10px;font:12.5px var(--font-body);outline:none;min-height:42px;max-height:100px}
-  .ai-send{width:44px;border:0;border-radius:10px;background:var(--navy-900);color:#fff;cursor:pointer;font-size:17px}
-  .ai-send:disabled{opacity:.5;cursor:progress}
-  @media(max-width:600px){.ai-fab{right:16px;bottom:16px}.ai-panel{right:16px;bottom:84px;height:calc(100vh - 110px)}}
 </style>
 </head>
 <body>
@@ -887,21 +852,50 @@
 </div>
 
 
-<button type="button" class="ai-fab" id="aiFab" aria-label="Abrir assistente">✦</button>
-<section class="ai-panel" id="aiPanel" aria-label="Assistente do sistema">
-  <header class="ai-head">
-    <div><strong>Assistente do sistema</strong><small>Consulte os dados e tire dúvidas sobre o sistema</small></div>
-    <button type="button" class="ai-close" id="aiClose">×</button>
-  </header>
-  <div class="ai-body" id="aiBody">
-    <div class="ai-presets">
-      <button class="ai-preset ai-preset-primary" id="aiPeticionamento">Informar Peticionados</button>
+
+<button type="button" class="action-fab" id="actionFab" aria-label="Abrir ações rápidas">⚡</button>
+<section class="action-panel" id="actionPanel" aria-label="Ações rápidas">
+  <header class="action-head">
+    <div class="action-head-main">
+      <div class="action-head-icon">⚡</div>
+      <div><strong>Ações rápidas</strong><small>Escolha uma tarefa para executar</small></div>
     </div>
-    <div class="ai-msg bot">Olá! Aqui você pode conversar com o sistema. Para registrar peticionamentos, use <strong>Informar Peticionados</strong>; perguntas livres continuam sendo respondidas pela IA.</div>
+    <button type="button" class="action-close" id="actionClose" aria-label="Fechar">×</button>
+  </header>
+
+  <div class="action-body" id="actionBody">
+    <div class="action-intro">Tudo aqui é ação direta no sistema. Não há conversa com IA.</div>
+
+    <div class="action-grid" id="actionGrid">
+      <button type="button" class="action-card primary" id="actionPeticionamento">
+        <div class="action-card-icon">📋</div>
+        <div><strong>Informar Peticionados</strong><span>Registrar data, número e motoristas diretamente na planilha.</span></div>
+        <span class="action-arrow">›</span>
+      </button>
+
+      <button type="button" class="action-card" id="actionConferencia">
+        <div class="action-card-icon">✓</div>
+        <div><strong>Conferência</strong><span>Verificar afastamentos e férias dos condutores.</span></div>
+        <span class="action-arrow">›</span>
+      </button>
+
+      <button type="button" class="action-card" id="actionRefresh">
+        <div class="action-card-icon">↻</div>
+        <div><strong>Atualizar dados</strong><span>Recarregar as informações mais recentes das planilhas.</span></div>
+        <span class="action-arrow">›</span>
+      </button>
+
+      <button type="button" class="action-card" id="actionExport">
+        <div class="action-card-icon">⇩</div>
+        <div><strong>Exportar lista</strong><span>Gerar o relatório de condutores em PDF.</span></div>
+        <span class="action-arrow">›</span>
+      </button>
+    </div>
   </div>
-  <div class="ai-foot">
-    <textarea class="ai-input" id="aiInput" placeholder="Pergunte qualquer coisa…" rows="1"></textarea>
-    <button type="button" class="ai-send" id="aiSend">➤</button>
+
+  <div class="action-foot" id="actionFoot" style="display:none">
+    <textarea class="action-input" id="actionInput" placeholder="Digite a resposta…" rows="1"></textarea>
+    <button type="button" class="action-send" id="actionSend">➤</button>
   </div>
 </section>
 
@@ -916,200 +910,203 @@
   // Planilha de Multas (separada da planilha de condutores)
   const SHEET_ID_MULTAS = '1cTmy2i0nc201sVVv67U19-NzFBHbWjLjRyGg8c_g3m0';
   const MULTAS_TAB = 'Página1';
+  const PETICIONAMENTO_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec';
 
-  // O endpoint é um Web App do Google Apps Script. A chave do Gemini fica
-  // somente nas Script Properties do Apps Script, nunca neste HTML.
-  const AI_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec';
 
-  function aiAppend(role, text){
-    const el=document.createElement('div');
-    el.className='ai-msg '+role;
-    if(role==='bot'){
-      // Markdown leve e seguro: negrito, títulos e destaque sem permitir HTML vindo da IA.
-      let s=String(text||'');
-      s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      s=s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-      s=s.replace(/^###\s*(.+)$/gm,'<span class="ai-title">$1</span>');
-      s=s.replace(/`([^`]+)`/g,'<span class="ai-highlight">$1</span>');
-      s=s.replace(/\n/g,'<br>');
-      el.innerHTML=s;
-    }else{
-      el.textContent=text;
-    }
-    els.aiBody.appendChild(el);
-    els.aiBody.scrollTop=els.aiBody.scrollHeight;
-    return el;
-  }
-  function aiLoading(){
-    const el=document.createElement('div');
-    el.className='ai-msg bot ai-loading';
-    el.innerHTML='<span class="ai-dots"><i></i><i></i><i></i></span><span>Consultando o assistente…</span>';
-    els.aiBody.appendChild(el);
-    els.aiBody.scrollTop=els.aiBody.scrollHeight;
-    return el;
-  }
-  function aiFriendlyError(err){
-    const raw=String(err && err.message || err || '');
-    const lower=raw.toLowerCase();
-    let title='O assistente está indisponível no momento';
-    let help='Isso pode acontecer por uma instabilidade temporária. Tente novamente em alguns instantes.';
-    if(lower.includes('503') || lower.includes('high demand') || lower.includes('overloaded')){
-      title='A IA está recebendo muitas solicitações';
-      help='O serviço está temporariamente com alta demanda. Seus dados continuam seguros e nada foi alterado.';
-    }else if(lower.includes('401') || lower.includes('403') || lower.includes('api key') || lower.includes('permission')){
-      title='O assistente não conseguiu se autenticar';
-      help='A configuração da IA precisa ser verificada pelo administrador do sistema.';
-    }else if(lower.includes('404') || lower.includes('model')){
-      title='O modelo de IA está temporariamente indisponível';
-      help='O sistema já tentou uma alternativa. Se o problema continuar, tente novamente mais tarde.';
-    }else if(lower.includes('429') || lower.includes('quota') || lower.includes('rate')){
-      title='O assistente atingiu o limite temporário de uso';
-      help='Aguarde um pouco e tente novamente.';
-    }
-    const el=document.createElement('div');
-    el.className='ai-msg bot ai-system-error';
-    el.innerHTML='<div class="ai-error-title"><span class="ai-error-icon">!</span>'+title+'</div>'
-      +'<div>'+help+'</div>'
-      +'<div class="ai-error-help">Nenhuma alteração foi feita nos dados.</div>';
-    const retry=document.createElement('button');
-    retry.type='button'; retry.className='ai-retry'; retry.textContent='Tentar novamente';
-    retry.onclick=()=>{ el.remove(); if(lastAIPrompt) askAI(lastAIPrompt,true); };
-    el.appendChild(retry);
-    els.aiBody.appendChild(el);
-    els.aiBody.scrollTop=els.aiBody.scrollHeight;
-    return el;
-  }
-  function aiContext(){
-    const base=lastFilteredRows.length?lastFilteredRows:rawRows;
-    return {
-      filtros:{filial:els.filterFilial.value||'todas',der:els.filterStatusDer.value||'todos',cnh:els.filterStatusCnh.value||'todos',busca:els.search.value||''},
-      resumo:{
-        total:rawRows.length,visiveis:base.length,
-        aguardandoDer:rawRows.filter(r=>r.derStatus==='AGUARDANDO').length,
-        derAtivo:rawRows.filter(r=>r.derStatus==='ATIVO').length,
-        derVencendo:rawRows.filter(r=>r.derStatus==='VENCENDO').length,
-        derVencido:rawRows.filter(r=>r.derStatus==='VENCIDO').length,
-        cnhAtiva:rawRows.filter(r=>r.cnhStatus==='ATIVO').length,
-        cnhVencida:rawRows.filter(r=>r.cnhStatus==='VENCIDO').length,
-        multas:rawRows.filter(r=>(r.multasPendentes||0)>0).length
-      },
-      registros:base.slice(0,300).map(r=>({motorista:r.motorista,matricula:r.matricula,filial:r.filial,derStatus:r.derStatus,derVal:r.derVal?fmtDate(r.derVal):null,cnhStatus:r.cnhStatus,cnhVal:r.cnhVal?fmtDate(r.cnhVal):null,problemas:r.problemas||'',observacao:r.observacao||'',multasPendentes:r.multasPendentes||0,afastado:!!r.afastado,emFerias:!!r.emFerias}))
-    };
-  }
-  async function postAssistant(payload){
-    const res=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-    const data=await res.json();
-    if(!res.ok||data.error) throw new Error(data.error||'Falha no servidor');
-    return data;
-  }
-
-  let lastAIPrompt='';
-  async function askAI(prompt, retry=false){
-    if(!AI_ENDPOINT){
-      aiAppend('user',prompt);
-      aiFriendlyError(new Error('endpoint ausente'));
-      return;
-    }
-    lastAIPrompt=prompt;
-    const btn=els.aiSend;
-    btn.disabled=true;
-    if(!retry) aiAppend('user',prompt);
-    const wait=aiLoading();
-    try{
-      const data=await postAssistant({action:'ai',message:prompt,context:aiContext()});
-      wait.remove();
-      if(data.answer) aiAppend('bot',data.answer);
-      else aiFriendlyError(new Error('A resposta da IA veio vazia.'));
-    }catch(err){
-      wait.remove();
-      aiFriendlyError(err);
-    }finally{
-      btn.disabled=false;
-    }
-  }
-
+  // Ações diretas do sistema — sem IA.
   let petFlow = null;
-  function petBot(text){ aiAppend('bot',text); }
-  function petUser(text){ aiAppend('user',text); }
+
+  function actionAppend(role, text){
+    const el=document.createElement('div');
+    el.className='action-msg '+role;
+    el.textContent=text;
+    els.actionBody.appendChild(el);
+    els.actionBody.scrollTop=els.actionBody.scrollHeight;
+  }
+  function petBot(text){ actionAppend('system',text); }
+  function petUser(text){ actionAppend('user',text); }
+
   function petAsk(){
     if(!petFlow) return;
-    const prompts={date:'1/4 — Qual a data do peticionamento?\nDigite no formato DD/MM/AAAA.',number:'2/4 — Qual o número do peticionamento?',count:'3/4 — Quantos motoristas foram peticionados?',list:'4/4 — Informe a lista.\nDigite o nome de um condutor por vez e envie. Vou conferir se existe e se não foi repetido.'};
+    const prompts={
+      date:'1/4 — Qual a data do peticionamento?\nDigite no formato DD/MM/AAAA.',
+      number:'2/4 — Qual o número do peticionamento?',
+      count:'3/4 — Quantos motoristas foram peticionados?',
+      list:'4/4 — Informe a lista.\nDigite o nome de um condutor por vez e envie. Vou conferir se existe e se não foi repetido.'
+    };
     petBot(prompts[petFlow.step]);
   }
-  function normalizeName(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();}
+
+  function normalizeName(v){
+    return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();
+  }
+
   function parsePetDate(v){
     const m=String(v||'').trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
     if(!m) return null;
     const d=Number(m[1]), mo=Number(m[2]), y=Number(m[3]);
-    const dt=new Date(y,mo-1,d); if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return null;
+    const dt=new Date(y,mo-1,d);
+    if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return null;
     return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
+
   function beginPeticionamento(){
     petFlow={step:'date',date:'',number:'',count:0,drivers:[]};
-    aiAppend('user','Informar Peticionados');
-    petBot('Vamos registrar o peticionamento direto na planilha. Não uso IA para esse processo.');
+    els.actionGrid.style.display='none';
+    els.actionFoot.style.display='flex';
+    actionAppend('user','Informar Peticionados');
+    petBot('Vamos registrar o peticionamento direto na planilha.');
     petAsk();
-    els.aiInput.focus();
+    els.actionInput.focus();
   }
+
   function renderPetConfirmation(){
-    const box=document.createElement('div'); box.className='ai-msg bot';
+    const box=document.createElement('div');
+    box.className='action-msg system';
     const list=petFlow.drivers.map((d,i)=>`${i+1}. ${d.motorista} — ${d.filial}`).join('\n');
-    box.textContent=`Confira antes de gravar:\n\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\nMotoristas: ${petFlow.count}\n\n${list}\n\nPosso concluir e marcar PETICIONADO = SIM, DATA PETICIONAMENTO, N. PETICIONAMENTO e ENVIADOS = TRUE na planilha?`;
-    els.aiBody.appendChild(box);
-    const row=document.createElement('div'); row.className='ai-choice-row';
-    const yes=document.createElement('button'); yes.className='ai-choice yes'; yes.textContent='Sim, concluir';
-    const no=document.createElement('button'); no.className='ai-choice no'; no.textContent='Não';
-    yes.onclick=()=>finalizePeticionamento(); no.onclick=()=>{petFlow=null;petUser('Não');petBot('Tudo bem. O registro foi cancelado e nada foi alterado na planilha.');};
-    row.append(yes,no); els.aiBody.appendChild(row); els.aiBody.scrollTop=els.aiBody.scrollHeight;
+    box.textContent=`Confira antes de gravar:\n\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\nMotoristas: ${petFlow.count}\n\n${list}\n\nPosso concluir e atualizar a planilha?`;
+    els.actionBody.appendChild(box);
+
+    const row=document.createElement('div');
+    row.className='action-choice-row';
+
+    const yes=document.createElement('button');
+    yes.className='action-choice yes';
+    yes.textContent='Sim, concluir';
+
+    const no=document.createElement('button');
+    no.className='action-choice no';
+    no.textContent='Não';
+
+    yes.onclick=()=>finalizePeticionamento();
+    no.onclick=()=>{
+      petFlow=null;
+      petUser('Não');
+      petBot('Tudo bem. O registro foi cancelado e nada foi alterado na planilha.');
+      resetActionPanelSoon();
+    };
+
+    row.append(yes,no);
+    els.actionBody.appendChild(row);
+    els.actionBody.scrollTop=els.actionBody.scrollHeight;
   }
+
   function findDriverMatches(q){
-    const n=normalizeName(q); if(!n) return [];
+    const n=normalizeName(q);
+    if(!n) return [];
     return rawRows.filter(r=>normalizeName(r.motorista)===n || normalizeName(r.motorista).includes(n));
   }
+
   function handlePetInput(value){
-    const v=String(value||'').trim(); if(!v||!petFlow) return;
+    const v=String(value||'').trim();
+    if(!v||!petFlow) return;
     petUser(v);
+
     if(petFlow.step==='date'){
-      const iso=parsePetDate(v); if(!iso){petBot('A data não parece válida. Digite, por exemplo, 08/10/2026.');return;}
-      petFlow.date=iso; petFlow.dateDisplay=v; petFlow.step='number'; petAsk(); return;
+      const iso=parsePetDate(v);
+      if(!iso){petBot('A data não parece válida. Digite, por exemplo, 08/10/2026.');return;}
+      petFlow.date=iso;
+      petFlow.dateDisplay=v;
+      petFlow.step='number';
+      petAsk();
+      return;
     }
+
     if(petFlow.step==='number'){
       if(v.length<3){petBot('Informe o número completo do peticionamento.');return;}
-      petFlow.number=v; petFlow.step='count'; petAsk(); return;
+      petFlow.number=v;
+      petFlow.step='count';
+      petAsk();
+      return;
     }
+
     if(petFlow.step==='count'){
       const n=Number(v.replace(/\D/g,''));
       if(!Number.isInteger(n)||n<1){petBot('Informe uma quantidade inteira maior que zero.');return;}
-      petFlow.count=n; petFlow.step='list'; petAsk(); return;
+      petFlow.count=n;
+      petFlow.step='list';
+      petAsk();
+      return;
     }
+
     if(petFlow.step==='list'){
       const norm=normalizeName(v);
-      if(petFlow.drivers.some(d=>normalizeName(d.motorista)===norm)){petBot('Esse condutor já foi informado nesta lista. Digite outro nome.');return;}
+      if(petFlow.drivers.some(d=>normalizeName(d.motorista)===norm)){
+        petBot('Esse condutor já foi informado nesta lista. Digite outro nome.');
+        return;
+      }
+
       const matches=findDriverMatches(v);
-      if(!matches.length){petBot('Não encontrei esse condutor nos dados carregados. Confira o nome e tente novamente.');return;}
+      if(!matches.length){
+        petBot('Não encontrei esse condutor nos dados carregados. Confira o nome e tente novamente.');
+        return;
+      }
+
       if(matches.length>1){
-        petBot('Encontrei mais de um resultado. Digite o nome completo do condutor para eu identificar corretamente:\n'+matches.slice(0,8).map(m=>`• ${m.motorista} — ${m.filial}`).join('\n'));return;}
+        petBot('Encontrei mais de um resultado. Digite o nome completo do condutor:\n'+
+          matches.slice(0,8).map(m=>`• ${m.motorista} — ${m.filial}`).join('\n'));
+        return;
+      }
+
       const r=matches[0];
       petFlow.drivers.push({motorista:r.motorista,filial:r.filial});
-      aiAppend('bot',`✓ ${r.motorista} — ${r.filial}\n${petFlow.drivers.length}/${petFlow.count} informado(s).`);
-      if(petFlow.drivers.length>=petFlow.count){petFlow.step='confirm';renderPetConfirmation();}
-      else petBot(`Informe o próximo condutor. Faltam ${petFlow.count-petFlow.drivers.length}.`);
+      actionAppend('system',`✓ ${r.motorista} — ${r.filial}\n${petFlow.drivers.length}/${petFlow.count} informado(s).`);
+
+      if(petFlow.drivers.length>=petFlow.count){
+        petFlow.step='confirm';
+        renderPetConfirmation();
+      }else{
+        petBot(`Informe o próximo condutor. Faltam ${petFlow.count-petFlow.drivers.length}.`);
+      }
     }
   }
+
   async function finalizePeticionamento(){
     if(!petFlow||petFlow.step!=='confirm') return;
-    const buttons=[...els.aiBody.querySelectorAll('.ai-choice')]; buttons.forEach(b=>b.disabled=true);
-    const wait=document.createElement('div'); wait.className='ai-msg bot'; wait.textContent='Gravando na planilha…'; els.aiBody.appendChild(wait);
+
+    const buttons=[...els.actionBody.querySelectorAll('.action-choice')];
+    buttons.forEach(b=>b.disabled=true);
+
+    const wait=document.createElement('div');
+    wait.className='action-msg system';
+    wait.textContent='Gravando na planilha…';
+    els.actionBody.appendChild(wait);
+
     try{
-      const data=await postAssistant({action:'registerPeticionamento',dataPeticionamento:petFlow.date,numeroPeticionamento:petFlow.number,motoristas:petFlow.drivers});
+      const res=await fetch(PETICIONAMENTO_ENDPOINT,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({
+          action:'registerPeticionamento',
+          dataPeticionamento:petFlow.date,
+          numeroPeticionamento:petFlow.number,
+          motoristas:petFlow.drivers
+        })
+      });
+
+      const data=await res.json();
       wait.remove();
-      if(!data.ok) throw new Error(data.error||'Não foi possível concluir.');
-      petBot(`✓ Peticionamento concluído. ${data.count} motorista(s) atualizado(s).\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\n\nAs colunas PETICIONADO, DATA PETICIONAMENTO, N. PETICIONAMENTO e ENVIADOS foram atualizadas.`);
+
+      if(!res.ok||data.error||!data.ok){
+        throw new Error(data.error||'Não foi possível concluir.');
+      }
+
+      petBot(`✓ Peticionamento concluído.\n${data.count} motorista(s) atualizado(s).\n\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\n\nPETICIONADO, DATA PETICIONAMENTO, N. PETICIONAMENTO e ENVIADOS foram atualizados.`);
       petFlow=null;
       loadData();
-    }catch(err){ wait.textContent='Não foi possível concluir: '+err.message; buttons.forEach(b=>b.disabled=false); }
+      resetActionPanelSoon();
+    }catch(err){
+      wait.textContent='Não foi possível concluir: '+err.message;
+      buttons.forEach(b=>b.disabled=false);
+    }
   }
 
+  function resetActionPanelSoon(){
+    setTimeout(()=>{
+      els.actionFoot.style.display='none';
+      els.actionGrid.style.display='grid';
+    },900);
+  }
 
   // Planilha de Controle de Documentação (separada, também dividida por filial)
   const SHEET_ID_DOCS = '1ywn1NLRrqC5oj3Ir3mbg9tYwNejHyO5SIHd98hi9t-4';
@@ -1178,12 +1175,14 @@
     exportPickerFilterBar: document.getElementById('exportPickerFilterBar'),
     exportPickerFilterInfo: document.getElementById('exportPickerFilterInfo'),
     exportPickerClearFilters: document.getElementById('exportPickerClearFilters'),
-    aiFab: document.getElementById('aiFab'),
-    aiClose: document.getElementById('aiClose'),
-    aiPanel: document.getElementById('aiPanel'),
-    aiBody: document.getElementById('aiBody'),
-    aiInput: document.getElementById('aiInput'),
-    aiSend: document.getElementById('aiSend'),
+    actionFab: document.getElementById('actionFab'),
+    actionClose: document.getElementById('actionClose'),
+    actionPanel: document.getElementById('actionPanel'),
+    actionBody: document.getElementById('actionBody'),
+    actionGrid: document.getElementById('actionGrid'),
+    actionInput: document.getElementById('actionInput'),
+    actionSend: document.getElementById('actionSend'),
+    actionFoot: document.getElementById('actionFoot'),
   };
 
   // Caminho do relCondutores.xlsx a partir de Html/condutores.html.
@@ -1232,11 +1231,39 @@ function tempoRelativo(data) {
   }
 
   els.btnRefresh.addEventListener('click', () => loadData());
-  els.aiFab.addEventListener('click',()=>{els.aiPanel.classList.toggle('open');if(els.aiPanel.classList.contains('open'))els.aiInput.focus();});
-  els.aiClose.addEventListener('click',()=>els.aiPanel.classList.remove('open'));
-  document.getElementById('aiPeticionamento').addEventListener('click',beginPeticionamento);
-  els.aiSend.addEventListener('click',()=>{const q=els.aiInput.value.trim();if(!q)return;els.aiInput.value='';if(petFlow)handlePetInput(q);else askAI(q);});
-  els.aiInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();els.aiSend.click();}});
+
+  els.actionFab.addEventListener('click',()=>{
+    els.actionPanel.classList.toggle('open');
+    if(els.actionPanel.classList.contains('open') && petFlow) els.actionInput.focus();
+  });
+  els.actionClose.addEventListener('click',()=>els.actionPanel.classList.remove('open'));
+
+  document.getElementById('actionPeticionamento').addEventListener('click',beginPeticionamento);
+  document.getElementById('actionConferencia').addEventListener('click',()=>{
+    els.actionPanel.classList.remove('open');
+    els.btnConferencia.click();
+  });
+  document.getElementById('actionRefresh').addEventListener('click',()=>{
+    els.actionPanel.classList.remove('open');
+    els.btnRefresh.click();
+  });
+  document.getElementById('actionExport').addEventListener('click',()=>{
+    els.actionPanel.classList.remove('open');
+    els.btnExportList.click();
+  });
+
+  els.actionSend.addEventListener('click',()=>{
+    const q=els.actionInput.value.trim();
+    if(!q||!petFlow)return;
+    els.actionInput.value='';
+    handlePetInput(q);
+  });
+  els.actionInput.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){
+      e.preventDefault();
+      els.actionSend.click();
+    }
+  });
   els.search.addEventListener('input', () => {
     els.searchClear.style.display = els.search.value ? 'flex' : 'none';
     currentPage = 1;
