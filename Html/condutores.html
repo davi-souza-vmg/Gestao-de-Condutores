@@ -859,7 +859,10 @@
     try{
       const data=await postAssistant({action:'ai',message:prompt,context:aiContext()});
       wait.remove(); aiAppend('bot',data.answer||'Não consegui obter uma resposta.');
-    }catch(err){ wait.textContent='Não consegui consultar a IA agora. Verifique a implantação do Apps Script.'; }
+    }catch(err){
+      const msg = err && err.message ? err.message : 'Erro desconhecido.';
+      wait.textContent='Não consegui consultar a IA.\n\nDetalhes: '+msg;
+    }
     finally{btn.disabled=false;}
   }
 
