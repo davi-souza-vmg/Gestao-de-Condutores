@@ -465,7 +465,7 @@
   .ai-body{flex:1;overflow:auto;padding:14px;background:var(--bg)}
   .ai-presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
   .ai-preset{border:1px solid var(--line);background:#fff;color:var(--slate-900);border-radius:10px;padding:9px 10px;text-align:left;font-size:11.5px;font-weight:600;cursor:pointer}
-  .ai-preset:hover{border-color:var(--navy-700);background:#f8faff}
+  .ai-preset:hover{border-color:var(--navy-700);background:#f8faff}.ai-preset-primary{background:var(--navy-900);color:#fff;border-color:var(--navy-900);grid-column:1/-1}.ai-preset-primary:hover{background:var(--navy-800);color:#fff}.ai-choice-row{display:flex;gap:8px;margin-top:8px}.ai-choice{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px;font-weight:700;cursor:pointer}.ai-choice.yes{background:var(--green-soft);color:var(--green);border-color:rgba(43,173,125,.35)}.ai-choice.no{background:var(--red-soft);color:var(--red);border-color:rgba(229,72,77,.35)}.ai-driver-ok{border-left:3px solid var(--green);padding-left:9px}.ai-driver-error{border-left:3px solid var(--red);padding-left:9px}
   .ai-msg{max-width:88%;padding:10px 12px;border-radius:12px;margin:7px 0;font-size:12.5px;line-height:1.45;white-space:pre-wrap}
   .ai-msg.user{margin-left:auto;background:var(--navy-900);color:#fff;border-bottom-right-radius:4px}
   .ai-msg.bot{background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
@@ -798,12 +798,9 @@
   </header>
   <div class="ai-body" id="aiBody">
     <div class="ai-presets">
-      <button class="ai-preset" data-ai-prompt="Quantos condutores estão aguardando DER?">Aguardando DER</button>
-      <button class="ai-preset" data-ai-prompt="Quais condutores estão com DER vencido?">DER vencido</button>
-      <button class="ai-preset" data-ai-prompt="Quais são as principais pendências documentais?">Pendências</button>
-      <button class="ai-preset" data-ai-prompt="Faça um resumo da situação atual dos condutores.">Resumo geral</button>
+      <button class="ai-preset ai-preset-primary" id="aiPeticionamento">Informar Peticionados</button>
     </div>
-    <div class="ai-msg bot">Olá! Posso consultar os dados carregados no painel e explicar como o sistema funciona. O que você quer saber?</div>
+    <div class="ai-msg bot">Olá! Aqui você pode conversar com o sistema. Para registrar peticionamentos, use <strong>Informar Peticionados</strong>; perguntas livres continuam sendo respondidas pela IA.</div>
   </div>
   <div class="ai-foot">
     <textarea class="ai-input" id="aiInput" placeholder="Pergunte qualquer coisa…" rows="1"></textarea>
@@ -825,7 +822,7 @@
 
   // O endpoint é um Web App do Google Apps Script. A chave do Gemini fica
   // somente nas Script Properties do Apps Script, nunca neste HTML.
-  const AI_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec'; // cole aqui a URL /exec do seu Web App
+  const AI_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec';
 
   function aiAppend(role, text){
     const el=document.createElement('div'); el.className='ai-msg '+role; el.textContent=text;
@@ -848,18 +845,106 @@
       registros:base.slice(0,300).map(r=>({motorista:r.motorista,matricula:r.matricula,filial:r.filial,derStatus:r.derStatus,derVal:r.derVal?fmtDate(r.derVal):null,cnhStatus:r.cnhStatus,cnhVal:r.cnhVal?fmtDate(r.cnhVal):null,problemas:r.problemas||'',observacao:r.observacao||'',multasPendentes:r.multasPendentes||0,afastado:!!r.afastado,emFerias:!!r.emFerias}))
     };
   }
+  async function postAssistant(payload){
+    const res=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(!res.ok||data.error) throw new Error(data.error||'Falha no servidor');
+    return data;
+  }
+
   async function askAI(prompt){
-    if(!AI_ENDPOINT){ aiAppend('user',prompt); aiAppend('bot','O assistente está instalado, mas falta configurar o AI_ENDPOINT com a URL /exec do Web App do Google Apps Script. A chave do Gemini deve ficar somente no servidor.'); return; }
+    if(!AI_ENDPOINT){ aiAppend('user',prompt); aiAppend('bot','O endpoint do assistente não está configurado.'); return; }
     const btn=els.aiSend; btn.disabled=true; aiAppend('user',prompt);
     const wait=document.createElement('div'); wait.className='ai-msg bot'; wait.textContent='Consultando…'; els.aiBody.appendChild(wait);
     try{
-      const res=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({message:prompt,context:aiContext()})});
-      const data=await res.json(); wait.remove();
-      if(!res.ok||data.error) throw new Error(data.error||'Falha na IA');
-      aiAppend('bot',data.answer||'Não consegui obter uma resposta.');
+      const data=await postAssistant({action:'ai',message:prompt,context:aiContext()});
+      wait.remove(); aiAppend('bot',data.answer||'Não consegui obter uma resposta.');
     }catch(err){ wait.textContent='Não consegui consultar a IA agora. Verifique a implantação do Apps Script.'; }
     finally{btn.disabled=false;}
   }
+
+  let petFlow = null;
+  function petBot(text){ aiAppend('bot',text); }
+  function petUser(text){ aiAppend('user',text); }
+  function petAsk(){
+    if(!petFlow) return;
+    const prompts={date:'1/4 — Qual a data do peticionamento?\nDigite no formato DD/MM/AAAA.',number:'2/4 — Qual o número do peticionamento?',count:'3/4 — Quantos motoristas foram peticionados?',list:'4/4 — Informe a lista.\nDigite o nome de um condutor por vez e envie. Vou conferir se existe e se não foi repetido.'};
+    petBot(prompts[petFlow.step]);
+  }
+  function normalizeName(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();}
+  function parsePetDate(v){
+    const m=String(v||'').trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if(!m) return null;
+    const d=Number(m[1]), mo=Number(m[2]), y=Number(m[3]);
+    const dt=new Date(y,mo-1,d); if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return null;
+    return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  }
+  function beginPeticionamento(){
+    petFlow={step:'date',date:'',number:'',count:0,drivers:[]};
+    aiAppend('user','Informar Peticionados');
+    petBot('Vamos registrar o peticionamento direto na planilha. Não uso IA para esse processo.');
+    petAsk();
+    els.aiInput.focus();
+  }
+  function renderPetConfirmation(){
+    const box=document.createElement('div'); box.className='ai-msg bot';
+    const list=petFlow.drivers.map((d,i)=>`${i+1}. ${d.motorista} — ${d.filial}`).join('\n');
+    box.textContent=`Confira antes de gravar:\n\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\nMotoristas: ${petFlow.count}\n\n${list}\n\nPosso concluir e marcar PETICIONADO = SIM, DATA PETICIONAMENTO, N. PETICIONAMENTO e ENVIADOS = TRUE na planilha?`;
+    els.aiBody.appendChild(box);
+    const row=document.createElement('div'); row.className='ai-choice-row';
+    const yes=document.createElement('button'); yes.className='ai-choice yes'; yes.textContent='Sim, concluir';
+    const no=document.createElement('button'); no.className='ai-choice no'; no.textContent='Não';
+    yes.onclick=()=>finalizePeticionamento(); no.onclick=()=>{petFlow=null;petUser('Não');petBot('Tudo bem. O registro foi cancelado e nada foi alterado na planilha.');};
+    row.append(yes,no); els.aiBody.appendChild(row); els.aiBody.scrollTop=els.aiBody.scrollHeight;
+  }
+  function findDriverMatches(q){
+    const n=normalizeName(q); if(!n) return [];
+    return rawRows.filter(r=>normalizeName(r.motorista)===n || normalizeName(r.motorista).includes(n));
+  }
+  function handlePetInput(value){
+    const v=String(value||'').trim(); if(!v||!petFlow) return;
+    petUser(v);
+    if(petFlow.step==='date'){
+      const iso=parsePetDate(v); if(!iso){petBot('A data não parece válida. Digite, por exemplo, 08/10/2026.');return;}
+      petFlow.date=iso; petFlow.dateDisplay=v; petFlow.step='number'; petAsk(); return;
+    }
+    if(petFlow.step==='number'){
+      if(v.length<3){petBot('Informe o número completo do peticionamento.');return;}
+      petFlow.number=v; petFlow.step='count'; petAsk(); return;
+    }
+    if(petFlow.step==='count'){
+      const n=Number(v.replace(/\D/g,''));
+      if(!Number.isInteger(n)||n<1){petBot('Informe uma quantidade inteira maior que zero.');return;}
+      petFlow.count=n; petFlow.step='list'; petAsk(); return;
+    }
+    if(petFlow.step==='list'){
+      const norm=normalizeName(v);
+      if(petFlow.drivers.some(d=>normalizeName(d.motorista)===norm)){petBot('Esse condutor já foi informado nesta lista. Digite outro nome.');return;}
+      const matches=findDriverMatches(v);
+      if(!matches.length){petBot('Não encontrei esse condutor nos dados carregados. Confira o nome e tente novamente.');return;}
+      if(matches.length>1){
+        petBot('Encontrei mais de um resultado. Digite o nome completo do condutor para eu identificar corretamente:\n'+matches.slice(0,8).map(m=>`• ${m.motorista} — ${m.filial}`).join('\n'));return;}
+      const r=matches[0];
+      petFlow.drivers.push({motorista:r.motorista,filial:r.filial});
+      aiAppend('bot',`✓ ${r.motorista} — ${r.filial}\n${petFlow.drivers.length}/${petFlow.count} informado(s).`);
+      if(petFlow.drivers.length>=petFlow.count){petFlow.step='confirm';renderPetConfirmation();}
+      else petBot(`Informe o próximo condutor. Faltam ${petFlow.count-petFlow.drivers.length}.`);
+    }
+  }
+  async function finalizePeticionamento(){
+    if(!petFlow||petFlow.step!=='confirm') return;
+    const buttons=[...els.aiBody.querySelectorAll('.ai-choice')]; buttons.forEach(b=>b.disabled=true);
+    const wait=document.createElement('div'); wait.className='ai-msg bot'; wait.textContent='Gravando na planilha…'; els.aiBody.appendChild(wait);
+    try{
+      const data=await postAssistant({action:'registerPeticionamento',dataPeticionamento:petFlow.date,numeroPeticionamento:petFlow.number,motoristas:petFlow.drivers});
+      wait.remove();
+      if(!data.ok) throw new Error(data.error||'Não foi possível concluir.');
+      petBot(`✓ Peticionamento concluído. ${data.count} motorista(s) atualizado(s).\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\n\nAs colunas PETICIONADO, DATA PETICIONAMENTO, N. PETICIONAMENTO e ENVIADOS foram atualizadas.`);
+      petFlow=null;
+      loadData();
+    }catch(err){ wait.textContent='Não foi possível concluir: '+err.message; buttons.forEach(b=>b.disabled=false); }
+  }
+
 
   // Planilha de Controle de Documentação (separada, também dividida por filial)
   const SHEET_ID_DOCS = '1ywn1NLRrqC5oj3Ir3mbg9tYwNejHyO5SIHd98hi9t-4';
@@ -984,8 +1069,8 @@ function tempoRelativo(data) {
   els.btnRefresh.addEventListener('click', () => loadData());
   els.aiFab.addEventListener('click',()=>{els.aiPanel.classList.toggle('open');if(els.aiPanel.classList.contains('open'))els.aiInput.focus();});
   els.aiClose.addEventListener('click',()=>els.aiPanel.classList.remove('open'));
-  document.querySelectorAll('.ai-preset').forEach(b=>b.addEventListener('click',()=>askAI(b.dataset.aiPrompt)));
-  els.aiSend.addEventListener('click',()=>{const q=els.aiInput.value.trim();if(q){els.aiInput.value='';askAI(q);}});
+  document.getElementById('aiPeticionamento').addEventListener('click',beginPeticionamento);
+  els.aiSend.addEventListener('click',()=>{const q=els.aiInput.value.trim();if(!q)return;els.aiInput.value='';if(petFlow)handlePetInput(q);else askAI(q);});
   els.aiInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();els.aiSend.click();}});
   els.search.addEventListener('input', () => {
     els.searchClear.style.display = els.search.value ? 'flex' : 'none';
