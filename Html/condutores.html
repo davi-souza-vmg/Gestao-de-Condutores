@@ -825,7 +825,7 @@
 
   // O endpoint é um Web App do Google Apps Script. A chave do Gemini fica
   // somente nas Script Properties do Apps Script, nunca neste HTML.
-  const AI_ENDPOINT = ''; // cole aqui a URL /exec do seu Web App
+  const AI_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec'; // cole aqui a URL /exec do seu Web App
 
   function aiAppend(role, text){
     const el=document.createElement('div'); el.className='ai-msg '+role; el.textContent=text;
