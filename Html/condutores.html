@@ -492,7 +492,7 @@
     margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);
     border-radius:13px;background:#fff;color:var(--slate-600);font-size:12px;line-height:1.45;
   }
-  .action-grid{display:grid;gap:10px}
+  .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .action-card{
     width:100%;display:grid;grid-template-columns:42px 1fr 24px;align-items:center;
     gap:11px;text-align:left;border:1px solid var(--line);border-radius:15px;
@@ -531,7 +531,19 @@
     width:44px;border:0;border-radius:10px;background:var(--navy-900);
     color:#fff;cursor:pointer;font-size:17px;
   }
+  .action-roster{background:#fff;border:1px solid var(--line);border-radius:15px;padding:12px}
+  .action-roster-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .action-roster-head strong{display:block;color:var(--slate-900);font-size:14px}
+  .action-roster-head span{display:block;color:var(--slate-500);font-size:11px;margin-top:2px}
+  .action-roster-back{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;color:var(--slate-700);font-weight:700;cursor:pointer}
+  .action-roster-list{display:flex;flex-direction:column;gap:7px;max-height:440px;overflow:auto}
+  .action-roster-item{display:flex;align-items:center;gap:10px;padding:9px;border:1px solid var(--line);border-radius:11px;background:#fff}
+  .action-roster-avatar{width:32px;height:32px;border-radius:10px;background:#eef3fa;color:var(--navy-900);display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+  .action-roster-item strong{display:block;color:var(--slate-900);font-size:12px}
+  .action-roster-item span{display:block;color:var(--slate-500);font-size:10.5px;margin-top:2px}
+  .action-roster-empty{padding:28px 12px;text-align:center;color:var(--slate-500);font-size:12px}
   @media(max-width:600px){
+    .action-grid{grid-template-columns:1fr}
     .action-fab{right:16px;bottom:16px}
     .action-panel{right:16px;bottom:84px;height:calc(100vh - 110px)}
   }
@@ -552,13 +564,6 @@
       <select id="filterFilial">
         <option value="">Todas as filiais</option>
       </select>
-      <button class="btn btn-ghost" id="btnConferencia" style="border-color:rgba(255,255,255,.25);color:#fff;position:relative;">
-        Conferência CNH/DER
-        <span id="confBadge" class="conf-badge hidden">0</span>
-      </button>
-      <button class="btn btn-ghost" id="btnRefresh" style="border-color:rgba(255,255,255,.25);color:#fff;">Atualizar agora</button>
-      <button class="btn btn-ghost" id="btnExportDash" style="border-color:rgba(255,255,255,.25);color:#fff;">
-        <span class="btn-icon">⇩</span> Exportar</button>
     </div>
   </div>
 </header>
@@ -672,7 +677,6 @@
         <option value="SEM_CADASTRO">CNH sem cadastro</option>
       </select>
       <span class="count-pill" id="countPill">0 registros</span>
-      <button type="button" class="btn-chip" id="btnExportList">⇩ Exportar lista</button>
     </div>
 
     <div class="table-wrap">
@@ -864,7 +868,7 @@
   </header>
 
   <div class="action-body" id="actionBody">
-    <div class="action-intro">Tudo aqui é ação direta no sistema. Não há conversa com IA.</div>
+    <div class="action-intro">Acesse rapidamente as principais tarefas do sistema.</div>
 
     <div class="action-grid" id="actionGrid">
       <button type="button" class="action-card primary" id="actionPeticionamento">
@@ -873,9 +877,15 @@
         <span class="action-arrow">›</span>
       </button>
 
-      <button type="button" class="action-card" id="actionConferencia">
-        <div class="action-card-icon">✓</div>
-        <div><strong>Conferência</strong><span>Verificar afastamentos e férias dos condutores.</span></div>
+      <button type="button" class="action-card" id="actionAfastados">
+        <div class="action-card-icon">🧑‍✈️</div>
+        <div><strong>Condutores afastados</strong><span>Ver rapidamente quem está afastado.</span></div>
+        <span class="action-arrow">›</span>
+      </button>
+
+      <button type="button" class="action-card" id="actionFerias">
+        <div class="action-card-icon">🌴</div>
+        <div><strong>Condutores em férias</strong><span>Ver rapidamente quem está de férias.</span></div>
         <span class="action-arrow">›</span>
       </button>
 
@@ -925,6 +935,35 @@
   }
   function petBot(text){ actionAppend('system',text); }
   function petUser(text){ actionAppend('user',text); }
+
+  function showActionRoster(type){
+    const title = type==='afastados' ? '🧑‍✈️ Condutores afastados' : '🌴 Condutores em férias';
+    const rows = rawRows.filter(r => type==='afastados' ? !!r.afastado : !!r.emFerias);
+    els.actionGrid.style.display='none';
+    els.actionFoot.style.display='none';
+    const old=els.actionBody.querySelector('.action-roster');
+    if(old) old.remove();
+    const box=document.createElement('div');
+    box.className='action-roster';
+    box.innerHTML=`<div class="action-roster-head"><div><strong>${title}</strong><span>${rows.length} condutor${rows.length===1?'':'es'}</span></div><button type="button" class="action-roster-back">← Voltar</button></div><div class="action-roster-list"></div>`;
+    const list=box.querySelector('.action-roster-list');
+    if(!rows.length){
+      list.innerHTML='<div class="action-roster-empty">Nenhum condutor encontrado.</div>';
+    }else{
+      rows.sort((a,b)=>(a.motorista||'').localeCompare(b.motorista||'','pt-BR'));
+      list.innerHTML=rows.map(r=>{
+        const detalhe=type==='afastados'
+          ? (r.afastadoInfo && r.afastadoInfo.fim ? `Até ${fmtDate(r.afastadoInfo.fim)}` : 'Afastado')
+          : (r.ferias && r.ferias.inicio && r.ferias.fim ? `${fmtDate(r.ferias.inicio)} a ${fmtDate(r.ferias.fim)}` : 'Em férias');
+        return `<div class="action-roster-item"><div class="action-roster-avatar">${escapeHtml((r.motorista||'?').trim().charAt(0).toUpperCase())}</div><div><strong>${escapeHtml(r.motorista||'—')}</strong><span>${escapeHtml(r.filial||'')} · ${escapeHtml(detalhe)}</span></div></div>`;
+      }).join('');
+    }
+    box.querySelector('.action-roster-back').onclick=()=>{
+      box.remove(); els.actionGrid.style.display='grid';
+    };
+    els.actionBody.appendChild(box);
+    els.actionBody.scrollTop=els.actionBody.scrollHeight;
+  }
 
   function petAsk(){
     if(!petFlow) return;
@@ -1143,7 +1182,6 @@
     modalBackdrop: document.getElementById('modalBackdrop'),
     modalClose: document.getElementById('modalClose'),
     btnAllFiliais: document.getElementById('btnAllFiliais'),
-    btnConferencia: document.getElementById('btnConferencia'),
     confBadge: document.getElementById('confBadge'),
     confModalBackdrop: document.getElementById('confModalBackdrop'),
     confModalClose: document.getElementById('confModalClose'),
@@ -1153,8 +1191,6 @@
     confCopyToast: document.getElementById('confCopyToast'),
     confTableWrap: document.getElementById('confTableWrap'),
     confTbody: document.getElementById('confTbody'),
-    btnExportDash: document.getElementById('btnExportDash'),
-    btnExportList: document.getElementById('btnExportList'),
     exportModalBackdrop: document.getElementById('exportModalBackdrop'),
     exportModalClose: document.getElementById('exportModalClose'),
     exportModalCancel: document.getElementById('exportModalCancel'),
@@ -1230,7 +1266,6 @@ function tempoRelativo(data) {
     return r.derStatus === 'AGUARDANDO';
   }
 
-  els.btnRefresh.addEventListener('click', () => loadData());
 
   els.actionFab.addEventListener('click',()=>{
     els.actionPanel.classList.toggle('open');
@@ -1239,17 +1274,15 @@ function tempoRelativo(data) {
   els.actionClose.addEventListener('click',()=>els.actionPanel.classList.remove('open'));
 
   document.getElementById('actionPeticionamento').addEventListener('click',beginPeticionamento);
-  document.getElementById('actionConferencia').addEventListener('click',()=>{
-    els.actionPanel.classList.remove('open');
-    els.btnConferencia.click();
-  });
   document.getElementById('actionRefresh').addEventListener('click',()=>{
     els.actionPanel.classList.remove('open');
-    els.btnRefresh.click();
+    loadData();
   });
+  document.getElementById('actionAfastados').addEventListener('click',()=>showActionRoster('afastados'));
+  document.getElementById('actionFerias').addEventListener('click',()=>showActionRoster('ferias'));
   document.getElementById('actionExport').addEventListener('click',()=>{
     els.actionPanel.classList.remove('open');
-    els.btnExportList.click();
+    openExportModal();
   });
 
   els.actionSend.addEventListener('click',()=>{
@@ -1278,11 +1311,8 @@ function tempoRelativo(data) {
   });
   els.modalClose.addEventListener('click', closeModal);
   els.modalBackdrop.addEventListener('click', (e) => { if(e.target === els.modalBackdrop) closeModal(); });
-  els.btnConferencia.addEventListener('click', () => openConferenciaModal());
   els.confModalClose.addEventListener('click', closeConferenciaModal);
   els.confModalBackdrop.addEventListener('click', (e) => { if(e.target === els.confModalBackdrop) closeConferenciaModal(); });
-  els.btnExportDash.addEventListener('click', () => exportDashboardPdf());
-  els.btnExportList.addEventListener('click', () => openExportModal());
   els.exportModalClose.addEventListener('click', closeExportModal);
   els.exportModalCancel.addEventListener('click', closeExportModal);
   els.exportModalBackdrop.addEventListener('click', (e) => { if(e.target === els.exportModalBackdrop) closeExportModal(); });
