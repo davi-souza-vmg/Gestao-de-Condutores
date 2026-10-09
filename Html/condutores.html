@@ -2928,19 +2928,10 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         }
 
         function docsInfoRelatorio(r){
-          const originais = Array.isArray(r.docsPendentes) ? r.docsPendentes : [];
+          // Não existe mais modo confidencial: o relatório considera apenas
+          // as pendências documentais atualmente visíveis no sistema.
           const pendentes = docsPendentesRelatorio(r);
-          const temOcultas = modoConfidencial && originais.some(tag => TAGS_OCULTAS_NO_RELATORIO.includes(tag));
-          let texto;
-          if(pendentes.length){
-            texto = pendentes.join(', ');
-            if(temOcultas) texto += ' · pendência interna oculta';
-          } else if(temOcultas){
-            texto = 'Pendência interna oculta';
-          } else {
-            texto = 'Nenhuma pendência';
-          }
-          return {texto};
+          return {texto: pendentes.length ? pendentes.join(', ') : 'Nenhuma pendência'};
         }
 
         // A informação operacional passa a vir da planilha complementar
