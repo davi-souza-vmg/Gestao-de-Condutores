@@ -1533,7 +1533,7 @@ function tempoRelativo(data) {
         if(matches.length===0){continue;} // Motoristas desligados podem continuar válidos no relatório oficial; não é divergência.
         if(matches.length>1){issues.push({type:'CPF duplicado no sistema',name:o.name,detail:`CPF ${o.cpf} aparece em ${matches.length} registros: ${matches.map(x=>x.branch).join(', ')}`});continue;}
         const a=matches[0]; checked++;
-        if(norm(o.name)!==norm(a.name)) issues.push({type:'Nome divergente',name:o.name||a.name,cpf:o.cpf,branch:a.branch,fixKind:'name',fixValue:o.name,oldValue:a.name,officialLabel:'Nome no relatório oficial',officialValue:o.name||'Não informado',systemLabel:`Nome no sistema · ${a.branch||'Filial não informada'}`,systemValue:a.name||'Não informado'});
+        // O nome válido é o cadastrado no sistema; diferenças de grafia em relação ao relatório oficial são ignoradas.
         const officialTs=dateNorm(o.expiry); const systemTs=dateNorm(a.expiry);
         if(officialTs!==systemTs){
           let direction='Datas diferentes';
@@ -1565,7 +1565,7 @@ function tempoRelativo(data) {
       summary.appendChild(list);
       if(issues.length>max){const more=document.createElement('div');more.style.marginTop='8px';more.textContent=`Exibindo as primeiras ${max} de ${issues.length} divergências.`;summary.appendChild(more);}
       els.actionBody.appendChild(summary);els.actionBody.scrollTop=els.actionBody.scrollHeight;
-      actionAppend('system','As divergências foram apenas identificadas. Para corrigir uma pendência compatível, use o ícone verde do respectivo card; a correção exige confirmação e os dados serão recarregados em seguida.');
+      actionAppend('system','As divergências de validade foram identificadas. Para corrigir uma pendência compatível, use o ícone verde do respectivo card; a correção exige confirmação e os dados serão recarregados em seguida.');
     }catch(err){console.error('Conferência oficial:',err);actionAppend('system','Não foi possível concluir a conferência: '+(err.message||'erro inesperado')+' Confira se o arquivo relCondutores.xlsx está público no GitHub e tente novamente.');}
   }
   function appendNameDiff(container, officialName, systemName, side){
