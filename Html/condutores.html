@@ -1947,8 +1947,11 @@ function tempoRelativo(data) {
           derVal: derValFinal,
           derValEstimado: derValEstimado,
           derDias: isNaN(derDiasCalc) ? null : derDiasCalc,
-          // A MÁGICA ACONTECE AQUI: Substitui o status na raiz para ignorar lógicas futuras
-          derStatus: enviadoFlag ? 'AGUARDANDO' : rawDerStatus,
+          // Só fica como Aguardando DER se já foi enviado e o DER está vencendo,
+          // vencido ou sem cadastro. Enviado, por si só, não significa aguardando.
+          derStatus: (enviadoFlag && ['VENCENDO', 'VENCIDO', 'SEM_CADASTRO'].includes(rawDerStatus))
+            ? 'AGUARDANDO'
+            : rawDerStatus,
           cnhNumero: iCnhNum>-1 ? cellText(c[iCnhNum]) : '',
           cnhVal: cnhValFinal,
           cnhValEstimado: cnhValEstimado,
