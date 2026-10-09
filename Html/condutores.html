@@ -877,15 +877,9 @@
         <span class="action-arrow">›</span>
       </button>
 
-      <button type="button" class="action-card" id="actionAfastados">
-        <div class="action-card-icon">🧑‍✈️</div>
-        <div><strong>Condutores afastados</strong><span>Ver rapidamente quem está afastado.</span></div>
-        <span class="action-arrow">›</span>
-      </button>
-
-      <button type="button" class="action-card" id="actionFerias">
-        <div class="action-card-icon">🌴</div>
-        <div><strong>Condutores em férias</strong><span>Ver rapidamente quem está de férias.</span></div>
+      <button type="button" class="action-card" id="actionValidity">
+        <div class="action-card-icon">📅</div>
+        <div><strong>Atualizar Validade</strong><span>Atualizar vencimento do DER ou da CNH usando o CPF.</span></div>
         <span class="action-arrow">›</span>
       </button>
 
@@ -925,6 +919,7 @@
 
   // Ações diretas do sistema — sem IA.
   let petFlow = null;
+  let validityFlow = null;
 
   function actionAppend(role, text){
     const el=document.createElement('div');
@@ -971,7 +966,7 @@
       date:'1/4 — Qual a data do peticionamento?\nDigite no formato DD/MM/AAAA.',
       number:'2/4 — Qual o número do peticionamento?',
       count:'3/4 — Quantos motoristas foram peticionados?',
-      list:'4/4 — Informe a lista.\nDigite o nome de um condutor por vez e envie. Vou conferir se existe e se não foi repetido.'
+      list:'4/4 — Informe um condutor por vez no formato FILIAL NOME COMPLETO.\nExemplos: ARAXA JOAO VICENTE DA SILVA; SERRA NOME COMPLETO; LAFAIETE NOME COMPLETO.'
     };
     petBot(prompts[petFlow.step]);
   }
@@ -991,6 +986,8 @@
 
   function beginPeticionamento(){
     petFlow={step:'date',date:'',number:'',count:0,drivers:[]};
+    validityFlow=null;
+    els.actionInput.placeholder='Digite a resposta…';
     els.actionGrid.style.display='none';
     els.actionFoot.style.display='flex';
     actionAppend('user','Informar Peticionados');
@@ -1030,10 +1027,24 @@
     els.actionBody.scrollTop=els.actionBody.scrollHeight;
   }
 
+  function parseBranchAndName(input){
+    const text=String(input||'').trim();
+    const m=text.match(/^(ARAXA|SERRA|LAFAIETE)\s+(.+)$/i);
+    if(!m) return {error:'Comece com a filial e depois o nome. Ex.: ARAXA JOAO VICENTE DA SILVA.'};
+    const aliases={
+      ARAXA:'ARAXA',
+      SERRA:'SERRA DO SALITRE',
+      LAFAIETE:'CONSELHEIRO LAFAIETE'
+    };
+    return {filial:aliases[normalizeName(m[1])], nome:m[2].trim()};
+  }
+
   function findDriverMatches(q){
-    const n=normalizeName(q);
-    if(!n) return [];
-    return rawRows.filter(r=>normalizeName(r.motorista)===n || normalizeName(r.motorista).includes(n));
+    const parsed=parseBranchAndName(q);
+    if(parsed.error) return {error:parsed.error,matches:[]};
+    const n=normalizeName(parsed.nome);
+    return {matches:rawRows.filter(r=>normalizeName(r.filial)===normalizeName(parsed.filial) &&
+      (normalizeName(r.motorista)===n || normalizeName(r.motorista).includes(n)))};
   }
 
   function handlePetInput(value){
@@ -1070,24 +1081,24 @@
 
     if(petFlow.step==='list'){
       const norm=normalizeName(v);
-      if(petFlow.drivers.some(d=>normalizeName(d.motorista)===norm)){
-        petBot('Esse condutor já foi informado nesta lista. Digite outro nome.');
-        return;
-      }
-
-      const matches=findDriverMatches(v);
+      const found=findDriverMatches(v);
+      if(found.error){petBot(found.error);return;}
+      const matches=found.matches;
       if(!matches.length){
-        petBot('Não encontrei esse condutor nos dados carregados. Confira o nome e tente novamente.');
+        petBot('Não encontrei esse condutor nessa filial. Confira a filial e o nome e tente novamente.');
         return;
       }
 
       if(matches.length>1){
-        petBot('Encontrei mais de um resultado. Digite o nome completo do condutor:\n'+
-          matches.slice(0,8).map(m=>`• ${m.motorista} — ${m.filial}`).join('\n'));
+        petBot('Encontrei mais de um resultado nessa filial. Digite o nome completo do condutor.');
         return;
       }
 
       const r=matches[0];
+      if(petFlow.drivers.some(d=>normalizeName(d.motorista)===normalizeName(r.motorista) && normalizeName(d.filial)===normalizeName(r.filial))){
+        petBot('Esse condutor já foi informado nesta lista. Digite outro.');
+        return;
+      }
       petFlow.drivers.push({motorista:r.motorista,filial:r.filial});
       actionAppend('system',`✓ ${r.motorista} — ${r.filial}\n${petFlow.drivers.length}/${petFlow.count} informado(s).`);
 
@@ -1098,6 +1109,80 @@
         petBot(`Informe o próximo condutor. Faltam ${petFlow.count-petFlow.drivers.length}.`);
       }
     }
+  }
+
+
+  function beginValidityUpdate(){
+    validityFlow={step:'count',count:0,field:'',items:[]};
+    petFlow=null;
+    els.actionGrid.style.display='none';
+    els.actionFoot.style.display='flex';
+    actionAppend('user','Atualizar Validade');
+    petBot('Vamos atualizar as validades diretamente na planilha. Primeiro, quantos motoristas serão atualizados?');
+    els.actionInput.placeholder='Informe a quantidade…';
+    els.actionInput.focus();
+  }
+
+  function validityBot(text){ actionAppend('system',text); }
+  function handleValidityInput(v){
+    if(!validityFlow) return;
+    petUser(v);
+    if(validityFlow.step==='count'){
+      const n=Number(String(v).replace(/\D/g,''));
+      if(!Number.isInteger(n)||n<1){validityBot('Informe uma quantidade inteira maior que zero.');return;}
+      validityFlow.count=n;
+      validityFlow.step='field';
+      validityBot('Qual validade deseja atualizar? Digite DER ou CNH.');
+      return;
+    }
+    if(validityFlow.step==='field'){
+      const f=normalizeName(v);
+      if(!['DER','CNH'].includes(f)){validityBot('Opção inválida. Digite DER ou CNH.');return;}
+      validityFlow.field=f;
+      validityFlow.step='items';
+      validityBot(`Agora informe ${validityFlow.count} registro(s), um por vez, neste formato:\nCPF DATA\nExemplo: 123.456.789-00 31/12/2027\nO CPF pode ter pontos e traço ou somente números.`);
+      return;
+    }
+    if(validityFlow.step==='items'){
+      const m=String(v).trim().match(/^(.+?)\s+(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{4})$/);
+      if(!m){validityBot('Formato inválido. Digite o CPF, um espaço e a nova data. Ex.: 12345678900 31/12/2027');return;}
+      const cpf=m[1].replace(/\D/g,'');
+      const iso=parsePetDate(m[2]);
+      if(cpf.length!==11){validityBot('O CPF deve conter 11 números. Tente novamente.');return;}
+      if(!iso){validityBot('A data não é válida. Use DD/MM/AAAA.');return;}
+      if(validityFlow.items.some(x=>x.cpf===cpf)){validityBot('Esse CPF já foi informado. Digite outro.');return;}
+      validityFlow.items.push({cpf,dataValidade:iso,dataDisplay:m[2]});
+      validityBot(`✓ CPF ${cpf} — nova validade ${m[2]} (${validityFlow.items.length}/${validityFlow.count}).`);
+      if(validityFlow.items.length===validityFlow.count){
+        validityFlow.step='confirm';
+        const summary=document.createElement('div');
+        summary.className='action-msg system';
+        summary.textContent=`Confira antes de gravar:\nCampo: VENCIMENTO ${validityFlow.field}\nMotoristas: ${validityFlow.count}\n\n`+
+          validityFlow.items.map((x,i)=>`${i+1}. CPF ${x.cpf} → ${x.dataDisplay}`).join('\n')+
+          '\n\nPosso atualizar a planilha?';
+        els.actionBody.appendChild(summary);
+        const row=document.createElement('div'); row.className='action-choice-row';
+        const yes=document.createElement('button'); yes.className='action-choice yes'; yes.textContent='Sim, atualizar';
+        const no=document.createElement('button'); no.className='action-choice no'; no.textContent='Cancelar';
+        yes.onclick=finalizeValidityUpdate;
+        no.onclick=()=>{validityFlow=null;petUser('Cancelar');petBot('Atualização cancelada. Nada foi alterado.');resetActionPanelSoon();};
+        row.append(yes,no);els.actionBody.appendChild(row);els.actionBody.scrollTop=els.actionBody.scrollHeight;
+      }else validityBot(`Informe o próximo CPF e data. Faltam ${validityFlow.count-validityFlow.items.length}.`);
+    }
+  }
+
+  async function finalizeValidityUpdate(){
+    if(!validityFlow||validityFlow.step!=='confirm') return;
+    const buttons=[...els.actionBody.querySelectorAll('.action-choice')];buttons.forEach(b=>b.disabled=true);
+    const wait=document.createElement('div');wait.className='action-msg system';wait.textContent='Validando CPFs e atualizando a planilha…';els.actionBody.appendChild(wait);
+    try{
+      const res=await fetch(PETICIONAMENTO_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'updateValidity',campo:validityFlow.field,itens:validityFlow.items.map(x=>({cpf:x.cpf,dataValidade:x.dataValidade}))})});
+      const data=await res.json();wait.remove();
+      if(!res.ok||data.error||!data.ok) throw new Error(data.error||'Não foi possível concluir.');
+      validityBot(`✓ Validades atualizadas com sucesso.\n${data.count} motorista(s) atualizado(s).\nCampo: VENCIMENTO ${validityFlow.field}.`);
+      validityFlow=null;loadData();resetActionPanelSoon();
+    }catch(err){wait.textContent='Não foi possível concluir: '+err.message;buttons.forEach(b=>b.disabled=false);}
   }
 
   async function finalizePeticionamento(){
@@ -1143,6 +1228,7 @@
   function resetActionPanelSoon(){
     setTimeout(()=>{
       els.actionFoot.style.display='none';
+      els.actionInput.placeholder='Digite a resposta…';
       els.actionGrid.style.display='grid';
     },900);
   }
@@ -1274,12 +1360,11 @@ function tempoRelativo(data) {
   els.actionClose.addEventListener('click',()=>els.actionPanel.classList.remove('open'));
 
   document.getElementById('actionPeticionamento').addEventListener('click',beginPeticionamento);
+  document.getElementById('actionValidity').addEventListener('click',beginValidityUpdate);
   document.getElementById('actionRefresh').addEventListener('click',()=>{
     els.actionPanel.classList.remove('open');
     loadData();
   });
-  document.getElementById('actionAfastados').addEventListener('click',()=>showActionRoster('afastados'));
-  document.getElementById('actionFerias').addEventListener('click',()=>showActionRoster('ferias'));
   document.getElementById('actionExport').addEventListener('click',()=>{
     els.actionPanel.classList.remove('open');
     openExportModal();
@@ -1287,9 +1372,9 @@ function tempoRelativo(data) {
 
   els.actionSend.addEventListener('click',()=>{
     const q=els.actionInput.value.trim();
-    if(!q||!petFlow)return;
+    if(!q||(!petFlow&&!validityFlow))return;
     els.actionInput.value='';
-    handlePetInput(q);
+    if(validityFlow) handleValidityInput(q); else handlePetInput(q);
   });
   els.actionInput.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey){
