@@ -522,6 +522,17 @@
   }
   .action-choice.yes{background:var(--green-soft);color:var(--green);border-color:rgba(43,173,125,.35)}
   .action-choice.no{background:var(--red-soft);color:var(--red);border-color:rgba(229,72,77,.35)}
+  .action-quick-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:11px;width:100%;}
+  .action-quick-option{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;padding:12px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--slate-900);cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;}
+  .action-quick-option:hover:not(:disabled){border-color:#9aafc9;box-shadow:0 5px 14px rgba(10,25,48,.08);transform:translateY(-1px)}
+  .action-quick-option:disabled{opacity:.62;cursor:default}
+  .action-quick-option:focus-visible{outline:3px solid rgba(52,112,181,.25);outline-offset:2px}
+  .action-quick-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#eef3fa;color:var(--navy-900);font-weight:800;font-size:14px;flex:none}
+  .action-quick-option strong{display:block;font-size:13px;line-height:1.2}
+  .action-quick-option small{display:block;color:var(--slate-500);font-size:10.5px;line-height:1.35;margin-top:3px}
+  .action-step-label{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.45px;text-transform:uppercase;color:var(--slate-500);margin-bottom:7px}
+  .action-step-dot{width:6px;height:6px;border-radius:50%;background:#2bad7d;display:inline-block}
+  @media(max-width:380px){.action-quick-options{grid-template-columns:1fr}.action-quick-option{padding:10px}}
   .action-foot{padding:10px;border-top:1px solid var(--line);background:#fff;display:flex;gap:8px}
   .action-input{
     flex:1;resize:none;border:1px solid var(--line);border-radius:10px;
@@ -868,7 +879,7 @@
   </header>
 
   <div class="action-body" id="actionBody">
-    <div class="action-intro">Acesse rapidamente as principais tarefas do sistema.</div>
+    <div class="action-intro">Escolha uma ação. O assistente vai orientar cada etapa e pedir confirmação antes de alterar a planilha.</div>
 
     <div class="action-grid" id="actionGrid">
       <button type="button" class="action-card primary" id="actionPeticionamento">
@@ -931,6 +942,44 @@
   function petBot(text){ actionAppend('system',text); }
   function petUser(text){ actionAppend('user',text); }
 
+  function clearActionConversation(){
+    els.actionBody.querySelectorAll(':scope > .action-msg,:scope > .action-choice-row').forEach(node=>node.remove());
+  }
+  function quickChoiceMessage(text, options){
+    const wrap=document.createElement('div');
+    wrap.className='action-msg system';
+    const copy=document.createElement('div'); copy.textContent=text; wrap.appendChild(copy);
+    const grid=document.createElement('div'); grid.className='action-quick-options';
+    options.forEach(opt=>{
+      const btn=document.createElement('button'); btn.type='button'; btn.className='action-quick-option';
+      const icon=document.createElement('span'); icon.className='action-quick-icon'; icon.textContent=opt.icon||'›';
+      const content=document.createElement('span');
+      const title=document.createElement('strong'); title.textContent=opt.label; content.appendChild(title);
+      if(opt.detail){const detail=document.createElement('small');detail.textContent=opt.detail;content.appendChild(detail);}
+      btn.append(icon,content); btn.addEventListener('click',()=>{grid.querySelectorAll('button').forEach(b=>b.disabled=true);opt.onClick();}); grid.appendChild(btn);
+    });
+    wrap.appendChild(grid); els.actionBody.appendChild(wrap); els.actionBody.scrollTop=els.actionBody.scrollHeight;
+    return wrap;
+  }
+  function validityChooseField(field, logChoice=true){
+    if(!validityFlow||validityFlow.step!=='field') return;
+    if(logChoice) petUser(field);
+    validityFlow.field=field; validityFlow.step='items';
+    els.actionInput.placeholder='CPF e data (ex.: 12345678900 31/12/2027)';
+    petBot(`Perfeito! Vamos atualizar a validade da ${field}.\n\nEnvie um registro por mensagem, neste formato:`);
+    actionAppend('system','CPF DATA\nExemplo: 12345678900 31/12/2027\nVocê pode digitar o CPF com ou sem pontos e traço.');
+    els.actionInput.focus();
+  }
+  function validityChooseCount(n, logChoice=true){
+    if(!validityFlow||validityFlow.step!=='count') return;
+    if(logChoice) petUser(String(n));
+    validityFlow.count=n; validityFlow.step='field';
+    quickChoiceMessage('Etapa 2 de 3 · Qual validade deseja atualizar?',[ 
+      {label:'Validade DER',detail:'Documento do DER',icon:'DER',onClick:()=>validityChooseField('DER')},
+      {label:'Validade CNH',detail:'Carteira de habilitação',icon:'CNH',onClick:()=>validityChooseField('CNH')}
+    ]);
+  }
+
   function showActionRoster(type){
     const title = type==='afastados' ? '🧑‍✈️ Condutores afastados' : '🌴 Condutores em férias';
     const rows = rawRows.filter(r => type==='afastados' ? !!r.afastado : !!r.emFerias);
@@ -985,6 +1034,7 @@
   }
 
   function beginPeticionamento(){
+    clearActionConversation();
     petFlow={step:'date',date:'',number:'',count:0,drivers:[]};
     validityFlow=null;
     els.actionInput.placeholder='Digite a resposta…';
@@ -1114,13 +1164,17 @@
 
   function beginValidityUpdate(){
     validityFlow={step:'count',count:0,field:'',items:[]};
-    petFlow=null;
-    els.actionGrid.style.display='none';
-    els.actionFoot.style.display='flex';
+    petFlow=null; clearActionConversation();
+    els.actionGrid.style.display='none'; els.actionFoot.style.display='flex';
     actionAppend('user','Atualizar Validade');
-    petBot('Vamos atualizar as validades diretamente na planilha. Primeiro, quantos motoristas serão atualizados?');
-    els.actionInput.placeholder='Informe a quantidade…';
-    els.actionInput.focus();
+    quickChoiceMessage('Vamos atualizar a planilha com segurança.\n\nEtapa 1 de 3 · Quantos motoristas deseja atualizar?',[ 
+      {label:'1 motorista',detail:'Atualizar um registro',icon:'1',onClick:()=>validityChooseCount(1)},
+      {label:'2 motoristas',detail:'Atualizar dois registros',icon:'2',onClick:()=>validityChooseCount(2)},
+      {label:'3 motoristas',detail:'Atualizar três registros',icon:'3',onClick:()=>validityChooseCount(3)},
+      {label:'5 motoristas',detail:'Atualizar cinco registros',icon:'5',onClick:()=>validityChooseCount(5)},
+      {label:'Outra quantidade',detail:'Digitar um número',icon:'…',onClick:()=>{els.actionInput.placeholder='Digite a quantidade…';els.actionInput.focus();}}
+    ]);
+    els.actionInput.placeholder='Ou digite a quantidade…';
   }
 
   function validityBot(text){ actionAppend('system',text); }
@@ -1128,19 +1182,19 @@
     if(!validityFlow) return;
     petUser(v);
     if(validityFlow.step==='count'){
-      const n=Number(String(v).replace(/\D/g,''));
-      if(!Number.isInteger(n)||n<1){validityBot('Informe uma quantidade inteira maior que zero.');return;}
-      validityFlow.count=n;
-      validityFlow.step='field';
-      validityBot('Qual validade deseja atualizar? Digite DER ou CNH.');
-      return;
+      const n=Number(String(v).trim());
+      if(!Number.isInteger(n)||n<1||n>500){validityBot('Informe um número inteiro entre 1 e 500.');return;}
+      validityChooseCount(n, false); return;
     }
     if(validityFlow.step==='field'){
       const f=normalizeName(v);
-      if(!['DER','CNH'].includes(f)){validityBot('Opção inválida. Digite DER ou CNH.');return;}
-      validityFlow.field=f;
-      validityFlow.step='items';
-      validityBot(`Agora informe ${validityFlow.count} registro(s), um por vez, neste formato:\nCPF DATA\nExemplo: 123.456.789-00 31/12/2027\nO CPF pode ter pontos e traço ou somente números.`);
+      if(!['DER','CNH'].includes(f)){
+        quickChoiceMessage('Escolha uma das opções abaixo para continuar:',[
+          {label:'Validade DER',detail:'Documento do DER',icon:'DER',onClick:()=>validityChooseField('DER')},
+          {label:'Validade CNH',detail:'Carteira de habilitação',icon:'CNH',onClick:()=>validityChooseField('CNH')}
+        ]); return;
+      }
+      validityChooseField(f, false);
       return;
     }
     if(validityFlow.step==='items'){
