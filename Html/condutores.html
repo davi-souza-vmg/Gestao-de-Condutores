@@ -958,6 +958,24 @@
   function clearActionConversation(){
     els.actionBody.querySelectorAll(':scope > .action-msg,:scope > .action-choice-row,:scope > .validity-branch-actions,:scope > .validity-branch-switch').forEach(node=>node.remove());
   }
+  function returnToActionMenu(){
+    petFlow=null; validityFlow=null;
+    clearActionConversation();
+    els.actionBody.querySelectorAll(':scope > .action-session-back,:scope > .action-roster').forEach(node=>node.remove());
+    els.actionGrid.style.display='grid';
+    els.actionFoot.style.display='none';
+    els.actionInput.value='';
+    els.actionInput.placeholder='Digite a resposta…';
+    els.actionSend.disabled=false;
+    els.actionBody.scrollTop=0;
+  }
+  function addActionSessionBack(){
+    els.actionBody.querySelectorAll(':scope > .action-session-back').forEach(node=>node.remove());
+    const row=document.createElement('div'); row.className='action-session-back';
+    row.style.cssText='display:flex;justify-content:flex-start;margin:0 0 10px;';
+    const btn=document.createElement('button'); btn.type='button'; btn.className='action-roster-back'; btn.textContent='← Voltar às ações rápidas';
+    btn.addEventListener('click',returnToActionMenu); row.appendChild(btn); els.actionBody.appendChild(row);
+  }
   function quickChoiceMessage(text, options){
     const wrap=document.createElement('div');
     wrap.className='action-msg system';
@@ -1091,6 +1109,7 @@
     clearActionConversation();
     petFlow={step:'date',date:'',number:'',count:0,drivers:[]};
     validityFlow=null;
+    addActionSessionBack();
     els.actionInput.placeholder='Digite a resposta…';
     els.actionGrid.style.display='none';
     els.actionFoot.style.display='flex';
@@ -1219,6 +1238,7 @@
   function beginValidityUpdate(){
     validityFlow={step:'count',count:0,field:'',branch:'',items:[],checking:false};
     petFlow=null; clearActionConversation();
+    addActionSessionBack();
     els.actionGrid.style.display='none'; els.actionFoot.style.display='flex';
     actionAppend('user','Atualizar Validade');
     petBot('Vamos atualizar a validade com conferência antes de gravar.');
@@ -1486,7 +1506,7 @@ function tempoRelativo(data) {
       actionAppend('system','Não foi possível carregar o leitor de Excel. Verifique sua conexão e tente novamente.');
       return;
     }
-    actionAppend('system','Conferência iniciada. Buscando a versão mais recente do relatório no GitHub…');
+    actionAppend('system','Conferência iniciada. Buscando a versão mais recente do relatório…');
     try{
       const url='https://raw.githubusercontent.com/davi-souza-vmg/Gestao-de-Condutores/main/relCondutores.xlsx?v='+Date.now();
       const response=await fetch(url,{cache:'no-store'});
@@ -1565,7 +1585,7 @@ function tempoRelativo(data) {
       summary.appendChild(list);
       if(issues.length>max){const more=document.createElement('div');more.style.marginTop='8px';more.textContent=`Exibindo as primeiras ${max} de ${issues.length} divergências.`;summary.appendChild(more);}
       els.actionBody.appendChild(summary);els.actionBody.scrollTop=els.actionBody.scrollHeight;
-      actionAppend('system','As divergências de validade foram identificadas. Para corrigir uma pendência compatível, use o ícone verde do respectivo card; a correção exige confirmação e os dados serão recarregados em seguida.');
+      
     }catch(err){console.error('Conferência oficial:',err);actionAppend('system','Não foi possível concluir a conferência: '+(err.message||'erro inesperado')+' Confira se o arquivo relCondutores.xlsx está público no GitHub e tente novamente.');}
   }
   function appendNameDiff(container, officialName, systemName, side){
@@ -1600,8 +1620,8 @@ function tempoRelativo(data) {
   }
 
   function beginOfficialConference(){
-    petFlow=null;validityFlow=null;clearActionConversation();els.actionGrid.style.display='none';els.actionFoot.style.display='none';
-    actionAppend('user','Conferência');actionAppend('system','Vou comparar nome, CPF e VALIDADE CADASTRO do relatório oficial com o CPF, nome e DER VALIDADE do seu sistema. Quando houver correção segura, use o ícone verde no card para aplicar o dado oficial ao sistema.');
+    petFlow=null;validityFlow=null;clearActionConversation();addActionSessionBack();els.actionGrid.style.display='none';els.actionFoot.style.display='none';
+    actionAppend('user','Conferência');
     runOfficialConference();
   }
 
@@ -2870,8 +2890,14 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     setBtnLoading(els.exportModalGenerate, true, '⏳ Gerando…');
     setTimeout(() => {
       try{
+        if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
+          throw new Error('A biblioteca de PDF não carregou. Atualize a página e tente novamente.');
+        }
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l','mm','a4'); // paisagem
+        if(typeof doc.autoTable !== 'function'){
+          throw new Error('O complemento de tabelas do PDF não carregou. Atualize a página e tente novamente.');
+        }
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
 
@@ -3064,6 +3090,9 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         const ts = new Date().toISOString().slice(0,16).replace(/[-T:]/g,'').replace(/(\d{8})(\d{4})/,'$1-$2');
         doc.save(`relatorio-condutores_${ts}.pdf`);
         closeExportModal();
+      } catch(err) {
+        console.error('Erro ao gerar PDF do relatório de condutores:', err);
+        alert('Não foi possível gerar o PDF. ' + (err && err.message ? err.message : 'Verifique sua conexão e tente novamente.'));
       } finally {
         setBtnLoading(els.exportModalGenerate, false, '', 'Gerar PDF');
       }
