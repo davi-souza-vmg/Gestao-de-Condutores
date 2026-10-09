@@ -562,6 +562,11 @@
   .validity-branch-switch{display:inline-flex;align-items:center;gap:6px;margin:8px 0 10px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--slate-600);font:600 11px var(--font-body);cursor:pointer;box-shadow:0 2px 8px rgba(15,37,68,.05)}
   .validity-branch-switch:hover{border-color:var(--navy-700);color:var(--navy-700)}
 </style>
+<style>
+  @keyframes confSpin{to{transform:rotate(360deg)}}
+  .conf-auto-fix:hover{filter:brightness(.97);transform:translateY(-1px)}
+  .conf-auto-fix:disabled{cursor:wait}
+</style>
 </head>
 <body>
 
@@ -1528,12 +1533,12 @@ function tempoRelativo(data) {
         if(matches.length===0){continue;} // Motoristas desligados podem continuar válidos no relatório oficial; não é divergência.
         if(matches.length>1){issues.push({type:'CPF duplicado no sistema',name:o.name,detail:`CPF ${o.cpf} aparece em ${matches.length} registros: ${matches.map(x=>x.branch).join(', ')}`});continue;}
         const a=matches[0]; checked++;
-        if(norm(o.name)!==norm(a.name)) issues.push({type:'Nome divergente',name:o.name||a.name,cpf:o.cpf,officialLabel:'Nome no relatório oficial',officialValue:o.name||'Não informado',systemLabel:`Nome no sistema · ${a.branch||'Filial não informada'}`,systemValue:a.name||'Não informado'});
+        if(norm(o.name)!==norm(a.name)) issues.push({type:'Nome divergente',name:o.name||a.name,cpf:o.cpf,branch:a.branch,fixKind:'name',fixValue:o.name,oldValue:a.name,officialLabel:'Nome no relatório oficial',officialValue:o.name||'Não informado',systemLabel:`Nome no sistema · ${a.branch||'Filial não informada'}`,systemValue:a.name||'Não informado'});
         const officialTs=dateNorm(o.expiry); const systemTs=dateNorm(a.expiry);
         if(officialTs!==systemTs){
           let direction='Datas diferentes';
           if(officialTs!==null&&systemTs!==null) direction=officialTs>systemTs?'Relatório oficial mais atualizado':'Sistema mais atualizado';
-          issues.push({type:'Validade DER divergente',name:o.name||a.name,cpf:o.cpf,officialLabel:'Validade no relatório oficial',officialValue:dateLabel(o.expiry),systemLabel:`Validade DER no sistema · ${a.branch||'Filial não informada'}`,systemValue:dateLabel(a.expiry),note:direction});
+          issues.push({type:'Validade DER divergente',name:o.name||a.name,cpf:o.cpf,branch:a.branch,fixKind:officialTs!==null?'validity':'',fixValue:officialTs!==null?new Date(officialTs).getFullYear()+'-'+String(new Date(officialTs).getMonth()+1).padStart(2,'0')+'-'+String(new Date(officialTs).getDate()).padStart(2,'0'):'',oldValue:systemTs===null?'':new Date(systemTs).getFullYear()+'-'+String(new Date(systemTs).getMonth()+1).padStart(2,'0')+'-'+String(new Date(systemTs).getDate()).padStart(2,'0'),officialLabel:'Validade no relatório oficial',officialValue:dateLabel(o.expiry),systemLabel:`Validade DER no sistema · ${a.branch||'Filial não informada'}`,systemValue:dateLabel(a.expiry),note:direction});
         }
       }
       // Registros que existem apenas no sistema não são exibidos: o relatório oficial pode omitir motoristas desligados.
@@ -1551,7 +1556,8 @@ function tempoRelativo(data) {
         const n=document.createElement('div');n.style.cssText='font-weight:750;font-size:14px;line-height:1.45;overflow-wrap:anywhere;margin-bottom:5px;';n.textContent=it.name||'Nome não informado';item.append(top,n);
         if(it.cpf){const cpf=document.createElement('div');cpf.style.cssText='font-size:12px;color:var(--muted-color,#64748b);margin-bottom:11px;';const digits=String(it.cpf).replace(/\D/g,'');cpf.textContent='CPF '+(digits.length===11?digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):it.cpf);item.appendChild(cpf);}
         if(it.officialValue!==undefined){const compare=document.createElement('div');compare.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;';
-          [[it.officialLabel,it.officialValue], [it.systemLabel,it.systemValue]].forEach(([label,value])=>{const cell=document.createElement('div');cell.style.cssText='min-width:0;border-radius:10px;padding:10px;background:var(--input-bg,rgba(100,116,139,.07));';const lab=document.createElement('div');lab.style.cssText='font-size:10px;font-weight:750;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-color,#64748b);margin-bottom:5px;';lab.textContent=label;const val=document.createElement('div');val.style.cssText='font-size:12px;font-weight:600;line-height:1.5;overflow-wrap:anywhere;';val.textContent=value;cell.append(lab,val);compare.appendChild(cell);});item.appendChild(compare);
+          [[it.officialLabel,it.officialValue,'official'], [it.systemLabel,it.systemValue,'system']].forEach(([label,value,side])=>{const cell=document.createElement('div');cell.style.cssText='min-width:0;border-radius:10px;padding:10px;background:var(--input-bg,rgba(100,116,139,.07));';const lab=document.createElement('div');lab.style.cssText='font-size:10px;font-weight:750;letter-spacing:.03em;text-transform:uppercase;color:var(--muted-color,#64748b);margin-bottom:5px;';lab.textContent=label;const val=document.createElement('div');val.style.cssText='font-size:12px;font-weight:650;line-height:1.65;overflow-wrap:anywhere;';if(it.type==='Nome divergente'){appendNameDiff(val,it.officialValue,it.systemValue,side);}else{val.textContent=value;}cell.append(lab,val);compare.appendChild(cell);});item.appendChild(compare);
+          if(it.fixKind && it.cpf && it.branch){const fix=document.createElement('button');fix.type='button';fix.className='conf-auto-fix';fix.title=it.fixKind==='name'?'Corrigir nome pelo relatório oficial':'Corrigir validade DER pelo relatório oficial';fix.setAttribute('aria-label',fix.title);fix.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7 10 17l-5-5"/><path d="M12 3a9 9 0 1 0 9 9"/></svg>';fix.style.cssText='float:right;margin-top:9px;width:34px;height:34px;border:1px solid #b8e5d0;border-radius:10px;background:#e8f8ef;color:#16804a;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;';fix.querySelector('svg').style.cssText='width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;';fix.addEventListener('click',()=>applyOfficialFix(it,fix));item.appendChild(fix);const hint=document.createElement('span');hint.textContent='Corrigir automaticamente';hint.style.cssText='display:inline-block;margin:18px 0 0 8px;font-size:11px;color:var(--muted-color,#64748b);';item.appendChild(hint);}
           if(it.note){const note=document.createElement('div');note.style.cssText='font-size:11px;margin-top:9px;color:var(--muted-color,#64748b);';note.textContent=it.note;item.appendChild(note);}
         }else if(it.detail){const d=document.createElement('div');d.style.cssText='font-size:12px;line-height:1.5;color:var(--muted-color,#64748b);margin-top:5px;overflow-wrap:anywhere;';d.textContent=it.detail;item.appendChild(d);}
         list.appendChild(item);
@@ -1559,12 +1565,43 @@ function tempoRelativo(data) {
       summary.appendChild(list);
       if(issues.length>max){const more=document.createElement('div');more.style.marginTop='8px';more.textContent=`Exibindo as primeiras ${max} de ${issues.length} divergências.`;summary.appendChild(more);}
       els.actionBody.appendChild(summary);els.actionBody.scrollTop=els.actionBody.scrollHeight;
-      actionAppend('system','A conferência é somente para consulta: nenhuma informação foi alterada na planilha.');
+      actionAppend('system','As divergências foram apenas identificadas. Para corrigir uma pendência compatível, use o ícone verde do respectivo card; a correção exige confirmação e os dados serão recarregados em seguida.');
     }catch(err){console.error('Conferência oficial:',err);actionAppend('system','Não foi possível concluir a conferência: '+(err.message||'erro inesperado')+' Confira se o arquivo relCondutores.xlsx está público no GitHub e tente novamente.');}
   }
+  function appendNameDiff(container, officialName, systemName, side){
+    const tokenize = value => String(value||'').match(/[^\s]+/g)||[];
+    const a=tokenize(officialName), b=tokenize(systemName), n=a.length, m=b.length;
+    const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
+    for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) dp[i][j]=a[i].toLocaleUpperCase('pt-BR')===b[j].toLocaleUpperCase('pt-BR')?1+dp[i+1][j+1]:Math.max(dp[i+1][j],dp[i][j+1]);
+    const sameA=new Set(), sameB=new Set();let i=0,j=0;
+    while(i<n&&j<m){if(a[i].toLocaleUpperCase('pt-BR')===b[j].toLocaleUpperCase('pt-BR')){sameA.add(i++);sameB.add(j++);}else if(dp[i+1][j]>=dp[i][j+1])i++;else j++;}
+    const tokens=side==='official'?a:b, same=side==='official'?sameA:sameB;
+    tokens.forEach((token,index)=>{if(index)container.appendChild(document.createTextNode(' '));const span=document.createElement('span');span.textContent=token;if(!same.has(index)){span.style.cssText='padding:1px 3px;border-radius:4px;font-weight:800;color:'+(side==='official'?'#147a45':'#b4232c')+';background:'+(side==='official'?'#dcfce7':'#fee2e2')+';';span.title=side==='official'?'Trecho correto conforme relatório oficial':'Trecho diferente no sistema';}container.appendChild(span);});
+  }
+
+  async function applyOfficialFix(issue, button){
+    if(button.disabled)return;
+    const what=issue.fixKind==='name'?'nome do motorista':'validade DER';
+    if(!confirm('Corrigir '+what+' de '+(issue.name||'este motorista')+' usando o relatório oficial?'))return;
+    button.disabled=true;button.style.opacity='.65';button.innerHTML='<span class="conf-fix-spinner" aria-hidden="true"></span>';
+    const spinner=button.querySelector('.conf-fix-spinner');spinner.style.cssText='width:16px;height:16px;border:2px solid #b7dfc8;border-top-color:#16804a;border-radius:50%;display:block;animation:confSpin .7s linear infinite;';
+    try{
+      const response=await fetch(PETICIONAMENTO_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'updateOfficialField',kind:issue.fixKind,cpf:String(issue.cpf).replace(/\D/g,''),filial:issue.branch,value:issue.fixValue,expectedValue:issue.oldValue})});
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw new Error(result.error||'O sistema não confirmou a alteração.');
+      actionAppend('system','✓ '+what.charAt(0).toUpperCase()+what.slice(1)+' corrigido para '+(issue.fixKind==='name'?issue.fixValue:issue.officialValue)+'. Atualizando os dados…');
+      await loadData();
+      await runOfficialConference();
+    }catch(err){
+      console.error('Correção automática da conferência:',err);
+      actionAppend('system','Não foi possível corrigir automaticamente: '+(err.message||'erro inesperado')+'. Confira a implantação do Apps Script e tente novamente.');
+      button.disabled=false;button.style.opacity='1';button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7 10 17l-5-5"/><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+    }
+  }
+
   function beginOfficialConference(){
     petFlow=null;validityFlow=null;clearActionConversation();els.actionGrid.style.display='none';els.actionFoot.style.display='none';
-    actionAppend('user','Conferência');actionAppend('system','Vou comparar nome, CPF e VALIDADE CADASTRO do relatório oficial com o CPF, nome e DER VALIDADE do seu sistema. Nenhum dado será alterado.');
+    actionAppend('user','Conferência');actionAppend('system','Vou comparar nome, CPF e VALIDADE CADASTRO do relatório oficial com o CPF, nome e DER VALIDADE do seu sistema. Quando houver correção segura, use o ícone verde no card para aplicar o dado oficial ao sistema.');
     runOfficialConference();
   }
 
