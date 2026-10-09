@@ -945,7 +945,7 @@
   function petUser(text){ actionAppend('user',text); }
 
   function clearActionConversation(){
-    els.actionBody.querySelectorAll(':scope > .action-msg,:scope > .action-choice-row').forEach(node=>node.remove());
+    els.actionBody.querySelectorAll(':scope > .action-msg,:scope > .action-choice-row,:scope > .validity-branch-actions,:scope > .validity-branch-switch').forEach(node=>node.remove());
   }
   function quickChoiceMessage(text, options){
     const wrap=document.createElement('div');
@@ -1002,9 +1002,11 @@
     exit.addEventListener('click',()=>{
       validityFlow=null; petFlow=null;
       clearActionConversation();
+      els.actionBody.querySelectorAll('.validity-branch-actions,.validity-branch-switch,.action-quick-options').forEach(node=>node.remove());
       els.actionFoot.style.display='none';
       els.actionInput.value='';
       els.actionInput.placeholder='Digite a resposta…';
+      els.actionSend.disabled=false;
       els.actionGrid.style.display='grid';
       els.actionBody.scrollTop=0;
     });
