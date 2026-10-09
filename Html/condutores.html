@@ -1150,18 +1150,27 @@
     els.actionBody.scrollTop=els.actionBody.scrollHeight;
   }
 
-  function parseBranchAndName(input){
-    const text=String(input||'').trim();
-    const m=text.match(/^(ARAXA|SERRA|LAFAIETE)\s+(.+)$/i);
-    if(!m) return {error:'Comece com a filial e depois o nome. Ex.: ARAXA JOAO VICENTE DA SILVA.'};
-    const aliases={
-      ARAXA:'ARAXA',
-      SERRA:'SERRA DO SALITRE',
-      LAFAIETE:'CONSELHEIRO LAFAIETE',
-      SETELAGOAS: 'SETE LAGOAS'
-    };
-    return {filial:aliases[normalizeName(m[1])], nome:m[2].trim()};
-  }
+  function parseBranchAndName(input) {
+  const text = String(input || '').trim();
+  // Inclui as variações das filiais aceitas na Regex
+  const m = text.match(/^(ARAXA|SERRA|LAFAIETE|SETE\s*LAGOAS|SETELAGOAS|CONTAGEM)\s+(.+)$/i);
+  
+  if (!m) return { error: 'Comece com a filial e depois o nome. Ex.: ARAXA JOAO VICENTE DA SILVA.' };
+
+  const aliases = {
+    ARAXA: 'ARAXA',
+    SERRA: 'SERRA DO SALITRE',
+    LAFAIETE: 'CONSELHEIRO LAFAIETE',
+    SETELAGOAS: 'SETE LAGOAS',
+    'SETE LAGOAS': 'SETE LAGOAS',
+    CONTAGEM: 'CONTAGEM',
+  };
+
+  const branchKey = normalizeName(m[1]).replace(/\s+/g, '');
+  const mappedBranch = aliases[normalizeName(m[1])] || aliases[branchKey];
+
+  return { filial: mappedBranch, nome: m[2].trim() };
+}
 
   function findDriverMatches(q){
     const parsed=parseBranchAndName(q);
