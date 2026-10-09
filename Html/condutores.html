@@ -999,7 +999,15 @@
       {label:'Sete Lagoas',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')}
     ]);});
     const exit=document.createElement('button'); exit.type='button'; exit.className='validity-branch-switch'; exit.textContent='Sair';
-    exit.addEventListener('click',()=>{validityFlow=null;petBot('Atualização de validade encerrada.');resetActionPanelSoon();});
+    exit.addEventListener('click',()=>{
+      validityFlow=null; petFlow=null;
+      clearActionConversation();
+      els.actionFoot.style.display='none';
+      els.actionInput.value='';
+      els.actionInput.placeholder='Digite a resposta…';
+      els.actionGrid.style.display='grid';
+      els.actionBody.scrollTop=0;
+    });
     const actions=document.createElement('div'); actions.className='validity-branch-actions'; actions.append(chip,exit);
     els.actionBody.appendChild(actions);
   }
