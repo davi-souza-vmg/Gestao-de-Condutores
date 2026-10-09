@@ -1153,12 +1153,12 @@
   function parseBranchAndName(input) {
   const text = String(input || '').trim();
 
-  // 1. Regex aceitando: ARAXA, SERRA, LAFAIETE, CONTAGEM, SETE LAGOAS, SETELAGOAS, 7L e 7LAGOAS
+  // 1. Regex com todas as variações da filial
   const m = text.match(/^(ARAXA|SERRA|LAFAIETE|CONTAGEM|SETE\s*LAGOAS|SETELAGOAS|7LAGOAS|7L)\s+(.+)$/i);
   
   if (!m) return { error: 'Comece com a filial e depois o nome. Ex.: ARAXA JOAO VICENTE DA SILVA.' };
 
-  // 2. Dicionário apenas com as filiais mantidas e os atalhos 7L / 7LAGOAS
+  // 2. Mapeamento de atalhos e nomes oficiais
   const aliases = {
     ARAXA: 'ARAXA',
     SERRA: 'SERRA DO SALITRE',
@@ -1169,27 +1169,24 @@
     '7L': 'SETE LAGOAS'
   };
 
-  // 3. Normaliza o termo digitado (remove acentos, espaços e deixa maiúsculo)
+  // 3. Normalização e retorno limpo
   const branchKey = normalizeName(m[1]).replace(/\s+/g, '');
   const filialDefinitiva = aliases[branchKey] || 'SETE LAGOAS';
 
   return { filial: filialDefinitiva, nome: m[2].trim() };
 }
 
-  const branchKey = normalizeName(m[1]).replace(/\s+/g, '');
-  const mappedBranch = aliases[normalizeName(m[1])] || aliases[branchKey];
-
-  return { filial: mappedBranch, nome: m[2].trim() };
+function findDriverMatches(q) {
+  const parsed = parseBranchAndName(q);
+  if (parsed.error) return { error: parsed.error, matches: [] };
+  const n = normalizeName(parsed.nome);
+  return {
+    matches: rawRows.filter(r => 
+      normalizeName(r.filial) === normalizeName(parsed.filial) &&
+      (normalizeName(r.motorista) === n || normalizeName(r.motorista).includes(n))
+    )
+  };
 }
-
-  function findDriverMatches(q){
-    const parsed=parseBranchAndName(q);
-    if(parsed.error) return {error:parsed.error,matches:[]};
-    const n=normalizeName(parsed.nome);
-    return {matches:rawRows.filter(r=>normalizeName(r.filial)===normalizeName(parsed.filial) &&
-      (normalizeName(r.motorista)===n || normalizeName(r.motorista).includes(n)))};
-  }
-
   function handlePetInput(value){
     const v=String(value||'').trim();
     if(!v||!petFlow) return;
