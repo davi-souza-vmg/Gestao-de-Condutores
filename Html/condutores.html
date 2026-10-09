@@ -559,6 +559,8 @@
     .action-panel{right:16px;bottom:84px;height:calc(100vh - 110px)}
   }
 
+  .validity-branch-switch{display:inline-flex;align-items:center;gap:6px;margin:8px 0 10px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--slate-600);font:600 11px var(--font-body);cursor:pointer;box-shadow:0 2px 8px rgba(15,37,68,.05)}
+  .validity-branch-switch:hover{border-color:var(--navy-700);color:var(--navy-700)}
 </style>
 </head>
 <body>
@@ -964,17 +966,54 @@
   function validityChooseField(field, logChoice=true){
     if(!validityFlow||validityFlow.step!=='field') return;
     if(logChoice) petUser(field);
-    validityFlow.field=field; validityFlow.step='items';
-    els.actionInput.placeholder='CPF e data (ex.: 12345678900 31/12/2027)';
-    petBot(`Perfeito! Vamos atualizar a validade da ${field}.\n\nEnvie um registro por mensagem, neste formato:`);
-    actionAppend('system','CPF DATA\nExemplo: 12345678900 31/12/2027\nVocê pode digitar o CPF com ou sem pontos e traço.');
+    validityFlow.field=field; validityFlow.step='branch';
+    quickChoiceMessage('Etapa 3 de 4 · Em qual filial o motorista está cadastrado?',[ 
+      {label:'Araxá',detail:'ARAXA',icon:'AR',onClick:()=>validityChooseBranch('ARAXA')},
+      {label:'Serra do Salitre',detail:'SERRA DO SALITRE',icon:'SS',onClick:()=>validityChooseBranch('SERRA DO SALITRE')},
+      {label:'Conselheiro Lafaiete',detail:'CONSELHEIRO LAFAIETE',icon:'CL',onClick:()=>validityChooseBranch('CONSELHEIRO LAFAIETE')},
+      {label:'Contagem',detail:'CONTAGEM',icon:'CO',onClick:()=>validityChooseBranch('CONTAGEM')},
+      {label:'Sete Lagoas',detail:'SETE LAGOAS',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')},
+      {label:'Belém',detail:'BELEM',icon:'BE',onClick:()=>validityChooseBranch('BELEM')},
+      {label:'Canaã dos Carajás',detail:'CANAA DOS CARAJAS',icon:'CC',onClick:()=>validityChooseBranch('CANAA DOS CARAJAS')},
+      {label:'Catalão',detail:'CATALAO',icon:'CA',onClick:()=>validityChooseBranch('CATALAO')},
+      {label:'Parauapebas',detail:'PARAUAPEBAS',icon:'PA',onClick:()=>validityChooseBranch('PARAUAPEBAS')},
+      {label:'Tucumã',detail:'TUCUMA',icon:'TU',onClick:()=>validityChooseBranch('TUCUMA')}
+    ]);
+  }
+  function validityChooseBranch(branch, logChoice=true){
+    if(!validityFlow||validityFlow.step!=='branch') return;
+    if(logChoice) petUser(branch);
+    validityFlow.branch=branch; validityFlow.step='items';
+    els.actionInput.placeholder='CPF e validade (ex.: 12345678900 31/12/2027)';
+    petBot(`Filial selecionada: ${branch}. Agora envie o CPF e a nova validade, separados por espaço.`);
+    actionAppend('system','Exemplo: 12345678900 31/12/2027\nO sistema vai conferir o CPF na filial selecionada antes de aceitar o registro.');
+    renderValidityBranchChip();
     els.actionInput.focus();
+  }
+  function renderValidityBranchChip(){
+    const old=els.actionBody.querySelector('.validity-branch-switch'); if(old) old.remove();
+    if(!validityFlow||validityFlow.step!=='items') return;
+    const chip=document.createElement('button'); chip.type='button'; chip.className='validity-branch-switch';
+    chip.textContent=`Filial: ${validityFlow.branch}  ·  Trocar`;
+    chip.addEventListener('click',()=>{validityFlow.step='branch';quickChoiceMessage('Selecione a filial do próximo motorista:',[
+      {label:'Araxá',detail:'ARAXA',icon:'AR',onClick:()=>validityChooseBranch('ARAXA')},
+      {label:'Serra do Salitre',detail:'SERRA DO SALITRE',icon:'SS',onClick:()=>validityChooseBranch('SERRA DO SALITRE')},
+      {label:'Conselheiro Lafaiete',detail:'CONSELHEIRO LAFAIETE',icon:'CL',onClick:()=>validityChooseBranch('CONSELHEIRO LAFAIETE')},
+      {label:'Contagem',detail:'CONTAGEM',icon:'CO',onClick:()=>validityChooseBranch('CONTAGEM')},
+      {label:'Sete Lagoas',detail:'SETE LAGOAS',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')},
+      {label:'Belém',detail:'BELEM',icon:'BE',onClick:()=>validityChooseBranch('BELEM')},
+      {label:'Canaã dos Carajás',detail:'CANAA DOS CARAJAS',icon:'CC',onClick:()=>validityChooseBranch('CANAA DOS CARAJAS')},
+      {label:'Catalão',detail:'CATALAO',icon:'CA',onClick:()=>validityChooseBranch('CATALAO')},
+      {label:'Parauapebas',detail:'PARAUAPEBAS',icon:'PA',onClick:()=>validityChooseBranch('PARAUAPEBAS')},
+      {label:'Tucumã',detail:'TUCUMA',icon:'TU',onClick:()=>validityChooseBranch('TUCUMA')}
+    ]);});
+    els.actionBody.appendChild(chip);
   }
   function validityChooseCount(n, logChoice=true){
     if(!validityFlow||validityFlow.step!=='count') return;
     if(logChoice) petUser(String(n));
     validityFlow.count=n; validityFlow.step='field';
-    quickChoiceMessage('Etapa 2 de 3 · Qual validade deseja atualizar?',[ 
+    quickChoiceMessage('Qual validade deseja atualizar?',[ 
       {label:'Validade DER',detail:'Documento do DER',icon:'DER',onClick:()=>validityChooseField('DER')},
       {label:'Validade CNH',detail:'Carteira de habilitação',icon:'CNH',onClick:()=>validityChooseField('CNH')}
     ]);
@@ -1163,57 +1202,61 @@
 
 
   function beginValidityUpdate(){
-    validityFlow={step:'count',count:0,field:'',items:[]};
+    validityFlow={step:'count',count:0,field:'',branch:'',items:[],checking:false};
     petFlow=null; clearActionConversation();
     els.actionGrid.style.display='none'; els.actionFoot.style.display='flex';
     actionAppend('user','Atualizar Validade');
-    quickChoiceMessage('Vamos atualizar a planilha com segurança.\n\nEtapa 1 de 3 · Quantos motoristas deseja atualizar?',[ 
-      {label:'1 motorista',detail:'Atualizar um registro',icon:'1',onClick:()=>validityChooseCount(1)},
-      {label:'2 motoristas',detail:'Atualizar dois registros',icon:'2',onClick:()=>validityChooseCount(2)},
-      {label:'3 motoristas',detail:'Atualizar três registros',icon:'3',onClick:()=>validityChooseCount(3)},
-      {label:'5 motoristas',detail:'Atualizar cinco registros',icon:'5',onClick:()=>validityChooseCount(5)},
-      {label:'Outra quantidade',detail:'Digitar um número',icon:'…',onClick:()=>{els.actionInput.placeholder='Digite a quantidade…';els.actionInput.focus();}}
-    ]);
-    els.actionInput.placeholder='Ou digite a quantidade…';
+    petBot('Vamos atualizar a validade com conferência antes de gravar.');
+    petBot('Etapa 1 de 4 · Quantos motoristas deseja atualizar? Digite apenas o número e envie.');
+    els.actionInput.placeholder='Ex.: 5';
+    els.actionInput.focus();
   }
 
   function validityBot(text){ actionAppend('system',text); }
-  function handleValidityInput(v){
-    if(!validityFlow) return;
-    petUser(v);
+  async function handleValidityInput(v){
+    if(!validityFlow||validityFlow.checking) return;
+    const value=String(v||'').trim(); if(!value) return;
     if(validityFlow.step==='count'){
-      const n=Number(String(v).trim());
-      if(!Number.isInteger(n)||n<1||n>500){validityBot('Informe um número inteiro entre 1 e 500.');return;}
-      validityChooseCount(n, false); return;
+      const n=Number(value);
+      if(!Number.isInteger(n)||n<1||n>500){petUser(value);validityBot('Digite um número inteiro entre 1 e 500.');return;}
+      validityChooseCount(n); return;
     }
     if(validityFlow.step==='field'){
-      const f=normalizeName(v);
-      if(!['DER','CNH'].includes(f)){
-        quickChoiceMessage('Escolha uma das opções abaixo para continuar:',[
-          {label:'Validade DER',detail:'Documento do DER',icon:'DER',onClick:()=>validityChooseField('DER')},
-          {label:'Validade CNH',detail:'Carteira de habilitação',icon:'CNH',onClick:()=>validityChooseField('CNH')}
-        ]); return;
-      }
-      validityChooseField(f, false);
-      return;
+      const f=normalizeName(value);
+      if(!['DER','CNH'].includes(f)){petUser(value);validityBot('Para continuar, clique em um dos cards: Validade DER ou Validade CNH.');return;}
+      validityChooseField(f); return;
     }
-    if(validityFlow.step==='items'){
-      const m=String(v).trim().match(/^(.+?)\s+(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{4})$/);
-      if(!m){validityBot('Formato inválido. Digite o CPF, um espaço e a nova data. Ex.: 12345678900 31/12/2027');return;}
-      const cpf=m[1].replace(/\D/g,'');
-      const iso=parsePetDate(m[2]);
-      if(cpf.length!==11){validityBot('O CPF deve conter 11 números. Tente novamente.');return;}
-      if(!iso){validityBot('A data não é válida. Use DD/MM/AAAA.');return;}
-      if(validityFlow.items.some(x=>x.cpf===cpf)){validityBot('Esse CPF já foi informado. Digite outro.');return;}
-      validityFlow.items.push({cpf,dataValidade:iso,dataDisplay:m[2]});
-      validityBot(`✓ CPF ${cpf} — nova validade ${m[2]} (${validityFlow.items.length}/${validityFlow.count}).`);
+    if(validityFlow.step==='branch'){
+      petUser(value); validityBot('Escolha a filial clicando em um dos cards exibidos.'); return;
+    }
+    if(validityFlow.step!=='items') return;
+    const m=value.match(/^(.+?)\s+(\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{4})$/);
+    if(!m){petUser(value);validityBot('Formato inválido. Digite CPF, espaço e validade. Ex.: 12345678900 31/12/2027');return;}
+    const cpf=m[1].replace(/\D/g,''); const iso=parsePetDate(m[2]);
+    if(cpf.length!==11){petUser(value);validityBot('O CPF deve conter 11 números. Confira e tente novamente.');return;}
+    if(!iso){petUser(value);validityBot('A data não é válida. Use DD/MM/AAAA.');return;}
+    if(validityFlow.items.some(x=>x.cpf===cpf&&x.branch===validityFlow.branch)){petUser(value);validityBot('Esse CPF já foi informado para esta filial. Digite outro.');return;}
+
+    validityFlow.checking=true; els.actionSend.disabled=true;
+    const wait=document.createElement('div'); wait.className='action-msg system'; wait.textContent=`Conferindo CPF na filial ${validityFlow.branch}…`; els.actionBody.appendChild(wait);
+    try{
+      const res=await fetch(PETICIONAMENTO_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'lookupValidityCpf',cpf:cpf,filial:validityFlow.branch})});
+      const data=await res.json(); wait.remove();
+      if(!res.ok||data.error||!data.ok) throw new Error(data.error||'Não foi possível validar este CPF.');
+      petUser(value);
+      const item={cpf:cpf,dataValidade:iso,dataDisplay:m[2],motorista:data.motorista,branch:validityFlow.branch};
+      validityFlow.items.push(item);
+      validityBot(`${data.motorista} — ${m[2]} (${validityFlow.items.length}/${validityFlow.count})`);
       if(validityFlow.items.length===validityFlow.count){
         validityFlow.step='confirm';
-        const summary=document.createElement('div');
-        summary.className='action-msg system';
-        summary.textContent=`Confira antes de gravar:\nCampo: VENCIMENTO ${validityFlow.field}\nMotoristas: ${validityFlow.count}\n\n`+
-          validityFlow.items.map((x,i)=>`${i+1}. CPF ${x.cpf} → ${x.dataDisplay}`).join('\n')+
-          '\n\nPosso atualizar a planilha?';
+        const summary=document.createElement('div'); summary.className='action-msg system';
+        summary.textContent=`Confira os registros encontrados antes de gravar:
+Tipo: validade ${validityFlow.field}
+Motoristas: ${validityFlow.count}
+
+`+
+          validityFlow.items.map((x,i)=>`${i+1}. ${x.motorista} — ${x.dataDisplay} · ${x.branch}`).join('\n')+'\n\nPosso atualizar a planilha?';
         els.actionBody.appendChild(summary);
         const row=document.createElement('div'); row.className='action-choice-row';
         const yes=document.createElement('button'); yes.className='action-choice yes'; yes.textContent='Sim, atualizar';
@@ -1221,8 +1264,12 @@
         yes.onclick=finalizeValidityUpdate;
         no.onclick=()=>{validityFlow=null;petUser('Cancelar');petBot('Atualização cancelada. Nada foi alterado.');resetActionPanelSoon();};
         row.append(yes,no);els.actionBody.appendChild(row);els.actionBody.scrollTop=els.actionBody.scrollHeight;
-      }else validityBot(`Informe o próximo CPF e data. Faltam ${validityFlow.count-validityFlow.items.length}.`);
-    }
+      }else{
+        validityBot(`Próximo motorista: informe CPF e validade. Faltam ${validityFlow.count-validityFlow.items.length}.`);
+        renderValidityBranchChip();
+      }
+    }catch(err){wait.remove();petUser(value);validityBot(`Não encontrei esse CPF na filial ${validityFlow.branch}. Nada foi registrado para ele. Confira o CPF ou troque a filial e tente novamente.`);}
+    finally{if(validityFlow)validityFlow.checking=false;els.actionSend.disabled=false;els.actionInput.focus();}
   }
 
   async function finalizeValidityUpdate(){
@@ -1231,7 +1278,7 @@
     const wait=document.createElement('div');wait.className='action-msg system';wait.textContent='Validando CPFs e atualizando a planilha…';els.actionBody.appendChild(wait);
     try{
       const res=await fetch(PETICIONAMENTO_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'updateValidity',campo:validityFlow.field,itens:validityFlow.items.map(x=>({cpf:x.cpf,dataValidade:x.dataValidade}))})});
+        body:JSON.stringify({action:'updateValidity',campo:validityFlow.field,itens:validityFlow.items.map(x=>({cpf:x.cpf,dataValidade:x.dataValidade,filial:x.branch,motorista:x.motorista}))})});
       const data=await res.json();wait.remove();
       if(!res.ok||data.error||!data.ok) throw new Error(data.error||'Não foi possível concluir.');
       validityBot(`✓ Validades atualizadas com sucesso.\n${data.count} motorista(s) atualizado(s).\nCampo: VENCIMENTO ${validityFlow.field}.`);
