@@ -1152,19 +1152,29 @@
 
   function parseBranchAndName(input) {
   const text = String(input || '').trim();
-  // Inclui as variações das filiais aceitas na Regex
-  const m = text.match(/^(ARAXA|SERRA|LAFAIETE|SETE\s*LAGOAS|SETELAGOAS|CONTAGEM)\s+(.+)$/i);
+
+  // 1. Regex aceitando: ARAXA, SERRA, LAFAIETE, CONTAGEM, SETE LAGOAS, SETELAGOAS, 7L e 7LAGOAS
+  const m = text.match(/^(ARAXA|SERRA|LAFAIETE|CONTAGEM|SETE\s*LAGOAS|SETELAGOAS|7LAGOAS|7L)\s+(.+)$/i);
   
   if (!m) return { error: 'Comece com a filial e depois o nome. Ex.: ARAXA JOAO VICENTE DA SILVA.' };
 
+  // 2. Dicionário apenas com as filiais mantidas e os atalhos 7L / 7LAGOAS
   const aliases = {
     ARAXA: 'ARAXA',
     SERRA: 'SERRA DO SALITRE',
     LAFAIETE: 'CONSELHEIRO LAFAIETE',
-    SETELAGOAS: 'SETE LAGOAS',
-    'SETE LAGOAS': 'SETE LAGOAS',
     CONTAGEM: 'CONTAGEM',
+    SETELAGOAS: 'SETE LAGOAS',
+    '7LAGOAS': 'SETE LAGOAS',
+    '7L': 'SETE LAGOAS'
   };
+
+  // 3. Normaliza o termo digitado (remove acentos, espaços e deixa maiúsculo)
+  const branchKey = normalizeName(m[1]).replace(/\s+/g, '');
+  const filialDefinitiva = aliases[branchKey] || 'SETE LAGOAS';
+
+  return { filial: filialDefinitiva, nome: m[2].trim() };
+}
 
   const branchKey = normalizeName(m[1]).replace(/\s+/g, '');
   const mappedBranch = aliases[normalizeName(m[1])] || aliases[branchKey];
