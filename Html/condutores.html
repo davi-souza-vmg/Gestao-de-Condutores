@@ -1834,12 +1834,12 @@ function tempoRelativo(data) {
 
   function cellBool(cell){
     if(!cell) return false;
-    if(cell.v === true) return true;
-    if(typeof cell.v === 'string'){
-      const t = cell.v.trim().toUpperCase();
-      return t === 'TRUE' || t === 'SIM' || t === 'VERDADEIRO';
-    }
-    return false;
+    // O GViz pode devolver o booleano em v ou o texto formatado em f.
+    return [cell.v, cell.f].some(value => {
+      if(value === true || value === 1) return true;
+      const t = String(value ?? '').trim().toUpperCase();
+      return ['TRUE', 'SIM', 'VERDADEIRO', '1', '☑'].includes(t);
+    });
   }
 
   function daysUntil(date){
@@ -1948,7 +1948,7 @@ function tempoRelativo(data) {
           derValEstimado: derValEstimado,
           derDias: isNaN(derDiasCalc) ? null : derDiasCalc,
           // A MÁGICA ACONTECE AQUI: Substitui o status na raiz para ignorar lógicas futuras
-          derStatus: (enviadoFlag && rawDerStatus !== 'ATIVO') ? 'AGUARDANDO' : rawDerStatus,
+          derStatus: enviadoFlag ? 'AGUARDANDO' : rawDerStatus,
           cnhNumero: iCnhNum>-1 ? cellText(c[iCnhNum]) : '',
           cnhVal: cnhValFinal,
           cnhValEstimado: cnhValEstimado,
