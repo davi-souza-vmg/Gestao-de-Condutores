@@ -968,16 +968,11 @@
     if(logChoice) petUser(field);
     validityFlow.field=field; validityFlow.step='branch';
     quickChoiceMessage('Etapa 3 de 4 · Em qual filial o motorista está cadastrado?',[ 
-      {label:'Araxá',detail:'ARAXA',icon:'AR',onClick:()=>validityChooseBranch('ARAXA')},
-      {label:'Serra do Salitre',detail:'SERRA DO SALITRE',icon:'SS',onClick:()=>validityChooseBranch('SERRA DO SALITRE')},
-      {label:'Conselheiro Lafaiete',detail:'CONSELHEIRO LAFAIETE',icon:'CL',onClick:()=>validityChooseBranch('CONSELHEIRO LAFAIETE')},
-      {label:'Contagem',detail:'CONTAGEM',icon:'CO',onClick:()=>validityChooseBranch('CONTAGEM')},
-      {label:'Sete Lagoas',detail:'SETE LAGOAS',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')},
-      {label:'Belém',detail:'BELEM',icon:'BE',onClick:()=>validityChooseBranch('BELEM')},
-      {label:'Canaã dos Carajás',detail:'CANAA DOS CARAJAS',icon:'CC',onClick:()=>validityChooseBranch('CANAA DOS CARAJAS')},
-      {label:'Catalão',detail:'CATALAO',icon:'CA',onClick:()=>validityChooseBranch('CATALAO')},
-      {label:'Parauapebas',detail:'PARAUAPEBAS',icon:'PA',onClick:()=>validityChooseBranch('PARAUAPEBAS')},
-      {label:'Tucumã',detail:'TUCUMA',icon:'TU',onClick:()=>validityChooseBranch('TUCUMA')}
+      {label:'Araxá',icon:'AR',onClick:()=>validityChooseBranch('ARAXA')},
+      {label:'Serra do Salitre',icon:'SS',onClick:()=>validityChooseBranch('SERRA DO SALITRE')},
+      {label:'Conselheiro Lafaiete',icon:'CL',onClick:()=>validityChooseBranch('CONSELHEIRO LAFAIETE')},
+      {label:'Contagem',icon:'CO',onClick:()=>validityChooseBranch('CONTAGEM')},
+      {label:'Sete Lagoas',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')}
     ]);
   }
   function validityChooseBranch(branch, logChoice=true){
@@ -986,7 +981,7 @@
     validityFlow.branch=branch; validityFlow.step='items';
     els.actionInput.placeholder='CPF e validade (ex.: 12345678900 31/12/2027)';
     petBot(`Filial selecionada: ${branch}. Agora envie o CPF e a nova validade, separados por espaço.`);
-    actionAppend('system','Exemplo: 12345678900 31/12/2027\nO sistema vai conferir o CPF na filial selecionada antes de aceitar o registro.');
+    actionAppend('system','Exemplo: 12345678900 31/12/2027');
     renderValidityBranchChip();
     els.actionInput.focus();
   }
@@ -995,19 +990,18 @@
     if(!validityFlow||validityFlow.step!=='items') return;
     const chip=document.createElement('button'); chip.type='button'; chip.className='validity-branch-switch';
     chip.textContent=`Filial: ${validityFlow.branch}  ·  Trocar`;
-    chip.addEventListener('click',()=>{validityFlow.step='branch';quickChoiceMessage('Selecione a filial do próximo motorista:',[
-      {label:'Araxá',detail:'ARAXA',icon:'AR',onClick:()=>validityChooseBranch('ARAXA')},
-      {label:'Serra do Salitre',detail:'SERRA DO SALITRE',icon:'SS',onClick:()=>validityChooseBranch('SERRA DO SALITRE')},
-      {label:'Conselheiro Lafaiete',detail:'CONSELHEIRO LAFAIETE',icon:'CL',onClick:()=>validityChooseBranch('CONSELHEIRO LAFAIETE')},
-      {label:'Contagem',detail:'CONTAGEM',icon:'CO',onClick:()=>validityChooseBranch('CONTAGEM')},
-      {label:'Sete Lagoas',detail:'SETE LAGOAS',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')},
-      {label:'Belém',detail:'BELEM',icon:'BE',onClick:()=>validityChooseBranch('BELEM')},
-      {label:'Canaã dos Carajás',detail:'CANAA DOS CARAJAS',icon:'CC',onClick:()=>validityChooseBranch('CANAA DOS CARAJAS')},
-      {label:'Catalão',detail:'CATALAO',icon:'CA',onClick:()=>validityChooseBranch('CATALAO')},
-      {label:'Parauapebas',detail:'PARAUAPEBAS',icon:'PA',onClick:()=>validityChooseBranch('PARAUAPEBAS')},
-      {label:'Tucumã',detail:'TUCUMA',icon:'TU',onClick:()=>validityChooseBranch('TUCUMA')}
+    chip.textContent=`Trocar filial · ${validityFlow.branch}`;
+    chip.addEventListener('click',()=>{validityFlow.step='branch';quickChoiceMessage('Selecione a filial:',[
+      {label:'Araxá',icon:'AR',onClick:()=>validityChooseBranch('ARAXA')},
+      {label:'Serra do Salitre',icon:'SS',onClick:()=>validityChooseBranch('SERRA DO SALITRE')},
+      {label:'Conselheiro Lafaiete',icon:'CL',onClick:()=>validityChooseBranch('CONSELHEIRO LAFAIETE')},
+      {label:'Contagem',icon:'CO',onClick:()=>validityChooseBranch('CONTAGEM')},
+      {label:'Sete Lagoas',icon:'SL',onClick:()=>validityChooseBranch('SETE LAGOAS')}
     ]);});
-    els.actionBody.appendChild(chip);
+    const exit=document.createElement('button'); exit.type='button'; exit.className='validity-branch-switch'; exit.textContent='Sair';
+    exit.addEventListener('click',()=>{validityFlow=null;petBot('Atualização de validade encerrada.');resetActionPanelSoon();});
+    const actions=document.createElement('div'); actions.className='validity-branch-actions'; actions.append(chip,exit);
+    els.actionBody.appendChild(actions);
   }
   function validityChooseCount(n, logChoice=true){
     if(!validityFlow||validityFlow.step!=='count') return;
@@ -1318,7 +1312,7 @@ Motoristas: ${validityFlow.count}
 
       petBot(`✓ Peticionamento concluído.\n${data.count} motorista(s) atualizado(s).\n\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\n\nPETICIONADO, DATA PETICIONAMENTO, N. PETICIONAMENTO e ENVIADOS foram atualizados.`);
       petFlow=null;
-      loadData();
+      await loadData();
       resetActionPanelSoon();
     }catch(err){
       wait.textContent='Não foi possível concluir: '+err.message;
