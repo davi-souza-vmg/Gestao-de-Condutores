@@ -943,7 +943,7 @@
   // Planilha de Multas (separada da planilha de condutores)
   const SHEET_ID_MULTAS = '1cTmy2i0nc201sVVv67U19-NzFBHbWjLjRyGg8c_g3m0';
   const MULTAS_TAB = 'Página1';
-  const PETICIONAMENTO_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzFPE2IXEpBxZZMCCsgIcfGYM0Q_Ih6bKy4-Ty3e3Dy_g88L5QY64klLzNUcNJb81hUog/exec';
+  const PETICIONAMENTO_ENDPOINT = 'https://script.google.com/macros/s/AKfycbz0SceX5muEpj5E4gVnZR9dzZ5f4XZlzBtbZzcH5PtGIow53v-QwFRAQRxgr6LzKcbDCw/exec';
 
 
   // Ações diretas do sistema — sem IA.
@@ -1614,7 +1614,11 @@ function tempoRelativo(data) {
         if(!grouped.has(key)) grouped.set(key,{name:it.name||'Nome não informado',cpf:it.cpf||'',branch:it.branch||'',issues:[]});
         grouped.get(key).issues.push(it);
       });
-      const drivers=[...grouped.values()];
+      // Ordem estável: primeiro agrupa por filial em ordem alfabética; depois motorista.
+      const drivers=[...grouped.values()].sort((a,b)=>
+        norm(a.branch||'').localeCompare(norm(b.branch||''),'pt-BR') ||
+        norm(a.name||'').localeCompare(norm(b.name||''),'pt-BR')
+      );
       const summary=document.createElement('div');summary.className='action-msg system';
       const title=document.createElement('strong');title.textContent='Conferência documental';summary.appendChild(title);
       const subtitle=document.createElement('div');subtitle.textContent=`${drivers.length} motorista(s) com pendências · ${issues.length} divergência(s)`;subtitle.style.cssText='font-size:11px;color:var(--muted-color,#64748b);margin-top:4px;';summary.appendChild(subtitle);
