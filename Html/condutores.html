@@ -1566,7 +1566,7 @@ function tempoRelativo(data) {
         if(!cpf && !name) continue;
         official.push({cpf,name,expiry,cnh,row:i+1});
       }
-      const sys=rawRows.map(r=>({cpf:digits(r.cpf),name:String(r.motorista||'').trim(),expiry:r.derVal,cnh:String(r.cnh||r.numeroCnh||r.registroCnh||'').trim(),branch:String(r.filial||'').trim()})).filter(r=>r.cpf||r.name);
+      const sys=rawRows.map(r=>({cpf:digits(r.cpf),name:String(r.motorista||'').trim(),expiry:r.derVal,cnh:String(r.cnhNumero||r.cnh||r.numeroCnh||r.registroCnh||'').trim(),branch:String(r.filial||'').trim()})).filter(r=>r.cpf||r.name);
       const normName=v=>norm(v).replace(/^(SR|SRA|DR|DRA)/,'');
       const byName=new Map();
       for(const r of sys){const k=normName(r.name);if(!k)continue;if(!byName.has(k))byName.set(k,[]);byName.get(k).push(r);}
@@ -1615,8 +1615,8 @@ function tempoRelativo(data) {
         const item=document.createElement('div');item.style.cssText='border:1px solid var(--border-color,#dbe2ee);border-radius:14px;padding:13px 14px;background:var(--card-bg,#fff);box-shadow:0 2px 8px rgba(15,23,42,.04);';
         const top=document.createElement('div');top.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:9px;';
         const num=document.createElement('span');num.style.cssText='display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;border-radius:8px;background:var(--primary-color, #e8eefc);font-size:11px;font-weight:800;';num.textContent=String(i+1);
-        const h=document.createElement('strong');h.style.cssText='font-size:13px;line-height:1.35;';h.textContent=it.type;top.append(num,h);
-        const n=document.createElement('div');n.style.cssText='font-weight:750;font-size:14px;line-height:1.45;overflow-wrap:anywhere;margin-bottom:5px;';n.textContent=it.name||'Nome não informado';item.append(top,n);
+        const h=document.createElement('strong');h.style.cssText='font-size:14px;line-height:1.35;';h.textContent=it.name||'Nome não informado';top.append(num,h);
+        const n=document.createElement('div');n.style.cssText='font-size:12px;line-height:1.45;overflow-wrap:anywhere;margin:0 0 8px;color:var(--muted-color,#64748b);';n.textContent=it.type;item.append(top,n);
         if(it.cpf){const cpf=document.createElement('div');cpf.style.cssText='font-size:12px;color:var(--muted-color,#64748b);margin-bottom:11px;';const digits=String(it.cpf).replace(/\D/g,'');cpf.textContent='CPF '+(digits.length===11?digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):it.cpf);item.appendChild(cpf);}
         if(it.branch){const branch=document.createElement('div');branch.style.cssText='display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:.01em;color:var(--muted-color,#64748b);background:var(--input-bg,rgba(100,116,139,.07));border-radius:7px;padding:5px 8px;margin:0 0 10px;';branch.textContent='⌖ '+it.branch;item.appendChild(branch);}
         if(it.officialValue!==undefined){const compare=document.createElement('div');compare.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;';
