@@ -1716,7 +1716,7 @@ function tempoRelativo(data) {
         situation:String(r['Situação']||r['Situacao']||'').trim()
       })).filter(r=>r.name);
       const newDrivers=admissions.filter(r=>!exists(r));
-      const removedDrivers=dismissals.filter(r=>!exists(r));
+      const removedDrivers=dismissals; // A aba DEMITIDOS já contém os desligados ainda registrados nas planilhas; não aplicar o filtro inverso de ADMITIDOS.
       const dateText=v=>{
         if(!v) return '';
         const m=String(v).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
