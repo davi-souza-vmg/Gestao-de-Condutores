@@ -702,6 +702,7 @@
         <thead>
           <tr>
             <th data-key="motorista">Motorista <span class="arrow"></span></th>
+            <th data-key="filial">Filial <span class="arrow"></span></th>
             <th data-key="derVal">DER validade <span class="arrow"></span></th>
             <th data-key="derDias">Dias rest. DER <span class="arrow"></span></th>
             <th data-key="cnhVal">CNH validade <span class="arrow"></span></th>
@@ -710,7 +711,7 @@
         </thead>
         <tbody id="tbody"></tbody>
         <tfoot>
-          <tr><td colspan="5" id="tfootMsg"></td></tr>
+          <tr><td colspan="6" id="tfootMsg"></td></tr>
         </tfoot>
       </table>
     </div>
@@ -3256,6 +3257,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const multaTag = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
       return `<tr data-i="${i}">
         <td class="name"><span class="mcard-name-wrap">${escapeHtml(r.motorista)}${situacaoIconsHtml(r)}</span>${multaTag}</td>
+        <td>${escapeHtml(r.filial || '—')}</td>
         <td>${fmtDateEstHtml(r.derVal, r.derValEstimado)}</td>
         <td><div class="days"><div class="track"><i style="width:${der.pct}%;background:${der.color}"></i></div><span class="n">${der.label}</span></div></td>
         <td>${fmtDateEstHtml(r.cnhVal, r.cnhValEstimado)}</td>
@@ -3275,6 +3277,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         <div class="mcard-top">
           <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${situacaoIconsHtml(r)}${multaTagM}</span>
         </div>
+        <div class="mcard-row"><span>Filial</span><strong>${escapeHtml(r.filial || '—')}</strong></div>
         <div class="mcard-row"><span>DER · ${fmtDateEstHtml(r.derVal, r.derValEstimado)}</span><span class="mcard-pill" style="background:${der.color}22;color:${der.color}">${der.label}</span></div>
         <div class="mcard-row"><span>CNH · ${fmtDateEstHtml(r.cnhVal, r.cnhValEstimado)}</span><span class="mcard-pill" style="background:${cnh.color}22;color:${cnh.color}">${cnh.label}</span></div>
       </div>`;
