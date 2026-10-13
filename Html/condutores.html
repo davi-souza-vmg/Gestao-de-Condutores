@@ -562,6 +562,10 @@
   .validity-branch-switch{display:inline-flex;align-items:center;gap:6px;margin:8px 0 10px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--slate-600);font:600 11px var(--font-body);cursor:pointer;box-shadow:0 2px 8px rgba(15,37,68,.05)}
   .validity-branch-switch:hover{border-color:var(--navy-700);color:var(--navy-700)}
 @media(max-width:420px){.action-msg.system [style*="grid-template-columns:repeat(2"]{grid-template-columns:1fr!important}}
+.certidao-consta{background:rgba(220,38,38,.075)!important;color:#991b1b!important}
+tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
+.certidao-consta-tag{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:5px;background:rgba(220,38,38,.12);color:#b91c1c;font-size:10px;font-weight:800;letter-spacing:.02em;vertical-align:middle}
+.export-picker-row.certidao-consta{background:rgba(220,38,38,.075);border-color:rgba(220,38,38,.25)}
 </style>
 <style>
   @keyframes confSpin{to{transform:rotate(360deg)}}
@@ -848,8 +852,17 @@
           </fieldset>
           <fieldset class="export-status-filter" style="border:1px solid var(--border,#d8deea);border-radius:9px;padding:9px 11px;margin:0;min-width:0;">
             <legend style="padding:0 5px;font-size:12px;font-weight:700;">Documentação</legend>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:7px;">
               <input type="checkbox" id="exportIncludeDocs" checked> Incluir documentação pendente no relatório
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:5px;">
+              <input type="checkbox" id="exportExcludeCriminalConsta"> Excluir motoristas com Certidão Criminal “CONSTA”
+            </label>
+          </fieldset>
+          <fieldset class="export-status-filter" style="border:1px solid var(--border,#d8deea);border-radius:9px;padding:9px 11px;margin:0;min-width:0;">
+            <legend style="padding:0 5px;font-size:12px;font-weight:700;">Situação operacional</legend>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;">
+              <input type="checkbox" id="exportExcludeAfastados"> Excluir motoristas afastados
             </label>
           </fieldset>
         </div>
@@ -1449,6 +1462,8 @@ Motoristas: ${validityFlow.count}
     exportPickerFilial: document.getElementById('exportPickerFilial'),
     exportPickerSituacao: document.getElementById('exportPickerSituacao'),
     exportIncludeDocs: document.getElementById('exportIncludeDocs'),
+    exportExcludeCriminalConsta: document.getElementById('exportExcludeCriminalConsta'),
+    exportExcludeAfastados: document.getElementById('exportExcludeAfastados'),
     exportPickAllVisible: document.getElementById('exportPickAllVisible'),
     exportPickClear: document.getElementById('exportPickClear'),
     exportPickCount: document.getElementById('exportPickCount'),
@@ -1833,6 +1848,7 @@ function tempoRelativo(data) {
   els.exportModalBackdrop.addEventListener('click', (e) => { if(e.target === els.exportModalBackdrop) closeExportModal(); });
   els.exportModeFiltro.addEventListener('change', updateExportModeUI);
   els.exportModeManual.addEventListener('change', updateExportModeUI);
+  [els.exportExcludeCriminalConsta, els.exportExcludeAfastados].forEach(el => el && el.addEventListener('change', renderExportPickerList));
   els.exportPickerSearch.addEventListener('input', () => { exportPickerSearchQ = els.exportPickerSearch.value.trim().toLowerCase(); renderExportPickerList(); });
   els.exportPickerFilial.addEventListener('change', () => { exportPickerFilialQ = els.exportPickerFilial.value; renderExportPickerList(); });
   document.querySelectorAll('[data-export-der]').forEach(cb => cb.addEventListener('change', () => { cb.checked ? exportDerStatuses.add(cb.dataset.exportDer) : exportDerStatuses.delete(cb.dataset.exportDer); renderExportPickerList(); }));
@@ -1840,6 +1856,8 @@ function tempoRelativo(data) {
     exportPickerUseFilters = false;
     exportPickerFilialQ = ''; exportPickerSituacaoQ = '';
     exportDerStatuses.clear();
+    if(els.exportExcludeCriminalConsta) els.exportExcludeCriminalConsta.checked = false;
+    if(els.exportExcludeAfastados) els.exportExcludeAfastados.checked = false;
     document.querySelectorAll('[data-export-der]').forEach(cb => cb.checked = false);
     els.exportPickerFilial.value = '';
     renderExportPickerList();
@@ -2221,7 +2239,9 @@ function tempoRelativo(data) {
           const infoVal = cellText(c[iInfo]).trim();
           if(infoVal && infoVal.toUpperCase() !== 'TUDO OK') observacao = infoVal;
         }
-        return { motorista: cellText(c[iMotorista]), pendentes, observacao };
+        const iCriminal = idx('CERTIDÃO CRIMINAL');
+        const certidaoCriminal = iCriminal > -1 ? cellText(c[iCriminal]).trim().toUpperCase() : '';
+        return { motorista: cellText(c[iMotorista]), pendentes, observacao, certidaoCriminalConsta: certidaoCriminal === 'CONSTA' };
       });
   }
 
@@ -2253,6 +2273,7 @@ function tempoRelativo(data) {
       const found = byName[normalizeName(r.motorista)];
       r.docsPendentes = found ? found.pendentes : [];
       r.docsObservacao = found ? found.observacao : '';
+      r.certidaoCriminalConsta = !!(found && found.certidaoCriminalConsta);
     });
   }
 
@@ -2816,6 +2837,8 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     exportPickerSearchQ = '';
     exportPickerFilialQ = ''; exportPickerSituacaoQ = '';
     exportDerStatuses.clear();
+    if(els.exportExcludeCriminalConsta) els.exportExcludeCriminalConsta.checked = false;
+    if(els.exportExcludeAfastados) els.exportExcludeAfastados.checked = false;
     document.querySelectorAll('[data-export-der]').forEach(cb => cb.checked = false);
     els.exportPickerFilial.value = '';
     exportPickerUseFilters = false;
@@ -2844,6 +2867,8 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     if(exportPickerFilialQ) list = list.filter(r => (r.filial||'') === exportPickerFilialQ);
     // Dentro de cada grupo, os status marcados funcionam como OU; entre DER e CNH, como E.
     if(exportDerStatuses.size) list = list.filter(r => exportDerStatuses.has(r.derStatus));
+    if(els.exportExcludeCriminalConsta && els.exportExcludeCriminalConsta.checked) list = list.filter(r => !r.certidaoCriminalConsta);
+    if(els.exportExcludeAfastados && els.exportExcludeAfastados.checked) list = list.filter(r => !r.afastado);
     if(q){
       list = list.filter(r =>
         (r.motorista||'').toLowerCase().includes(q) ||
@@ -2871,9 +2896,9 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const key = exportRowKey(r);
       const checked = exportPickedCpf.has(key) ? 'checked' : '';
       const afastado = !!r.afastado || /\bAFASTADO\b/i.test((r.observacao || r.docsObservacao || '').toString());
-      return `<label class="export-picker-row${afastado ? ' is-afastado' : ''}">
+      return `<label class="export-picker-row${afastado ? ' is-afastado' : ''}${r.certidaoCriminalConsta ? ' certidao-consta' : ''}">
         <input type="checkbox" data-key="${escapeHtml(key)}" ${checked}>
-        <span class="epr-name">${escapeHtml(r.motorista)}${afastado ? '<span class="epr-afastado-tag">AFASTADO</span>' : ''}</span>
+        <span class="epr-name">${escapeHtml(r.motorista)}${r.certidaoCriminalConsta ? '<span class="certidao-consta-tag">CERTIDÃO CONSTA</span>' : ''}${afastado ? '<span class="epr-afastado-tag">AFASTADO</span>' : ''}</span>
         <span class="epr-meta">${escapeHtml(r.filial||'—')}</span>
       </label>`;
     }).join('');
@@ -3047,6 +3072,8 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       subtitulo = '';
     }
 
+    if(els.exportExcludeCriminalConsta && els.exportExcludeCriminalConsta.checked) rowsToExport = rowsToExport.filter(r => !r.certidaoCriminalConsta);
+    if(els.exportExcludeAfastados && els.exportExcludeAfastados.checked) rowsToExport = rowsToExport.filter(r => !r.afastado);
     if(!rowsToExport.length){
       alert('Não há condutores para exportar com esses critérios.');
       return;
@@ -3404,8 +3431,8 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const der = daysBar(r.derDias, r.derStatus);
       const cnh = daysBar(r.cnhDias, r.cnhStatus);
       const multaTag = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
-      return `<tr data-i="${i}">
-        <td class="name"><span class="mcard-name-wrap">${escapeHtml(r.motorista)}${situacaoIconsHtml(r)}</span>${multaTag}</td>
+      return `<tr data-i="${i}" class="${r.certidaoCriminalConsta ? 'certidao-consta' : ''}">
+        <td class="name"><span class="mcard-name-wrap">${escapeHtml(r.motorista)}${situacaoIconsHtml(r)}${r.certidaoCriminalConsta ? '<span class="certidao-consta-tag">CERTIDÃO CONSTA</span>' : ''}</span>${multaTag}</td>
         <td>${escapeHtml(r.filial || '—')}</td>
         <td>${fmtDateEstHtml(r.derVal, r.derValEstimado)}</td>
         <td><div class="days"><div class="track"><i style="width:${der.pct}%;background:${der.color}"></i></div><span class="n">${der.label}</span></div></td>
@@ -3422,9 +3449,9 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
       const der = daysBar(r.derDias, r.derStatus);
       const cnh = daysBar(r.cnhDias, r.cnhStatus);
       const multaTagM = r.multasPendentes>0 ? `<span class="badge-multa" title="${r.multasPendentes} multa(s) pendente(s)">Multa</span>` : '';
-      return `<div class="mcard" data-i="${i}">
+      return `<div class="mcard${r.certidaoCriminalConsta ? ' certidao-consta' : ''}" data-i="${i}">
         <div class="mcard-top">
-          <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${situacaoIconsHtml(r)}${multaTagM}</span>
+          <span class="mcard-name-wrap"><span class="mcard-name">${escapeHtml(r.motorista)}</span>${situacaoIconsHtml(r)}${r.certidaoCriminalConsta ? '<span class="certidao-consta-tag">CERTIDÃO CONSTA</span>' : ''}${multaTagM}</span>
         </div>
         <div class="mcard-row"><span>Filial</span><strong>${escapeHtml(r.filial || '—')}</strong></div>
         <div class="mcard-row"><span>DER · ${fmtDateEstHtml(r.derVal, r.derValEstimado)}</span><span class="mcard-pill" style="background:${der.color}22;color:${der.color}">${der.label}</span></div>
