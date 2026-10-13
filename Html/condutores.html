@@ -2068,7 +2068,14 @@ function tempoRelativo(data) {
 
     return data.table.rows
       .map(r => r.c)
-      .filter(c => c && c[iNome] && cellText(c[iNome]))
+      // Ignore completamente condutores identificados como DO TAXI na OBSERVAÇÃO (coluna P).
+      // O filtro é aplicado na origem para não aparecerem em contagens, cartões ou listagens.
+      .filter(c => {
+        if(!c || !c[iNome] || !cellText(c[iNome])) return false;
+        const observacao = iObs > -1 ? cellText(c[iObs]) : '';
+        const observacaoNormalizada = observacao.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+        return !observacaoNormalizada.includes('DO TAXI');
+      })
       .map(c => {
         const derValDate = parseGvizDate(c[iDerVal]);
         const cnhValDate = parseGvizDate(c[iCnhVal]);
