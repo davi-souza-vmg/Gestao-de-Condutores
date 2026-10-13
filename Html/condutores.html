@@ -1743,18 +1743,27 @@ function tempoRelativo(data) {
         c.append(num,lab); counts.appendChild(c);
       }); summary.appendChild(counts);
       const addSection=(titleText,items,kind,emptyText)=>{
+        items.sort((a,b)=>norm(a.branch).localeCompare(norm(b.branch),'pt-BR')||norm(a.name).localeCompare(norm(b.name),'pt-BR'));
         const section=document.createElement('section'); section.style.cssText='margin-top:13px;';
         const h=document.createElement('div'); h.textContent=titleText; h.style.cssText='font-size:12px;font-weight:800;margin-bottom:8px;'; section.appendChild(h);
         if(!items.length){const empty=document.createElement('div');empty.textContent=emptyText;empty.style.cssText='font-size:12px;color:var(--muted-color,#64748b);padding:12px;border-radius:10px;background:var(--input-bg,rgba(100,116,139,.07));';section.appendChild(empty);}
+        let lastBranch='';
         items.forEach(r=>{
-          const card=document.createElement('div'); card.style.cssText='padding:12px;border:1px solid var(--border-color,#dbe2ee);border-radius:12px;margin-bottom:8px;background:var(--card-bg,#fff);';
+          const branchLabel=r.branch||'Filial não informada';
+          if(branchLabel!==lastBranch){const group=document.createElement('div');group.textContent=branchLabel;group.style.cssText='font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-color,#64748b);padding:9px 2px 6px;margin-top:4px;border-bottom:1px solid var(--border-color,#dbe2ee);';section.appendChild(group);lastBranch=branchLabel;}
+          const card=document.createElement('div'); card.style.cssText='padding:12px;border:1px solid var(--border-color,#dbe2ee);border-radius:12px;margin:8px 0;background:var(--card-bg,#fff);';
           const top=document.createElement('div');top.style.cssText='display:flex;align-items:flex-start;gap:8px;';
           const dot=document.createElement('span');dot.textContent=kind==='add'?'＋':'−';dot.style.cssText=`display:inline-flex;align-items:center;justify-content:center;flex:0 0 25px;height:25px;border-radius:8px;font-weight:800;color:${kind==='add'?'#16804a':'#b4232c'};background:${kind==='add'?'#e8f8ef':'#fff0f0'};`;
           const name=document.createElement('strong');name.textContent=r.name;name.style.cssText='font-size:13px;line-height:1.4;overflow-wrap:anywhere;';
           top.append(dot,name);card.appendChild(top);
           const meta=document.createElement('div');meta.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 33px;';
           [[r.branch||'Filial não informada','⌖'],[r.matricula?'Matrícula '+r.matricula:'',''],[r.date?'Admissão '+dateText(r.date):'','']].filter(x=>x[0]).forEach(([v,ico])=>{const chip=document.createElement('span');chip.textContent=(ico?ico+' ':'')+v;chip.style.cssText='font-size:10px;color:var(--muted-color,#64748b);background:var(--input-bg,rgba(100,116,139,.07));padding:5px 7px;border-radius:7px;';meta.appendChild(chip);});
-          card.appendChild(meta); section.appendChild(card);
+          card.appendChild(meta);
+          const action=document.createElement('button'); action.type='button';
+          action.textContent=kind==='add'?'＋ Incluir admitido':'− Deletar demitido';
+          action.style.cssText=`margin:11px 0 0 33px;padding:8px 11px;border-radius:9px;border:1px solid ${kind==='add'?'#b8e5d0':'#f2c3c3'};background:${kind==='add'?'#e8f8ef':'#fff0f0'};color:${kind==='add'?'#16804a':'#b4232c'};font-size:11px;font-weight:750;cursor:pointer;`;
+          action.addEventListener('click',()=>mutateActiveDriver(r,kind,action));
+          card.appendChild(action); section.appendChild(card);
         });
         summary.appendChild(section);
       };
@@ -1765,6 +1774,30 @@ function tempoRelativo(data) {
     }catch(err){
       console.error('Conferência Ativos:',err);
       actionAppend('system','Não foi possível ler resultado_conferencia.xlsx: '+(err.message||'erro inesperado')+'. Confira se o arquivo está publicado na raiz do GitHub.');
+    }
+  }
+
+  async function mutateActiveDriver(driver, kind, button){
+    const verb=kind==='add'?'incluir':'excluir';
+    const promptText=kind==='add'
+      ? `Incluir ${driver.name} na aba ${driver.branch}, na primeira linha vazia?`
+      : `Excluir a linha de ${driver.name} da aba ${driver.branch}? Esta ação remove o registro da planilha.`;
+    if(!confirm(promptText)) return;
+    button.disabled=true; const old=button.textContent; button.textContent=kind==='add'?'Incluindo…':'Excluindo…';
+    try{
+      const payload=kind==='add'
+        ? {action:'addAdmittedDriver',driver:{motorista:driver.name,filial:driver.branch,matricula:driver.matricula||'',dataAdmissao:driver.date||'',situacao:driver.situation||''}}
+        : {action:'deleteDismissedDriver',driver:{motorista:driver.name,filial:driver.branch,matricula:driver.matricula||''}};
+      const response=await fetch(PETICIONAMENTO_ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+      const result=await response.json();
+      if(!response.ok||!result.ok) throw new Error(result.error||'O Apps Script não confirmou a operação.');
+      actionAppend('system',`✓ ${kind==='add'?'Motorista incluído':'Motorista removido'}: ${driver.name} — ${driver.branch}. Atualizando os dados do sistema…`);
+      await loadData();
+      await beginActiveConference();
+    }catch(err){
+      console.error('Alteração de ativos:',err);
+      actionAppend('system','Não foi possível '+verb+' o motorista: '+(err.message||'falha de rede')+'. Confirme se o Web App do Apps Script está publicado como “Qualquer pessoa” e se a URL /exec corresponde à implantação ativa.');
+      button.disabled=false;button.textContent=old;
     }
   }
 
@@ -1791,7 +1824,7 @@ function tempoRelativo(data) {
       actionAppend('system','✓ Pendências atualizadas para '+driver.name+'. Recarregando a conferência…');
       await loadData();await runOfficialConference();
     }catch(err){
-      actionAppend('system','Não foi possível atualizar todas as pendências: '+(err.message||'erro inesperado')+'. Confira se o Apps Script já foi atualizado.');
+      actionAppend('system','Não foi possível concluir a chamada ao Apps Script ('+(err.message||'falha de rede')+'). Isso normalmente indica URL /exec incorreta, implantação sem acesso a qualquer pessoa ou bloqueio de CORS/redirecionamento — não necessariamente código desatualizado. Confirme a URL publicada e teste novamente.');
       button.disabled=false;button.style.opacity='1';button.textContent='Corrigir pendências';
     }
   }
