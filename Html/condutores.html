@@ -1644,10 +1644,9 @@ function tempoRelativo(data) {
           const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-top:1px solid var(--border-color,#e5e7eb);';
           const left=document.createElement('div');left.style.cssText='padding:9px;min-width:0;border-right:1px solid var(--border-color,#e5e7eb);';
           const right=document.createElement('div');right.style.cssText='padding:9px;min-width:0;';
-          const label=document.createElement('div');label.textContent=it.type;label.style.cssText='font-size:10px;font-weight:750;color:var(--muted-color,#64748b);margin-bottom:5px;';left.appendChild(label);
-          const lv=document.createElement('div');lv.textContent=it.systemValue??'—';lv.style.cssText='font-size:12px;font-weight:700;color:#b4232c;overflow-wrap:anywhere;';left.appendChild(lv);copyValue(lv,it.systemValue??'');
-          const rv=document.createElement('div');rv.textContent=it.officialValue??'—';rv.style.cssText='font-size:12px;font-weight:700;color:#16804a;overflow-wrap:anywhere;';right.appendChild(rv);copyValue(rv,it.officialValue??'');
-          const rl=document.createElement('div');rl.textContent=it.officialLabel||'No DER';rl.style.cssText='font-size:10px;color:var(--muted-color,#64748b);margin-top:5px;';right.appendChild(rl);
+          // Layout minimalista: mostrar somente os valores, sem repetir o tipo da divergência.
+          const lv=document.createElement('div');lv.textContent=it.systemValue??'—';lv.style.cssText='font-size:12px;font-weight:750;color:#b4232c;overflow-wrap:anywhere;line-height:1.4;';left.appendChild(lv);copyValue(lv,it.systemValue??'');
+          const rv=document.createElement('div');rv.textContent=it.officialValue??'—';rv.style.cssText='font-size:12px;font-weight:750;color:#16804a;overflow-wrap:anywhere;line-height:1.4;';right.appendChild(rv);copyValue(rv,it.officialValue??'');
           row.append(left,right);table.appendChild(row);
         });
         item.appendChild(table);
