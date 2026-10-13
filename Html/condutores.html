@@ -845,13 +845,10 @@
             </div>
           </fieldset>
           <fieldset class="export-status-filter" style="border:1px solid var(--border,#d8deea);border-radius:9px;padding:9px 11px;margin:0;min-width:0;">
-            <legend style="padding:0 5px;font-size:12px;font-weight:700;">Situação da CNH</legend>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 10px;font-size:12.5px;">
-              <label><input type="checkbox" data-export-cnh="VENCENDO"> Vencendo</label>
-              <label><input type="checkbox" data-export-cnh="VENCIDO"> Vencida</label>
-              <label><input type="checkbox" data-export-cnh="SEM_CADASTRO"> Sem cadastro</label>
-              <label><input type="checkbox" data-export-cnh="ATIVO"> Ativa</label>
-            </div>
+            <legend style="padding:0 5px;font-size:12px;font-weight:700;">Documentação</legend>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;">
+              <input type="checkbox" id="exportIncludeDocs" checked> Incluir documentação pendente no relatório
+            </label>
           </fieldset>
         </div>
         <div class="search-wrap" style="margin-bottom:10px;">
@@ -1443,6 +1440,7 @@ Motoristas: ${validityFlow.count}
     exportPickerSearch: document.getElementById('exportPickerSearch'),
     exportPickerFilial: document.getElementById('exportPickerFilial'),
     exportPickerSituacao: document.getElementById('exportPickerSituacao'),
+    exportIncludeDocs: document.getElementById('exportIncludeDocs'),
     exportPickAllVisible: document.getElementById('exportPickAllVisible'),
     exportPickClear: document.getElementById('exportPickClear'),
     exportPickCount: document.getElementById('exportPickCount'),
@@ -1498,7 +1496,6 @@ function tempoRelativo(data) {
   let exportPickerFilialQ = '';
   let exportPickerSituacaoQ = '';
   const exportDerStatuses = new Set();
-  const exportCnhStatuses = new Set();
   let exportPickerUseFilters = true; // true = picker começa mostrando só quem bate com os filtros atuais da tela
 
   function isEnviadoAguardando(r){
@@ -1689,12 +1686,11 @@ function tempoRelativo(data) {
   els.exportPickerSearch.addEventListener('input', () => { exportPickerSearchQ = els.exportPickerSearch.value.trim().toLowerCase(); renderExportPickerList(); });
   els.exportPickerFilial.addEventListener('change', () => { exportPickerFilialQ = els.exportPickerFilial.value; renderExportPickerList(); });
   document.querySelectorAll('[data-export-der]').forEach(cb => cb.addEventListener('change', () => { cb.checked ? exportDerStatuses.add(cb.dataset.exportDer) : exportDerStatuses.delete(cb.dataset.exportDer); renderExportPickerList(); }));
-  document.querySelectorAll('[data-export-cnh]').forEach(cb => cb.addEventListener('change', () => { cb.checked ? exportCnhStatuses.add(cb.dataset.exportCnh) : exportCnhStatuses.delete(cb.dataset.exportCnh); renderExportPickerList(); }));
   els.exportPickerClearFilters.addEventListener('click', () => {
     exportPickerUseFilters = false;
     exportPickerFilialQ = ''; exportPickerSituacaoQ = '';
-    exportDerStatuses.clear(); exportCnhStatuses.clear();
-    document.querySelectorAll('[data-export-der], [data-export-cnh]').forEach(cb => cb.checked = false);
+    exportDerStatuses.clear();
+    document.querySelectorAll('[data-export-der]').forEach(cb => cb.checked = false);
     els.exportPickerFilial.value = '';
     renderExportPickerList();
     els.exportPickerSearch.focus();
@@ -2665,11 +2661,12 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
 
   function openExportModal(){
     els.exportModeFiltro.checked = true;
+    if(els.exportIncludeDocs) els.exportIncludeDocs.checked = true;
     exportPickedCpf.clear();
     exportPickerSearchQ = '';
     exportPickerFilialQ = ''; exportPickerSituacaoQ = '';
-    exportDerStatuses.clear(); exportCnhStatuses.clear();
-    document.querySelectorAll('[data-export-der], [data-export-cnh]').forEach(cb => cb.checked = false);
+    exportDerStatuses.clear();
+    document.querySelectorAll('[data-export-der]').forEach(cb => cb.checked = false);
     els.exportPickerFilial.value = '';
     exportPickerUseFilters = false;
     els.exportPickerSearch.value = '';
@@ -2697,7 +2694,6 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
     if(exportPickerFilialQ) list = list.filter(r => (r.filial||'') === exportPickerFilialQ);
     // Dentro de cada grupo, os status marcados funcionam como OU; entre DER e CNH, como E.
     if(exportDerStatuses.size) list = list.filter(r => exportDerStatuses.has(r.derStatus));
-    if(exportCnhStatuses.size) list = list.filter(r => exportCnhStatuses.has(r.cnhStatus));
     if(q){
       list = list.filter(r =>
         (r.motorista||'').toLowerCase().includes(q) ||
@@ -2968,11 +2964,16 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           return {texto:'—', tipo:''};
         }
 
-        // Resumo operacional do relatório. O card de documentação só aparece
-        // quando existe ao menos uma pendência documental visível no relatório.
+        // Colunas opcionais aparecem somente quando há conteúdo relevante.
         const totalCondutores = rowsToExport.length;
-        const totalPendencias = rowsToExport.reduce((n,r)=>n + docsPendentesRelatorio(r).length, 0);
-        const temDocumentacaoPendente = totalPendencias > 0;
+        const incluirDocumentacao = !!(els.exportIncludeDocs && els.exportIncludeDocs.checked);
+        const totalPendencias = incluirDocumentacao
+          ? rowsToExport.reduce((n,r)=>n + docsPendentesRelatorio(r).length, 0) : 0;
+        const temDocumentacaoPendente = incluirDocumentacao && totalPendencias > 0;
+        const temSituacaoEspecial = rowsToExport.some(r => {
+          const op = situacaoOperacionalRelatorio(r);
+          return !!(op.tipo && op.texto && op.texto !== '—');
+        });
         const resumo = [
           {label:'Aguardando DER', value:rowsToExport.filter(r=>r.derStatus==='ATIVO').length, color:[43,173,125]},
           {label:'Vencendo', value:rowsToExport.filter(r=>r.derStatus==='VENCENDO').length, color:[242,169,59]},
@@ -2984,20 +2985,12 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
           resumo.push({label:'Com documentação pendente', value:rowsToExport.filter(r=>docsPendentesRelatorio(r).length>0).length, color:[124,91,180]});
         }
 
-        // A coluna de documentação só entra no relatório quando houver
-        // documentação pendente visível. Condutores sem pendência ficam sem essa coluna.
         const pdfRows = rowsToExport.map(r => {
           const docs = docsInfoRelatorio(r);
           const operacional = situacaoOperacionalRelatorio(r);
-          const row = [
-            r.motorista || '—',
-            r.filial || '—',
-            statusDerRelatorio(r.derStatus),
-            operacional.texto,
-          ];
-          if(temDocumentacaoPendente){
-            row.push(docs.texto === 'Nenhuma pendência' ? '—' : docs.texto);
-          }
+          const row = [r.motorista || '—', r.filial || '—', statusDerRelatorio(r.derStatus)];
+          if(temSituacaoEspecial) row.push(operacional.texto);
+          if(temDocumentacaoPendente) row.push(docs.texto === 'Nenhuma pendência' ? '—' : docs.texto);
           return {row, source:r, operacional};
         });
 
@@ -3034,9 +3027,13 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
         }
 
         const tableStartY = 61;
-        const tableHead = temDocumentacaoPendente
-          ? ['Motorista','Filial','Situação DER','Situação especial','Documentação']
-          : ['Motorista','Filial','Situação DER','Situação especial'];
+        const tableHead = ['Motorista','Filial','Situação DER'];
+        if(temSituacaoEspecial) tableHead.push('Situação especial');
+        if(temDocumentacaoPendente) tableHead.push('Documentação');
+        const colStyles = {0:{cellWidth:temSituacaoEspecial || temDocumentacaoPendente ? 52 : 70},1:{cellWidth:35},2:{cellWidth:45}};
+        let nextCol = 3;
+        if(temSituacaoEspecial) colStyles[nextCol++] = {cellWidth:58};
+        if(temDocumentacaoPendente) colStyles[nextCol] = {cellWidth:'auto'};
         let firstPage = true;
         doc.autoTable({
           startY: tableStartY,
@@ -3058,18 +3055,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
             fontSize:8.4,
           },
           alternateRowStyles: {fillColor:[250,251,253]},
-          columnStyles: temDocumentacaoPendente ? {
-            0:{cellWidth:52},
-            1:{cellWidth:35},
-            2:{cellWidth:45},
-            3:{cellWidth:58},
-            4:{cellWidth:'auto'},
-          } : {
-            0:{cellWidth:65},
-            1:{cellWidth:42},
-            2:{cellWidth:48},
-            3:{cellWidth:'auto'},
-          },
+          columnStyles: colStyles,
           margin:{left:14,right:14,top:61,bottom:16},
           didDrawPage:function(){
             pdfHeader(doc, pageW, 'Relatório de Condutores', subtitulo);
@@ -3088,7 +3074,7 @@ els.confSub.textContent = `Arquivo atualizado ${textoRelativo}`;
               data.cell.styles.textColor = style.text;
               data.cell.styles.fontStyle = 'bold';
               data.cell.styles.halign = 'center';
-            } else if(data.column.index === 3 && meta.operacional && meta.operacional.tipo){
+            } else if(temSituacaoEspecial && data.column.index === 3 && meta.operacional && meta.operacional.tipo){
               data.cell.styles.fillColor = meta.operacional.tipo === 'AFASTADO' ? [238,241,245] : [255,244,216];
               data.cell.styles.textColor = meta.operacional.tipo === 'AFASTADO' ? [89,104,122] : [138,101,18];
               data.cell.styles.fontStyle = 'bold';
