@@ -2525,50 +2525,55 @@ function tempoRelativo(data) {
   }
 
   function attachAfastamentosFerias(condutorRows, complemento){
-    const afastByMat = new Map();
-    const afastByName = new Map();
-    (complemento.afastados || []).forEach(a => {
-      if(a.matriculaKey) afastByMat.set(a.matriculaKey, a);
-      const nameKey = normalizeName(a.nome);
-      if(nameKey) afastByName.set(nameKey, a);
-    });
+    // Evita associar férias/afastamento apenas pela matrícula: ela pode se
+    // repetir em filiais diferentes ou em registros de pessoas distintas.
+    // Prioridade: nome normalizado; alternativa: matrícula + filial.
+    const nameKey = v => normalizeName(v);
+    const branchKey = v => normalizeName(v);
 
-    const feriasByMat = new Map();
-    const feriasByName = new Map();
-    (complemento.ferias || []).forEach(f => {
-      if(f.matriculaKey){
-        const list = feriasByMat.get(f.matriculaKey) || [];
-        list.push(f); feriasByMat.set(f.matriculaKey, list);
+    function findPersonRecord(records, r, isFerias){
+      const nome = nameKey(r.motorista);
+      const filial = branchKey(r.filial);
+      const mat = normalizeMatricula(r.matricula);
+      const list = records || [];
+
+      // O nome completo é a identificação mais específica neste arquivo.
+      const byName = list.filter(x => nome && nameKey(x.nome) === nome);
+      if(byName.length){
+        if(!filial) return byName[0];
+        return byName.find(x => !x.filial || branchKey(x.filial) === filial) || byName[0];
       }
-      const nameKey = normalizeName(f.nome);
-      if(nameKey){
-        const list = feriasByName.get(nameKey) || [];
-        list.push(f); feriasByName.set(nameKey, list);
+
+      // Fallback seguro: só aceita matrícula se a filial também corresponder.
+      if(mat && filial){
+        return list.find(x =>
+          normalizeMatricula(x.matricula) === mat &&
+          branchKey(x.filial) === filial
+        ) || null;
       }
-    });
+      return null;
+    }
 
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
 
     condutorRows.forEach(r => {
-      const matKey = normalizeMatricula(r.matricula);
-      const nameKey = normalizeName(r.motorista);
-
-      const afastado = (matKey && afastByMat.get(matKey)) || afastByName.get(nameKey) || null;
+      const afastado = findPersonRecord(complemento.afastados, r, false);
       r.afastado = !!afastado;
       r.afastadoInfo = afastado || null;
 
-      const feriasCandidates = (matKey && feriasByMat.get(matKey)) || feriasByName.get(nameKey) || [];
-      // Só consideramos férias vigentes hoje. Férias futuras não exibem ícone;
-      // férias encerradas deixam de aparecer automaticamente.
-      const feriasAtivas = feriasCandidates.filter(f => hoje >= f.inicio && hoje <= f.fim);
+      // Primeiro identifica o motorista correto; depois verifica se as férias
+      // dele estão vigentes. Não usa uma matrícula isolada como vínculo.
+      const feriasPessoa = findPersonRecord(complemento.ferias, r, true);
+      const feriasCandidates = feriasPessoa ? [feriasPessoa] : [];
+      const feriasAtivas = feriasCandidates.filter(f =>
+        f.inicio && f.fim && hoje >= f.inicio && hoje <= f.fim
+      );
       feriasAtivas.sort((a,b) => b.fim - a.fim);
       r.ferias = feriasAtivas.length ? feriasAtivas[0] : null;
       r.emFerias = !!r.ferias;
 
-      // Afastado tem precedência sobre vencido/vencendo para DER e CNH.
-      // As datas originais permanecem no registro, mas o status operacional
-      // passa a ser AFASTADO enquanto o afastamento estiver marcado.
+      // O afastamento continua tendo precedência para o status documental.
       if(r.afastado){
         r.derStatus = 'AFASTADO';
         r.cnhStatus = 'AFASTADO';
