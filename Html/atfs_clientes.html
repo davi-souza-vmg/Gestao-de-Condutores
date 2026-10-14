@@ -452,14 +452,26 @@
 
   function normalizarCliente(nome) {
     if (!nome) return '';
-    let str = nome.trim().replace(/\s+/g, ' ');
-    str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-    
-    if (str === 'CNF2' || str.includes('CNF2')) {
+    let str = nome.trim().replace(/\\s+/g, ' ');
+    str = str.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toUpperCase();
+
+    // Sinônimos conhecidos: usar um nome canônico para a comparação entre planilhas.
+    const amazonAliases = [
+      'AMAZON', 'CNF2', 'ID LOGISTICA', 'ID DO BRASIL LOGISTICA',
+      'ID DO BRASIL LOGISTICA LTDA', 'ID LOGISTICS', 'AMAZON LOGISTICA'
+    ];
+    if (amazonAliases.some(alias => str === alias || str.includes(alias))) {
       return 'AMAZON';
     }
-    
+
     return str;
+  }
+
+  function nomeClienteExibicao(nome) {
+    if (normalizarCliente(nome) === 'AMAZON') {
+      return 'AMAZON (CNF2, ID LOGÍSTICA, ID DO BRASIL LOGÍSTICA, etc.)';
+    }
+    return nome || '';
   }
 
   function escapeHtml(s){
@@ -632,7 +644,7 @@
     els.filterFilial.innerHTML = '<option value="TODOS">Todas as filiais</option>' +
       opcoesFiliais.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
     els.filterCliente.innerHTML = '<option value="TODOS">Todos os clientes</option>' +
-      opcoesClientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      opcoesClientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(nomeClienteExibicao(c))}</option>`).join('');
 
     els.filterFilial.value = opcoesFiliais.includes(filialAtual) ? filialAtual : 'TODOS';
     els.filterCliente.value = opcoesClientes.includes(clienteAtual) ? clienteAtual : 'TODOS';
@@ -727,7 +739,7 @@
 
     els.tbody.innerHTML = rows.map(r => {
       const arrReg = clientesDaLinha(r);
-      const clientesNorm = arrReg.join(', ');
+      const clientesNorm = arrReg.map(nomeClienteExibicao).join(', ');
       
       let clientesValidosStr = '';
       let isValidRow = false;
@@ -737,7 +749,7 @@
         if (comp) {
           if (comp.tipo !== 'frota_nova') {
             const relacao = (comp.clientesRelacao || []).map(c => normalizarCliente(c));
-            clientesValidosStr = Array.from(new Set(relacao)).join(', ');
+            clientesValidosStr = Array.from(new Set(relacao)).map(nomeClienteExibicao).join(', ');
             
             isValidRow = arrReg.length > 0 && arrReg.some(reg => relacao.some(val => saoClientesEquivalentes(reg, val)));
           }
@@ -1286,7 +1298,7 @@
   function clienteCheckboxHtml(d, cliente, enviado){
     return `<label class="enviado-check ${enviado ? 'enviado' : ''}" title="${enviado ? 'Desmarcar (voltar para pendente)' : 'Marcar como enviado ao DER'}">
       <input type="checkbox" data-enviado-cliente="${escapeHtml(d.filial)}|${escapeHtml(d.frota)}|${escapeHtml(cliente)}" ${enviado ? 'checked' : ''}>
-      <span>${escapeHtml(cliente)}</span>
+      <span>${escapeHtml(nomeClienteExibicao(cliente))}</span>
     </label>`;
   }
 
