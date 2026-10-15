@@ -39,7 +39,7 @@
   .dot.off{background:var(--slate-400);box-shadow:none;}
   .dot.err{background:var(--red);box-shadow:0 0 0 4px rgba(229,72,77,.2);}
 
-  #filterFilial,#filterCliente{background:var(--navy-800);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:9px;padding:8px 12px;font-size:13px;font-family:var(--font-body);cursor:pointer;}
+  #filterFilial,#filterCliente{background:var(--navy-800);color:#fff;border:1.5px solid rgba(255,255,255,.3);border-radius:9px;padding:8px 12px;font-size:13px;font-family:var(--font-body);cursor:pointer;max-width:100%;}
   #filterFilial:hover,#filterCliente:hover{border-color:rgba(255,255,255,.55);}
   #filterFilial option,#filterCliente option{background:#fff;color:var(--slate-900);}
 
@@ -96,9 +96,10 @@
 
   /* Chips de status "por cliente" */
   .clientes-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
-  .enviado-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;user-select:none;background:var(--red-soft);color:var(--red);transition:background .15s,color .15s;}
+  .enviado-check{display:inline-flex;align-items:flex-start;gap:6px;max-width:100%;font-size:12px;font-weight:600;padding:5px 10px;border-radius:12px;cursor:pointer;user-select:none;background:var(--red-soft);color:var(--red);transition:background .15s,color .15s;white-space:normal;overflow-wrap:anywhere;}
   .enviado-check:hover{filter:brightness(0.96);}
-  .enviado-check input[type="checkbox"]{width:14px;height:14px;accent-color:var(--green);cursor:pointer;margin:0;flex:none;}
+  .enviado-check input[type="checkbox"]{width:14px;height:14px;accent-color:var(--green);cursor:pointer;margin:2px 0 0;flex:none;}
+  .enviado-check .cliente-label{display:inline-block;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.35;}
   .enviado-check.enviado{background:var(--green-soft);color:var(--green);}
   .div-item.aguardando{border-left:4px solid var(--navy-700);background:#f7f9fd;}
 
@@ -452,14 +453,28 @@
 
   function normalizarCliente(nome) {
     if (!nome) return '';
-    let str = nome.trim().replace(/\s+/g, ' ');
+    let str = String(nome).trim().replace(/\s+/g, ' ');
     str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-    
-    if (str === 'CNF2' || str.includes('CNF2')) {
-      return 'AMAZON';
-    }
-    
+
+    // Nomes alternativos que devem ser comparados como AMAZON.
+    // Mantemos o valor canônico curto para não deformar tabelas, chips e filtros.
+    const amazonAliases = [
+      'AMAZON', 'CNF2', 'ID LOGISTICA', 'ID DO BRASIL LOGISTICA',
+      'ID LOGISTICS', 'AMAZON LOGISTICA'
+    ];
+    if (amazonAliases.some(alias => str === alias || str.includes(alias))) return 'AMAZON';
     return str;
+  }
+
+  // Texto amigável apenas para exibição. O valor usado internamente continua sendo AMAZON.
+  function nomeClienteExibicao(nome) {
+    return normalizarCliente(nome) === 'AMAZON'
+      ? 'AMAZON (ID LOGÍSTICA, CNF2 e outros)'
+      : String(nome || '');
+  }
+
+  function listaClientesExibicao(clientes) {
+    return Array.from(new Set(clientes || [])).map(nomeClienteExibicao).join(', ');
   }
 
   function escapeHtml(s){
@@ -632,7 +647,7 @@
     els.filterFilial.innerHTML = '<option value="TODOS">Todas as filiais</option>' +
       opcoesFiliais.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
     els.filterCliente.innerHTML = '<option value="TODOS">Todos os clientes</option>' +
-      opcoesClientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+      opcoesClientes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(nomeClienteExibicao(c))}</option>`).join('');
 
     els.filterFilial.value = opcoesFiliais.includes(filialAtual) ? filialAtual : 'TODOS';
     els.filterCliente.value = opcoesClientes.includes(clienteAtual) ? clienteAtual : 'TODOS';
@@ -653,7 +668,7 @@
     const q = els.search.value.trim().toLowerCase();
 
     return frotasBaseFiltradas().filter(r=>{
-      const clientesStr = clientesDaLinha(r).join(', ').toLowerCase();
+      const clientesStr = clientesDaLinha(r).map(nomeClienteExibicao).join(', ').toLowerCase();
       if(q && !(r.frota.toLowerCase().includes(q) || clientesStr.includes(q) || (r.cliente||'').toLowerCase().includes(q))) return false;
       
       if (activeCardFilter === 'validadas') {
@@ -727,7 +742,7 @@
 
     els.tbody.innerHTML = rows.map(r => {
       const arrReg = clientesDaLinha(r);
-      const clientesNorm = arrReg.join(', ');
+      const clientesNorm = listaClientesExibicao(arrReg);
       
       let clientesValidosStr = '';
       let isValidRow = false;
@@ -737,7 +752,7 @@
         if (comp) {
           if (comp.tipo !== 'frota_nova') {
             const relacao = (comp.clientesRelacao || []).map(c => normalizarCliente(c));
-            clientesValidosStr = Array.from(new Set(relacao)).join(', ');
+            clientesValidosStr = listaClientesExibicao(Array.from(new Set(relacao)));
             
             isValidRow = arrReg.length > 0 && arrReg.some(reg => relacao.some(val => saoClientesEquivalentes(reg, val)));
           }
@@ -1037,8 +1052,8 @@
       const totalmenteEnviado = d.pendentes.length === 0;
       const situacao = totalmenteEnviado ? 'Aguardando DER' : (d.tipo === 'frota_nova' ? 'Frota nova' : 'Cliente diferente');
       const clientes = totalmenteEnviado
-        ? Array.from(new Set(d.enviados || [])).join(', ')
-        : Array.from(new Set(d.pendentes || [])).join(', ');
+        ? listaClientesExibicao(d.enviados || [])
+        : listaClientesExibicao(d.pendentes || []);
       const df = d.dadosFrota || {};
       return [d.frota, d.filial, situacao, clientes, df.lotacao || '', df.placa || '', df.anoModelo || '', df.chassi || '', formatarRenavam(df.renavam)];
     });
@@ -1171,15 +1186,13 @@
       const clientesAtfs = (d.clientesAtfs || []).map(c => normalizarCliente(c)).filter(c => !isClienteIgnorado(c));
       const enviadosBrutos = (d.enviados || []).map(c => normalizarCliente(c)).filter(c => !isClienteIgnorado(c));
 
-      let totalPendenteBruto;
-      if (d.tipo === 'frota_nova') {
-        totalPendenteBruto = clientesAtfs;
-      } else {
-        const clientesRelacao = (d.clientesRelacao || []).map(c => normalizarCliente(c));
-        totalPendenteBruto = clientesAtfs.filter(cliAtfs => {
-          return !clientesRelacao.some(cliRel => saoClientesEquivalentes(cliAtfs, cliRel));
-        });
-      }
+      // A ATF deixa de aparecer como pendente quando o cliente (considerando sinônimos)
+      // já está registrado na aba ATFs da RELAÇÃO DE FROTA VMG. Isso vale também
+      // para frota nova; não devemos marcar como pendente um cliente já localizado.
+      const clientesRelacao = (d.clientesRelacao || []).map(c => normalizarCliente(c));
+      let totalPendenteBruto = clientesAtfs.filter(cliAtfs => {
+        return !clientesRelacao.some(cliRel => saoClientesEquivalentes(cliAtfs, cliRel));
+      });
       totalPendenteBruto = Array.from(new Set(totalPendenteBruto));
 
       const enviados = Array.from(new Set(
@@ -1286,7 +1299,7 @@
   function clienteCheckboxHtml(d, cliente, enviado){
     return `<label class="enviado-check ${enviado ? 'enviado' : ''}" title="${enviado ? 'Desmarcar (voltar para pendente)' : 'Marcar como enviado ao DER'}">
       <input type="checkbox" data-enviado-cliente="${escapeHtml(d.filial)}|${escapeHtml(d.frota)}|${escapeHtml(cliente)}" ${enviado ? 'checked' : ''}>
-      <span>${escapeHtml(cliente)}</span>
+      <span class="cliente-label">${escapeHtml(nomeClienteExibicao(cliente))}</span>
     </label>`;
   }
 
