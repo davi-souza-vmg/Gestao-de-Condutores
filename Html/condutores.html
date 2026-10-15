@@ -1338,7 +1338,11 @@ Motoristas: ${validityFlow.count}
         validityBot(`Próximo motorista: informe CPF e validade. Faltam ${validityFlow.count-validityFlow.items.length}.`);
         renderValidityBranchChip();
       }
-    }catch(err){wait.remove();petUser(value);validityBot(`Não encontrei esse CPF na filial ${validityFlow.branch}. Nada foi registrado para ele. Confira o CPF ou troque a filial e tente novamente.`);}
+    }catch(err){wait.remove();petUser(value);
+      const netFail=err instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(String(err&&err.message));
+      validityBot(netFail
+        ? 'Não consegui falar com o servidor (Apps Script). Confira se o Web App está implantado como "Qualquer pessoa" e tente novamente.'
+        : `Não encontrei esse CPF na filial ${validityFlow.branch}. Nada foi registrado para ele. Confira o CPF ou troque a filial e tente novamente.`);}
     finally{if(validityFlow)validityFlow.checking=false;els.actionSend.disabled=false;els.actionInput.focus();}
   }
 
@@ -1351,7 +1355,13 @@ Motoristas: ${validityFlow.count}
         body:JSON.stringify({action:'updateValidity',campo:validityFlow.field,itens:validityFlow.items.map(x=>({cpf:x.cpf,dataValidade:x.dataValidade,filial:x.branch,motorista:x.motorista}))})});
       const data=await res.json();wait.remove();
       if(!res.ok||data.error||!data.ok) throw new Error(data.error||'Não foi possível concluir.');
-      validityBot(`✓ Validades atualizadas com sucesso.\n${data.count} motorista(s) atualizado(s).\nCampo: VENCIMENTO ${validityFlow.field}.`);
+      const docs=data.docs||{};
+      const removidos=docs.removidos||[];
+      let docsMsg='';
+      if(docs.erro) docsMsg=`\n\n⚠ A validade foi gravada, mas não consegui limpar a planilha Controle de Documentação: ${docs.erro}`;
+      else if(removidos.length) docsMsg=`\n\nControle de Documentação: ${removidos.length} linha(s) removida(s)\n`+removidos.map(x=>`• ${x.motorista} — ${x.filial}`).join('\n');
+      else docsMsg='\n\nControle de Documentação: nenhum desses motoristas estava na lista.';
+      validityBot(`✓ Validades atualizadas com sucesso.\n${data.count} motorista(s) atualizado(s).\nCampo: VENCIMENTO ${validityFlow.field}.${docsMsg}`);
       validityFlow=null;loadData();resetActionPanelSoon();
     }catch(err){wait.textContent='Não foi possível concluir: '+err.message;buttons.forEach(b=>b.disabled=false);}
   }
