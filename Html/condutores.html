@@ -1552,9 +1552,8 @@ function tempoRelativo(data) {
       actionAppend('system','Não foi possível carregar o leitor de Excel. Verifique sua conexão e tente novamente.');
       return;
     }
-    actionAppend('system','Conferência iniciada. Buscando a versão mais recente do relatório…');
     const loadingCard=document.createElement('div'); loadingCard.className='conf-loading';
-    loadingCard.innerHTML='<div class="conf-loading-orbit" aria-hidden="true"></div><div><div class="conf-loading-title">Consultando o relatório oficial<span class="conf-loading-dots"></span></div><div class="conf-loading-sub">Baixando o arquivo e preparando a comparação dos dados.</div></div>';
+    loadingCard.innerHTML='<div class="conf-loading-orbit" aria-hidden="true"></div><div><div class="conf-loading-title">Estamos conferindo tudo<span class="conf-loading-dots"></span></div><div class="conf-loading-sub">Só um instante. Vamos comparar os dados e destacar o que precisa de atenção.</div></div>'; 
     els.actionBody.appendChild(loadingCard); els.actionBody.scrollTop=els.actionBody.scrollHeight;
     const loadingStarted=Date.now();
     let githubUpdatedAt='';
@@ -1640,10 +1639,18 @@ function tempoRelativo(data) {
       // Mantém a animação por um breve período para sinalizar claramente o processamento.
       await new Promise(resolve=>setTimeout(resolve,Math.max(0,1400-(Date.now()-loadingStarted))));
       loadingCard.remove();
-      if(githubUpdatedAt) actionAppend('system','Última atualização registrada no GitHub: '+githubUpdatedAt+' (data do último commit do arquivo).');
+      if(githubUpdatedAt) actionAppend('system','📅 Relatório atualizado em '+githubUpdatedAt+'.');
       // Registros que existem apenas no sistema não são exibidos: o relatório oficial pode omitir motoristas desligados.
-      actionAppend('system',`Conferência concluída.\n\nRegistros no relatório: ${official.length}\nRegistros no sistema: ${sys.length}\nCPFs comparados: ${checked}\nDivergências encontradas: ${issues.length}`);
-      if(!issues.length){actionAppend('system','✓ Nenhuma divergência foi encontrada nos campos conferidos.');return;}
+      const resultCard=document.createElement('div'); resultCard.className='action-msg system';
+      resultCard.style.cssText='border-radius:16px;padding:16px;border:1px solid '+(issues.length?'#f2d39b':'#b9e7d1')+';background:'+(issues.length?'#fffaf0':'#f0fbf5')+';color:#17324d;';
+      const resultTitle=document.createElement('div'); resultTitle.style.cssText='font-size:16px;font-weight:850;line-height:1.35;';
+      resultTitle.textContent=issues.length?'🧭 Encontramos alguns pontos para revisar':'🏆 Tudo em dia!'; resultCard.appendChild(resultTitle);
+      const resultSub=document.createElement('div'); resultSub.style.cssText='font-size:12px;line-height:1.5;margin-top:5px;color:#475569;';
+      resultSub.textContent=issues.length?`A conferência encontrou ${issues.length} ponto(s) que merecem atenção.`:'A conferência terminou sem encontrar diferenças nos dados verificados.'; resultCard.appendChild(resultSub);
+      const stats=document.createElement('div'); stats.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px;';
+      [[`📄 ${official.length}`, 'registros no relatório'],[`👥 ${sys.length}`,'registros no sistema'],[`🔎 ${checked}`,'motoristas comparados'],[issues.length?'🟠 '+issues.length:'⭐ 0','pontos para revisar']].forEach(([value,label])=>{const tile=document.createElement('div');tile.style.cssText='background:rgba(255,255,255,.8);border:1px solid rgba(148,163,184,.22);border-radius:11px;padding:10px;';const v=document.createElement('div');v.textContent=value;v.style.cssText='font-size:16px;font-weight:850;';const l=document.createElement('div');l.textContent=label;l.style.cssText='font-size:11px;color:#64748b;margin-top:3px;';tile.append(v,l);stats.appendChild(tile);});
+      resultCard.appendChild(stats); els.actionBody.appendChild(resultCard);
+      if(!issues.length){els.actionBody.scrollTop=els.actionBody.scrollHeight;return;}
       // Agrupa todas as pendências do mesmo motorista em um único card.
       const grouped=new Map();
       issues.forEach(it=>{
@@ -1724,20 +1731,63 @@ function tempoRelativo(data) {
         return ws ? XLSX.utils.sheet_to_json(ws,{defval:'',raw:false}) : [];
       };
       const matriculaKey=v=>String(v??'').replace(/\D/g,'').replace(/^0+(?=\d)/,'');
+      const normalizeDate=v=>{
+        if(v instanceof Date && !isNaN(v.getTime())) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+        const t=String(v??'').trim(); if(!t) return '';
+        let m=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+        m=t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+        if(m) return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+        return '';
+      };
       const sys=rawRows.map(r=>({
         name:String(r.motorista||'').trim(),
         branch:String(r.filial||'').trim(),
-        matricula:matriculaKey(r.matricula||r.matriculaMotorista||'')
+        matricula:matriculaKey(r.matricula||r.matriculaMotorista||''),
+        date:normalizeDate(r.admissao)
       }));
-      const exists=(entry)=>{
-        const name=norm(entry.name), branch=norm(entry.branch), mat=matriculaKey(entry.matricula);
-        return sys.some(r=>{
-          const sameBranch=!branch || norm(r.branch)===branch;
-          const sameMat=mat && r.matricula && mat===r.matricula;
-          const sameName=name && norm(r.name)===name;
-          return sameBranch && (sameMat || sameName);
-        });
+      const identityConflicts=[];
+      const addConflict=message=>{if(message&&!identityConflicts.includes(message))identityConflicts.push(message);};
+      // Matrícula repetida na mesma filial é um alerta, nunca uma identificação única.
+      const seenMatriculaGroups=new Map();
+      sys.forEach(r=>{
+        if(!r.matricula||!r.branch) return;
+        const key=norm(r.branch)+'|'+r.matricula;
+        if(!seenMatriculaGroups.has(key)) seenMatriculaGroups.set(key,[]);
+        seenMatriculaGroups.get(key).push(r);
+      });
+      seenMatriculaGroups.forEach(group=>{
+        const names=[...new Set(group.map(r=>norm(r.name)).filter(Boolean))];
+        if(group.length>1 && names.length>1) addConflict(`Matrícula ${group[0].matricula} duplicada na filial ${group[0].branch}, vinculada a nomes diferentes: ${group.map(r=>r.name).join(' / ')}.`);
+      });
+      const identityStatus=(entry)=>{
+        const name=norm(entry.name), branch=norm(entry.branch), date=normalizeDate(entry.date);
+        if(!name) return 'none';
+        const candidates=sys.filter(r=>norm(r.name)===name && (!branch||norm(r.branch)===branch));
+        if(!candidates.length) {
+          // Matrícula coincidente com outro nome é apenas um alerta, jamais uma correspondência.
+          const sameMat=sys.filter(r=>entry.matricula && matriculaKey(r.matricula)===matriculaKey(entry.matricula) && (!branch||norm(r.branch)===branch));
+          sameMat.filter(r=>norm(r.name)!==name).forEach(r=>addConflict(`A matrícula ${entry.matricula} na filial ${entry.branch||r.branch} aparece para ${r.name} no sistema e para ${entry.name} no relatório. Conferir manualmente.`));
+          return 'none';
+        }
+        const dateCandidates=date?candidates.filter(r=>r.date===date):candidates;
+        if(date && candidates.some(r=>r.date) && !dateCandidates.length){
+          addConflict(`Nome e filial coincidem para ${entry.name} (${entry.branch||'filial não informada'}), mas a data de admissão diverge entre o relatório e o sistema.`);
+          return 'conflict';
+        }
+        if(dateCandidates.length===1) return 'match';
+        if(dateCandidates.length>1){
+          addConflict(`Há mais de um registro de ${entry.name} na filial ${entry.branch||'não informada'}${date?' com a mesma data de admissão':''}. Conferir manualmente.`);
+          return 'conflict';
+        }
+        // Sem data no relatório: se houver vários homônimos na filial, não decidir automaticamente.
+        if(candidates.length>1){
+          addConflict(`Há homônimos de ${entry.name} na filial ${entry.branch||'não informada'}; a data de admissão não permite distinguir os registros.`);
+          return 'conflict';
+        }
+        return 'match';
       };
+      const exists=entry=>identityStatus(entry)==='match';
       const admissions=read('ADMITIDOS').map(r=>({
         name:String(r['Nome no PDF']||r['Nome']||r['Nome completo']||'').trim(),
         branch:String(r['FILIAL']||'').trim(),
@@ -1760,20 +1810,19 @@ function tempoRelativo(data) {
         situation:'AVISO PRÉVIO'
       })).filter(r=>r.name);
       const matchesDriver=(a,b)=>{
-        const sameBranch=!a.branch||!b.branch||norm(a.branch)===norm(b.branch);
-        const aMat=matriculaKey(a.matricula), bMat=matriculaKey(b.matricula);
-        return sameBranch && ((aMat&&bMat&&aMat===bMat)||norm(a.name)===norm(b.name));
+        const sameBranch=!!a.branch&&!!b.branch&&norm(a.branch)===norm(b.branch);
+        const sameName=norm(a.name)===norm(b.name);
+        const aDate=normalizeDate(a.date), bDate=normalizeDate(b.date);
+        // Matrícula nunca é suficiente para identificar alguém. Nome + filial são a base;
+        // se as duas datas existirem, elas também precisam coincidir.
+        return sameBranch && sameName && (!aDate||!bDate||aDate===bDate);
       };
-      // Se o motorista aparece em AVISO_PREVIO, nunca deve ser sugerido como admitido,
-      // mesmo que também esteja listado por engano na aba ADMITIDOS.
-      const newDrivers=admissions.filter(r=>!exists(r)&&!noticeDrivers.some(n=>matchesDriver(r,n)));
-      // Só mostrar como demitido quem realmente consta no sistema; aviso prévio também entra nessa lista.
+      // Aviso prévio tem prioridade sobre ADMITIDOS, usando nome + filial (e data quando disponível).
+      const newDrivers=admissions.filter(r=>identityStatus(r)==='none'&&!noticeDrivers.some(n=>matchesDriver(r,n)));
+      // Só mostrar desligamentos confirmados por nome + filial; conflitos vão para revisão manual.
       const removedDrivers=[...dismissals,...noticeDrivers]
-        .filter(r=>exists(r))
-        .filter((r,i,arr)=>arr.findIndex(x=>
-          norm(x.branch)===norm(r.branch) &&
-          ((matriculaKey(x.matricula)&&matriculaKey(x.matricula)===matriculaKey(r.matricula)) || norm(x.name)===norm(r.name))
-        )===i);
+        .filter(r=>identityStatus(r)==='match')
+        .filter((r,i,arr)=>arr.findIndex(x=>matchesDriver(x,r))===i);
       const dateText=v=>{
         if(!v) return '';
         const m=String(v).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -1823,6 +1872,12 @@ function tempoRelativo(data) {
       };
       addSection('ADMITIDOS',newDrivers,'add','Nenhuma nova admissão identificada.');
       addSection('DEMITIDOS',removedDrivers,'remove','Nenhum desligamento novo identificado.');
+      if(identityConflicts.length){
+        const section=document.createElement('section'); section.style.cssText='margin-top:14px;padding:12px;border:1px solid #f2c879;border-radius:12px;background:rgba(245,158,11,.08);';
+        const h=document.createElement('div'); h.textContent=`⚠ Conferir manualmente (${identityConflicts.length})`; h.style.cssText='font-size:12px;font-weight:800;margin-bottom:8px;color:#92400e;'; section.appendChild(h);
+        identityConflicts.forEach(msg=>{const item=document.createElement('div');item.textContent=msg;item.style.cssText='font-size:11px;line-height:1.5;padding:7px 0;border-top:1px solid rgba(180,120,20,.18);overflow-wrap:anywhere;';section.appendChild(item);});
+        summary.appendChild(section);
+      }
       els.actionBody.appendChild(summary); els.actionBody.scrollTop=els.actionBody.scrollHeight;
     }catch(err){
       console.error('Conferência Ativos:',err);
