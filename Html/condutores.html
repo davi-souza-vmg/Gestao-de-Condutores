@@ -80,6 +80,16 @@
     background:#ffffff;
     color:var(--slate-900);
   }
+  .header-refresh{width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.3);border-radius:9px;background:var(--navy-800);color:#fff;font-size:22px;line-height:1;cursor:pointer;transition:transform .25s,background .2s;}
+  .header-refresh:hover{background:var(--navy-700);transform:rotate(35deg)}
+  .header-refresh:disabled{opacity:.65;cursor:wait}
+  @keyframes confPulse{0%,100%{opacity:.45;transform:scale(.92)}50%{opacity:1;transform:scale(1)}}
+  @keyframes confDots{0%,20%{content:""}40%{content:"."}60%{content:".."}80%,100%{content:"..."}}
+  .conf-loading{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 6px 20px rgba(15,37,68,.06);margin:10px 0;}
+  .conf-loading-orbit{width:34px;height:34px;flex:0 0 34px;border:3px solid rgba(43,173,125,.18);border-top-color:var(--green);border-right-color:var(--amber);border-radius:50%;animation:confSpin .8s linear infinite;}
+  .conf-loading-title{font-size:12px;font-weight:800;color:var(--slate-900)}
+  .conf-loading-sub{font-size:11px;color:var(--slate-600);margin-top:4px;line-height:1.45}
+  .conf-loading-dots:after{content:"...";display:inline-block;width:16px;overflow:hidden;vertical-align:bottom;animation:confPulse 1s ease-in-out infinite;}
 
   /* ---------- skeleton loader ---------- */
   @keyframes shimmer{
@@ -588,6 +598,7 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
       <select id="filterFilial">
         <option value="">Todas as filiais</option>
       </select>
+      <button type="button" id="btnRefreshData" class="header-refresh" title="Atualizar dados" aria-label="Atualizar dados">↻</button>
     </div>
   </div>
 </header>
@@ -916,12 +927,6 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
       <button type="button" class="action-card" id="actionActiveConference">
         <div class="action-card-icon">↔</div>
         <div><strong>Conferência Ativos</strong><span>Admitidos que faltam cadastrar e desligados/aviso prévio ainda presentes no sistema.</span></div>
-        <span class="action-arrow">›</span>
-      </button>
-
-      <button type="button" class="action-card" id="actionRefresh">
-        <div class="action-card-icon">↻</div>
-        <div><strong>Atualizar dados</strong><span>Recarregar as informações mais recentes das planilhas.</span></div>
         <span class="action-arrow">›</span>
       </button>
 
@@ -1548,10 +1553,19 @@ function tempoRelativo(data) {
       return;
     }
     actionAppend('system','Conferência iniciada. Buscando a versão mais recente do relatório…');
+    const loadingCard=document.createElement('div'); loadingCard.className='conf-loading';
+    loadingCard.innerHTML='<div class="conf-loading-orbit" aria-hidden="true"></div><div><div class="conf-loading-title">Consultando o relatório oficial<span class="conf-loading-dots"></span></div><div class="conf-loading-sub">Baixando o arquivo e preparando a comparação dos dados.</div></div>';
+    els.actionBody.appendChild(loadingCard); els.actionBody.scrollTop=els.actionBody.scrollHeight;
+    const loadingStarted=Date.now();
+    let githubUpdatedAt='';
     try{
       const url='https://raw.githubusercontent.com/davi-souza-vmg/Gestao-de-Condutores/main/relCondutores.xlsx?v='+Date.now();
       const response=await fetch(url,{cache:'no-store'});
       if(!response.ok) throw new Error('O GitHub respondeu com HTTP '+response.status+'.');
+      try{
+        const metaResponse=await fetch('https://api.github.com/repos/davi-souza-vmg/Gestao-de-Condutores/commits?path=relCondutores.xlsx&per_page=1',{cache:'no-store',headers:{'Accept':'application/vnd.github+json'}});
+        if(metaResponse.ok){const commits=await metaResponse.json();const stamp=commits&&commits[0]&&commits[0].commit&&commits[0].commit.committer&&commits[0].commit.committer.date; if(stamp)githubUpdatedAt=new Date(stamp).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'});}
+      }catch(metaErr){console.info('Não foi possível obter a data do último commit do relatório:',metaErr);}
       const buffer=await response.arrayBuffer();
       const wb=XLSX.read(buffer,{type:'array',cellDates:false});
       const ws=wb.Sheets[wb.SheetNames[0]];
@@ -1623,6 +1637,10 @@ function tempoRelativo(data) {
           }
         }
       }
+      // Mantém a animação por um breve período para sinalizar claramente o processamento.
+      await new Promise(resolve=>setTimeout(resolve,Math.max(0,1400-(Date.now()-loadingStarted))));
+      loadingCard.remove();
+      if(githubUpdatedAt) actionAppend('system','Última atualização registrada no GitHub: '+githubUpdatedAt+' (data do último commit do arquivo).');
       // Registros que existem apenas no sistema não são exibidos: o relatório oficial pode omitir motoristas desligados.
       actionAppend('system',`Conferência concluída.\n\nRegistros no relatório: ${official.length}\nRegistros no sistema: ${sys.length}\nCPFs comparados: ${checked}\nDivergências encontradas: ${issues.length}`);
       if(!issues.length){actionAppend('system','✓ Nenhuma divergência foi encontrada nos campos conferidos.');return;}
@@ -1680,7 +1698,7 @@ function tempoRelativo(data) {
       if(drivers.length>max){const more=document.createElement('div');more.style.marginTop='8px';more.textContent=`Exibindo os primeiros ${max} de ${drivers.length} motoristas.`;summary.appendChild(more);}
       els.actionBody.appendChild(summary);els.actionBody.scrollTop=els.actionBody.scrollHeight;
       
-    }catch(err){console.error('Conferência oficial:',err);actionAppend('system','Não foi possível concluir a conferência: '+(err.message||'erro inesperado')+' Confira se o arquivo relCondutores.xlsx está público no GitHub e tente novamente.');}
+    }catch(err){if(loadingCard&&loadingCard.isConnected)loadingCard.remove();console.error('Conferência oficial:',err);actionAppend('system','Não foi possível concluir a conferência: '+(err.message||'erro inesperado')+' Confira se o arquivo relCondutores.xlsx está público no GitHub e tente novamente.');}
   }
   async function beginActiveConference(){
     petFlow=null; validityFlow=null; clearActionConversation();
@@ -1734,7 +1752,6 @@ function tempoRelativo(data) {
         date:String(r['Data de admissão']||r['Data de admissao']||'').trim(),
         situation:String(r['Situação']||r['Situacao']||'').trim()
       })).filter(r=>r.name);
-      const newDrivers=admissions.filter(r=>!exists(r));
       const noticeDrivers=read('AVISO_PREVIO').map(r=>({
         name:String(r['Nome']||r['Nome no PDF']||r['Nome completo']||'').trim(),
         branch:String(r['FILIAL']||'').trim(),
@@ -1742,6 +1759,14 @@ function tempoRelativo(data) {
         date:String(r['Data de admissão']||r['Data de admissao']||'').trim(),
         situation:'AVISO PRÉVIO'
       })).filter(r=>r.name);
+      const matchesDriver=(a,b)=>{
+        const sameBranch=!a.branch||!b.branch||norm(a.branch)===norm(b.branch);
+        const aMat=matriculaKey(a.matricula), bMat=matriculaKey(b.matricula);
+        return sameBranch && ((aMat&&bMat&&aMat===bMat)||norm(a.name)===norm(b.name));
+      };
+      // Se o motorista aparece em AVISO_PREVIO, nunca deve ser sugerido como admitido,
+      // mesmo que também esteja listado por engano na aba ADMITIDOS.
+      const newDrivers=admissions.filter(r=>!exists(r)&&!noticeDrivers.some(n=>matchesDriver(r,n)));
       // Só mostrar como demitido quem realmente consta no sistema; aviso prévio também entra nessa lista.
       const removedDrivers=[...dismissals,...noticeDrivers]
         .filter(r=>exists(r))
@@ -1787,7 +1812,10 @@ function tempoRelativo(data) {
           const name=document.createElement('strong');name.textContent=r.name;name.style.cssText='font-size:13px;line-height:1.4;overflow-wrap:anywhere;';
           top.append(dot,name);card.appendChild(top);
           const meta=document.createElement('div');meta.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 33px;';
-          [[r.branch||'Filial não informada','⌖'],[r.matricula?'Matrícula '+r.matricula:'',''],[r.date?'Admissão '+dateText(r.date):'','']].filter(x=>x[0]).forEach(([v,ico])=>{const chip=document.createElement('span');chip.textContent=(ico?ico+' ':'')+v;chip.style.cssText='font-size:10px;color:var(--muted-color,#64748b);background:var(--input-bg,rgba(100,116,139,.07));padding:5px 7px;border-radius:7px;';meta.appendChild(chip);});
+          const branchChip=document.createElement('span');branchChip.textContent='⌖ '+(r.branch||'Filial não informada');branchChip.style.cssText='font-size:10px;color:var(--muted-color,#64748b);background:var(--input-bg,rgba(100,116,139,.07));padding:5px 7px;border-radius:7px;';meta.appendChild(branchChip);
+          const makeCopyChip=(label,value)=>{if(!value)return;const chip=document.createElement('button');chip.type='button';chip.textContent=label;chip.title='Clique para copiar';chip.style.cssText='font:inherit;font-size:10px;color:var(--muted-color,#64748b);background:var(--input-bg,rgba(100,116,139,.07));padding:5px 7px;border-radius:7px;border:1px dashed var(--border-color,#cbd5e1);cursor:pointer;';chip.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(String(value));showCopyToast('Copiado: '+value);}catch(e){const ta=document.createElement('textarea');ta.value=String(value);document.body.appendChild(ta);ta.select();try{document.execCommand('copy');showCopyToast('Copiado: '+value);}catch(_){showCopyToast('Não foi possível copiar');}ta.remove();}});meta.appendChild(chip);};
+          makeCopyChip('▣ Matrícula '+r.matricula,r.matricula);
+          makeCopyChip('▣ Admissão '+dateText(r.date),r.date?dateText(r.date):'');
           card.appendChild(meta);
           section.appendChild(card);
         });
@@ -1795,7 +1823,6 @@ function tempoRelativo(data) {
       };
       addSection('ADMITIDOS',newDrivers,'add','Nenhuma nova admissão identificada.');
       addSection('DEMITIDOS',removedDrivers,'remove','Nenhum desligamento novo identificado.');
-      const foot=document.createElement('div');foot.textContent=`Planilha analisada: resultado_conferencia.xlsx · ${sys.length} registros atuais nas filiais`;foot.style.cssText='font-size:10px;color:var(--muted-color,#64748b);margin-top:13px;';summary.appendChild(foot);
       els.actionBody.appendChild(summary); els.actionBody.scrollTop=els.actionBody.scrollHeight;
     }catch(err){
       console.error('Conferência Ativos:',err);
@@ -1822,9 +1849,10 @@ function tempoRelativo(data) {
 
   document.getElementById('actionConference').addEventListener('click',beginOfficialConference);
   document.getElementById('actionActiveConference').addEventListener('click',beginActiveConference);
-  document.getElementById('actionRefresh').addEventListener('click',()=>{
-    els.actionPanel.classList.remove('open');
-    loadData();
+  document.getElementById('btnRefreshData').addEventListener('click',()=>{
+    const btn=document.getElementById('btnRefreshData');
+    btn.disabled=true; btn.style.transform='rotate(360deg)';
+    Promise.resolve(loadData()).finally(()=>{btn.disabled=false;btn.style.transform='';});
   });
   document.getElementById('actionExport').addEventListener('click',()=>{
     els.actionPanel.classList.remove('open');
