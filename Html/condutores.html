@@ -1101,10 +1101,10 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
   function petAsk(){
     if(!petFlow) return;
     const prompts={
-      date:'1/4 — Qual a data do peticionamento?\nDigite no formato DD/MM/AAAA.',
-      number:'2/4 — Qual o número do peticionamento?',
-      count:'3/4 — Quantos motoristas foram peticionados?',
-      list:'4/4 — Informe um condutor por vez no formato FILIAL NOME COMPLETO.\nExemplos: ARAXA JOAO VICENTE DA SILVA; SERRA NOME COMPLETO; LAFAIETE NOME COMPLETO.'
+      date:'📅 Etapa 1 de 4 — Qual foi a data do peticionamento?',
+      number:'🔢 Etapa 2 de 4 — Qual é o número do peticionamento?',
+      count:'👥 Etapa 3 de 4 — Quantos motoristas foram peticionados?',
+      list:'🚌 Etapa 4 de 4 — Digite o nome completo de um motorista e a filial. Envie um por vez.'
     };
     petBot(prompts[petFlow.step]);
   }
@@ -1140,7 +1140,7 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
     const box=document.createElement('div');
     box.className='action-msg system';
     const list=petFlow.drivers.map((d,i)=>`${i+1}. ${d.motorista} — ${d.filial}`).join('\n');
-    box.textContent=`Confira antes de gravar:\n\nData: ${petFlow.dateDisplay}\nNº: ${petFlow.number}\nMotoristas: ${petFlow.count}\n\n${list}\n\nPosso concluir e atualizar a planilha?`;
+    box.textContent=`🎯 Quase lá! Confira os dados antes de salvar:\n\n📅 Data: ${petFlow.dateDisplay}\n🔢 Número: ${petFlow.number}\n👥 Motoristas: ${petFlow.count}\n\n${list}\n\nTudo certo para registrar?`;
     els.actionBody.appendChild(box);
 
     const row=document.createElement('div');
@@ -1211,7 +1211,7 @@ function findDriverMatches(q) {
 
     if(petFlow.step==='date'){
       const iso=parsePetDate(v);
-      if(!iso){petBot('A data não parece válida. Digite, por exemplo, 08/10/2026.');return;}
+      if(!iso){petBot('Confira a data informada e tente novamente.');return;}
       petFlow.date=iso;
       petFlow.dateDisplay=v;
       petFlow.step='number';
@@ -1747,6 +1747,7 @@ function tempoRelativo(data) {
         date:normalizeDate(r.admissao)
       }));
       const identityConflicts=[];
+      const duplicateMatriculaGroups=[];
       const addConflict=message=>{if(message&&!identityConflicts.includes(message))identityConflicts.push(message);};
       // Matrícula repetida na mesma filial é um alerta, nunca uma identificação única.
       const seenMatriculaGroups=new Map();
@@ -1758,7 +1759,7 @@ function tempoRelativo(data) {
       });
       seenMatriculaGroups.forEach(group=>{
         const names=[...new Set(group.map(r=>norm(r.name)).filter(Boolean))];
-        if(group.length>1 && names.length>1) addConflict(`Matrícula ${group[0].matricula} duplicada na filial ${group[0].branch}, vinculada a nomes diferentes: ${group.map(r=>r.name).join(' / ')}.`);
+        if(group.length>1 && names.length>1) duplicateMatriculaGroups.push(group);
       });
       const identityStatus=(entry)=>{
         const name=norm(entry.name), branch=norm(entry.branch), date=normalizeDate(entry.date);
@@ -1809,6 +1810,17 @@ function tempoRelativo(data) {
         date:String(r['Data de admissão']||r['Data de admissao']||'').trim(),
         situation:'AVISO PRÉVIO'
       })).filter(r=>r.name);
+      // Enriquecer alertas de matrícula repetida usando a matrícula registrada no próprio relatório.
+      const reportPeople=[...admissions,...dismissals,...noticeDrivers];
+      duplicateMatriculaGroups.forEach(group=>{
+        const people=[...new Map(group.map(r=>[norm(r.name),r])).values()];
+        const details=people.map(person=>{
+          const refs=reportPeople.filter(x=>norm(x.name)===norm(person.name)&&norm(x.branch)===norm(person.branch));
+          const mats=[...new Set(refs.map(x=>String(x.matricula||'').trim()).filter(Boolean))];
+          return `${person.name}: ${mats.length?`matrícula no relatório ${mats.join(' / ')}`:'não localizado nas abas ADMITIDOS, DEMITIDOS ou AVISO_PREVIO'}`;
+        });
+        addConflict(`Na filial ${group[0].branch}, a matrícula ${group[0].matricula} aparece para mais de uma pessoa no cadastro atual. Compare com o relatório: ${details.join('; ')}. Confira os nomes e as matrículas antes de alterar o cadastro.`);
+      });
       const matchesDriver=(a,b)=>{
         const sameBranch=!!a.branch&&!!b.branch&&norm(a.branch)===norm(b.branch);
         const sameName=norm(a.name)===norm(b.name);
@@ -1874,8 +1886,9 @@ function tempoRelativo(data) {
       addSection('DEMITIDOS',removedDrivers,'remove','Nenhum desligamento novo identificado.');
       if(identityConflicts.length){
         const section=document.createElement('section'); section.style.cssText='margin-top:14px;padding:12px;border:1px solid #f2c879;border-radius:12px;background:rgba(245,158,11,.08);';
-        const h=document.createElement('div'); h.textContent=`⚠ Conferir manualmente (${identityConflicts.length})`; h.style.cssText='font-size:12px;font-weight:800;margin-bottom:8px;color:#92400e;'; section.appendChild(h);
-        identityConflicts.forEach(msg=>{const item=document.createElement('div');item.textContent=msg;item.style.cssText='font-size:11px;line-height:1.5;padding:7px 0;border-top:1px solid rgba(180,120,20,.18);overflow-wrap:anywhere;';section.appendChild(item);});
+        const h=document.createElement('div'); h.textContent=`🧭 Vamos conferir juntos (${identityConflicts.length})`; h.style.cssText='font-size:13px;font-weight:850;margin-bottom:5px;color:#92400e;'; section.appendChild(h);
+        const intro=document.createElement('div');intro.textContent='Encontramos informações que podem estar diferentes. Compare os dados abaixo antes de fazer qualquer alteração.';intro.style.cssText='font-size:11px;line-height:1.5;margin-bottom:8px;color:var(--muted-color,#64748b);';section.appendChild(intro);
+        identityConflicts.forEach((msg,index)=>{const item=document.createElement('div');item.style.cssText='font-size:12px;line-height:1.55;padding:10px;margin-top:7px;border:1px solid rgba(180,120,20,.18);border-radius:10px;background:rgba(255,255,255,.65);overflow-wrap:anywhere;';const label=document.createElement('div');label.textContent=`🔎 Ponto para revisar ${index+1}`;label.style.cssText='font-weight:800;margin-bottom:4px;color:#92400e;';const text=document.createElement('div');text.textContent=msg;item.append(label,text);section.appendChild(item);});
         summary.appendChild(section);
       }
       els.actionBody.appendChild(summary); els.actionBody.scrollTop=els.actionBody.scrollHeight;
