@@ -1719,7 +1719,11 @@ function tempoRelativo(data) {
       actionAppend('system','Não foi possível carregar o leitor de Excel. Verifique sua conexão e tente novamente.');
       return;
     }
-    actionAppend('system','Comparando os registros do relatório com os dados atuais das filiais…');
+    const loadingCard=document.createElement('div');
+    loadingCard.className='conf-loading';
+    loadingCard.innerHTML='<div class="conf-loading-orbit" aria-hidden="true"></div><div><div class="conf-loading-title">Conferência Ativos em andamento<span class="conf-loading-dots"></span></div><div class="conf-loading-sub">Estamos comparando os cadastros e verificando quais informações precisam da sua atenção.</div></div>';
+    els.actionBody.appendChild(loadingCard); els.actionBody.scrollTop=els.actionBody.scrollHeight;
+    const loadingStarted=Date.now();
     try{
       const url='https://raw.githubusercontent.com/davi-souza-vmg/Gestao-de-Condutores/main/resultado_conferencia.xlsx?v='+Date.now();
       const response=await fetch(url,{cache:'no-store'});
@@ -1899,10 +1903,14 @@ function tempoRelativo(data) {
         identityConflicts.forEach((msg,index)=>{const item=document.createElement('div');item.style.cssText='font-size:12px;line-height:1.55;padding:10px;margin-top:7px;border:1px solid rgba(180,120,20,.18);border-radius:10px;background:rgba(255,255,255,.65);overflow-wrap:anywhere;';const label=document.createElement('div');label.textContent=`🔎 Ponto para revisar ${index+1}`;label.style.cssText='font-weight:800;margin-bottom:4px;color:#92400e;';const text=document.createElement('div');text.textContent=msg;item.append(label,text);section.appendChild(item);});
         summary.appendChild(section);
       }
+      await new Promise(resolve=>setTimeout(resolve,Math.max(0,1200-(Date.now()-loadingStarted))));
+      if(loadingCard.isConnected) loadingCard.remove();
       els.actionBody.appendChild(summary); els.actionBody.scrollTop=els.actionBody.scrollHeight;
     }catch(err){
+      await new Promise(resolve=>setTimeout(resolve,Math.max(0,700-(Date.now()-loadingStarted))));
+      if(loadingCard.isConnected) loadingCard.remove();
       console.error('Conferência Ativos:',err);
-      actionAppend('system','Não foi possível ler resultado_conferencia.xlsx: '+(err.message||'erro inesperado')+'. Confira se o arquivo está publicado na raiz do GitHub.');
+      actionAppend('system','Não foi possível concluir a conferência. Verifique sua conexão e tente novamente.');
     }
   }
 
