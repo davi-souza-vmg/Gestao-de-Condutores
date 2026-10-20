@@ -910,7 +910,7 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
   </header>
 
   <div class="action-body" id="actionBody">
-    <div class="action-intro">Escolha uma ação. O assistente vai orientar cada etapa e pedir confirmação antes de alterar a planilha.</div>
+    <div class="action-intro">O que você precisa fazer hoje?</div>
 
     <div class="action-grid" id="actionGrid">
       <button type="button" class="action-card primary" id="actionPeticionamento">
@@ -1104,7 +1104,7 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
       date:'📅 Etapa 1 de 4 — Qual foi a data do peticionamento?',
       number:'🔢 Etapa 2 de 4 — Qual é o número do peticionamento?',
       count:'👥 Etapa 3 de 4 — Quantos motoristas foram peticionados?',
-      list:'🚌 Etapa 4 de 4 — Digite o nome completo de um motorista e a filial. Envie um por vez.'
+      list:'🚌 Etapa 4 de 4 — Informe primeiro a filial e depois o nome completo do motorista. Envie um por vez.'
     };
     petBot(prompts[petFlow.step]);
   }
@@ -1553,7 +1553,7 @@ function tempoRelativo(data) {
       return;
     }
     const loadingCard=document.createElement('div'); loadingCard.className='conf-loading';
-    loadingCard.innerHTML='<div class="conf-loading-orbit" aria-hidden="true"></div><div><div class="conf-loading-title">Estamos conferindo tudo<span class="conf-loading-dots"></span></div><div class="conf-loading-sub">Só um instante. Vamos comparar os dados e destacar o que precisa de atenção.</div></div>'; 
+    loadingCard.innerHTML='<div class="conf-loading-orbit" aria-hidden="true"></div><div><div class="conf-loading-title">Conferência Ativos em andamento<span class="conf-loading-dots"></span></div><div class="conf-loading-sub">Estamos comparando os cadastros para encontrar apenas o que precisa da sua atenção.</div></div>'; 
     els.actionBody.appendChild(loadingCard); els.actionBody.scrollTop=els.actionBody.scrollHeight;
     const loadingStarted=Date.now();
     let githubUpdatedAt='';
@@ -1851,13 +1851,21 @@ function tempoRelativo(data) {
       const title=document.createElement('strong'); title.textContent='Resultado da conferência'; title.style.cssText='display:block;font-size:14px;';
       const subtitle=document.createElement('span'); subtitle.textContent='Resultado cruzado com as planilhas das filiais'; subtitle.style.cssText='display:block;font-size:11px;color:var(--muted-color,#64748b);margin-top:3px;';
       heading.append(title,subtitle); head.append(mark,heading); summary.appendChild(head);
-      const counts=document.createElement('div'); counts.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px;';
-      [[newDrivers.length,'Admissões','#16804a'],[removedDrivers.length,'Desligamentos','#b4232c']].forEach(([n,label,color])=>{
-        const c=document.createElement('div'); c.style.cssText='padding:12px;border:1px solid var(--border-color,#dbe2ee);border-radius:12px;background:var(--card-bg,#fff);';
-        const num=document.createElement('div'); num.textContent=String(n); num.style.cssText=`font-size:23px;font-weight:800;line-height:1.1;color:${color};`;
-        const lab=document.createElement('div'); lab.textContent=label; lab.style.cssText='font-size:11px;font-weight:650;color:var(--muted-color,#64748b);margin-top:5px;';
-        c.append(num,lab); counts.appendChild(c);
-      }); summary.appendChild(counts);
+      const totalChanges=newDrivers.length+removedDrivers.length;
+      if(totalChanges===0 && identityConflicts.length===0){
+        const success=document.createElement('div');
+        success.style.cssText='padding:16px 14px;border-radius:14px;background:linear-gradient(135deg,#e8f8ef,#f2fbf5);border:1px solid #b8e6ca;text-align:center;margin:4px 0 8px;';
+        success.innerHTML='<div style="font-size:28px;line-height:1.3">🏆</div><strong style="display:block;color:#167344;font-size:15px;margin:4px 0">Tudo em dia!</strong><span style="display:block;color:#397653;font-size:12px;line-height:1.5">Nenhuma admissão ou saída nova precisa ser registrada.</span>';
+        summary.appendChild(success);
+      }else{
+        const counts=document.createElement('div'); counts.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px;';
+        [[newDrivers.length,'Novas admissões','#16804a'],[removedDrivers.length,'Saídas para registrar','#b4232c']].filter(([n])=>n>0).forEach(([n,label,color])=>{
+          const c=document.createElement('div'); c.style.cssText='padding:12px;border:1px solid var(--border-color,#dbe2ee);border-radius:12px;background:var(--card-bg,#fff);';
+          const num=document.createElement('div'); num.textContent=String(n); num.style.cssText=`font-size:23px;font-weight:800;line-height:1.1;color:${color};`;
+          const lab=document.createElement('div'); lab.textContent=label; lab.style.cssText='font-size:11px;font-weight:650;color:var(--muted-color,#64748b);margin-top:5px;';
+          c.append(num,lab); counts.appendChild(c);
+        }); summary.appendChild(counts);
+      }
       const addSection=(titleText,items,kind,emptyText)=>{
         items.sort((a,b)=>norm(a.branch).localeCompare(norm(b.branch),'pt-BR')||norm(a.name).localeCompare(norm(b.name),'pt-BR'));
         const section=document.createElement('section'); section.style.cssText='margin-top:13px;';
@@ -1882,8 +1890,8 @@ function tempoRelativo(data) {
         });
         summary.appendChild(section);
       };
-      addSection('ADMITIDOS',newDrivers,'add','Nenhuma nova admissão identificada.');
-      addSection('DEMITIDOS',removedDrivers,'remove','Nenhum desligamento novo identificado.');
+      if(newDrivers.length) addSection('NOVAS ADMISSÕES',newDrivers,'add','');
+      if(removedDrivers.length) addSection('SAÍDAS PARA REGISTRAR',removedDrivers,'remove','');
       if(identityConflicts.length){
         const section=document.createElement('section'); section.style.cssText='margin-top:14px;padding:12px;border:1px solid #f2c879;border-radius:12px;background:rgba(245,158,11,.08);';
         const h=document.createElement('div'); h.textContent=`🧭 Vamos conferir juntos (${identityConflicts.length})`; h.style.cssText='font-size:13px;font-weight:850;margin-bottom:5px;color:#92400e;'; section.appendChild(h);
