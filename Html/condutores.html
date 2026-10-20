@@ -471,6 +471,7 @@
     display:none;overflow:hidden;flex-direction:column;
   }
   .action-panel.open{display:flex}
+  .action-session-back{order:9999;margin-top:18px!important;margin-bottom:0!important;padding-top:12px;border-top:1px solid var(--line)}
   .action-head{
     padding:18px 18px 16px;
     background:linear-gradient(135deg,var(--navy-950),var(--navy-900));
@@ -487,7 +488,7 @@
     border:0;background:rgba(255,255,255,.12);color:#fff;
     border-radius:10px;width:32px;height:32px;cursor:pointer;font-size:19px;
   }
-  .action-body{flex:1;overflow:auto;padding:16px;background:var(--bg)}
+  .action-body{flex:1;overflow:auto;padding:16px;background:var(--bg);display:flex;flex-direction:column}
   .action-intro{
     margin:0 0 12px;padding:12px 13px;border:1px solid var(--line);
     border-radius:13px;background:#fff;color:var(--slate-600);font-size:12px;line-height:1.45;
@@ -906,14 +907,7 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
         <div><strong>Informar Peticionados</strong><span>Registrar data, número e motoristas diretamente na planilha.</span></div>
         <span class="action-arrow">›</span>
       </button>
-
-      <button type="button" class="action-card" id="actionValidity">
-        <div class="action-card-icon">📅</div>
-        <div><strong>Atualizar Validade</strong><span>Atualizar vencimento do DER ou da CNH usando o CPF.</span></div>
-        <span class="action-arrow">›</span>
-      </button>
-
-      <button type="button" class="action-card" id="actionConference">
+<button type="button" class="action-card" id="actionConference">
         <div class="action-card-icon">✓</div>
         <div><strong>Conferência DER</strong><span>Conferir divergências de validade com o relatório oficial.</span></div>
         <span class="action-arrow">›</span>
@@ -921,7 +915,7 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
 
       <button type="button" class="action-card" id="actionActiveConference">
         <div class="action-card-icon">↔</div>
-        <div><strong>Conferência Ativos</strong><span>Consultar admissões e desligamentos identificados no relatório oficial.</span></div>
+        <div><strong>Conferência Ativos</strong><span>Admitidos que faltam cadastrar e desligados/aviso prévio ainda presentes no sistema.</span></div>
         <span class="action-arrow">›</span>
       </button>
 
@@ -1741,7 +1735,20 @@ function tempoRelativo(data) {
         situation:String(r['Situação']||r['Situacao']||'').trim()
       })).filter(r=>r.name);
       const newDrivers=admissions.filter(r=>!exists(r));
-      const removedDrivers=dismissals; // A aba DEMITIDOS já contém os desligados ainda registrados nas planilhas; não aplicar o filtro inverso de ADMITIDOS.
+      const noticeDrivers=read('AVISO_PREVIO').map(r=>({
+        name:String(r['Nome']||r['Nome no PDF']||r['Nome completo']||'').trim(),
+        branch:String(r['FILIAL']||'').trim(),
+        matricula:String(r['Matrícula']||r['Matricula']||'').trim(),
+        date:String(r['Data de admissão']||r['Data de admissao']||'').trim(),
+        situation:'AVISO PRÉVIO'
+      })).filter(r=>r.name);
+      // Só mostrar como demitido quem realmente consta no sistema; aviso prévio também entra nessa lista.
+      const removedDrivers=[...dismissals,...noticeDrivers]
+        .filter(r=>exists(r))
+        .filter((r,i,arr)=>arr.findIndex(x=>
+          norm(x.branch)===norm(r.branch) &&
+          ((matriculaKey(x.matricula)&&matriculaKey(x.matricula)===matriculaKey(r.matricula)) || norm(x.name)===norm(r.name))
+        )===i);
       const dateText=v=>{
         if(!v) return '';
         const m=String(v).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -1813,7 +1820,6 @@ function tempoRelativo(data) {
     runOfficialConference();
   }
 
-  document.getElementById('actionValidity').addEventListener('click',beginValidityUpdate);
   document.getElementById('actionConference').addEventListener('click',beginOfficialConference);
   document.getElementById('actionActiveConference').addEventListener('click',beginActiveConference);
   document.getElementById('actionRefresh').addEventListener('click',()=>{
