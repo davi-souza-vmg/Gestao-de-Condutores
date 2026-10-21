@@ -147,14 +147,16 @@ function measureReplacement(item,text){
   return Math.max(2,c.measureText(text||" ").width+1);
 }
 function guessFont(item){let f=(item.fontFamily||"").toLowerCase();if(/times|serif|roman|cambria|georgia/.test(f))return "Times New Roman";if(/courier|mono/.test(f))return "Courier New";return "Arial"}
-function fitPreview(item){const p=item.preview;if(!p)return;const family=guessFont(item);p.style.fontFamily=family;p.style.fontSize=item.fontSize+"px";p.style.fontWeight=item.fontWeight||"400";p.style.fontStyle=item.fontStyle||"normal";const pageEdge=(item.pageWidthPx||0)-8;const availW=Math.max(item.width,pageEdge-item.x);p.style.width=Math.max(availW,2)+"px";p.style.height=Math.max(item.height,2)+"px";p.style.whiteSpace="pre";p.style.overflow="hidden";p.style.lineHeight="1";p.style.transform="scaleX(1)";const natural=Math.max(p.scrollWidth,p.getBoundingClientRect().width);if(natural>availW&&availW>4){p.style.transform=`scaleX(${Math.max(.35,availW/natural)})`}}
+function fitPreview(item){const p=item.preview;if(!p)return;const family=guessFont(item);p.style.fontFamily=family;p.style.fontSize=item.fontSize+"px";p.style.fontWeight=item.fontWeight||"400";p.style.fontStyle=item.fontStyle||"normal";const availW=Math.max(2,measureReplacement(item,item.text));p.style.width=availW+"px";p.style.height=Math.max(item.height,2)+"px";p.style.whiteSpace="pre";p.style.overflow="hidden";p.style.lineHeight="1";p.style.transform="scaleX(1)";const natural=Math.max(p.scrollWidth,p.getBoundingClientRect().width);if(natural>availW&&availW>4){p.style.transform=`scaleX(${Math.max(.35,availW/natural)})`}}
 function showChangedPreview(item){
   removePreview(item);if(!item.changed||item.deleted)return;
   const p=document.createElement("div");p.className="preview-text changed";
   p.style.left=item.x+"px";p.style.top=item.y+"px";p.textContent=item.text;
   const data=currentDoc?.pageData.find(d=>d.n===item.n);
   p.style.backgroundColor=backgroundCss(data,item);
-  p.style.width=Math.max(2,measureReplacement(item,item.text))+"px";
+  // A tarja cobre apenas a região do texto substituído, nunca o restante da linha.
+  const measuredWidth=measureReplacement(item,item.text);
+  p.style.width=Math.max(2,Math.min(Math.max(item.width,measuredWidth),Math.max(item.width,measuredWidth)+1))+"px";
   p.style.height=Math.max(item.height,2)+"px";
   item.preview=p;item.hit.parentElement.appendChild(p);fitPreview(item)
 }
@@ -239,7 +241,8 @@ async function buildPdf(doc){
         const text=item.text||"";
         let size=item.fontSize/sx;
         const targetW=Math.max(2,measureReplacement(item,text)/sx);
-        const patchW=Math.min(Math.max(w,targetW+1/sx),Math.max(w, pdfW-x));
+        // Limita a tarja ao texto antigo ou ao novo texto, sem avançar até a borda da página.
+        const patchW=Math.max(w,targetW+1/sx);
         p.drawRectangle({x,y,width:patchW,height:h,color:bg});
         if(text){
           const measured=font.widthOfTextAtSize(text,size);
