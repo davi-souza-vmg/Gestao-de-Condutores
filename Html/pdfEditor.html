@@ -69,7 +69,7 @@ main{height:calc(100vh - 64px);display:flex;min-width:0}
 </section>
 </main>
 <div class="drop-zone" id="dropZone"><div class="drop-card"><div class="big">📄</div><b>Solte seus PDFs aqui</b><span style="color:#94a3b8">Os arquivos serão abertos no navegador</span></div></div>
-<div class="modal" id="modal"><div class="dialog"><h2>Editar texto</h2><div class="dialog-sub">O texto original é mostrado abaixo para você comparar antes de salvar.</div><div class="field-label">TEXTO DE ORIGEM</div><div class="original-box" id="originalText"></div><div class="field-label">NOVO TEXTO</div><textarea id="textValue"></textarea><div class="row"><button id="cancelModal">Cancelar</button><button id="saveModal" class="primary">Salvar</button></div></div></div>
+<div class="modal" id="modal"><div class="dialog"><h2>Editar texto</h2><div class="dialog-sub">O texto original é mostrado abaixo para comparação. A aparência final depende das fontes e do fundo presentes no PDF.</div><div class="field-label">TEXTO DE ORIGEM</div><div class="original-box" id="originalText"></div><div class="field-label">NOVO TEXTO</div><textarea id="textValue"></textarea><div class="row"><button id="cancelModal">Cancelar</button><button id="saveModal" class="primary">Salvar</button></div></div></div>
 <div class="modal" id="imageModal"><div class="dialog"><div class="alert-icon">🖼️</div><h2>Este PDF não pode ser editado</h2><div class="dialog-sub">O arquivo foi aberto, mas não possui texto editável.</div><div class="alert-text">Este PDF parece ser uma <strong>imagem ou digitalização</strong>. O conteúdo visual existe como imagem, mas não há uma camada de texto que o editor consiga alterar.</div><div class="row"><button id="closeImageModal" class="primary">Entendi</button></div></div></div>
 <script type="module">
 const pdfjsLib=await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs");
@@ -122,9 +122,42 @@ modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("o
 function selectItem(item){if(selected?.hit)selected.hit.classList.remove("selected");selected=item;if(item?.hit)item.hit.classList.add("selected");adding=false;status(`Texto selecionado: “${item.text}”`)}
 function openEditor(item){if(!item)return;originalText.textContent=item.original;textValue.value=item.text;modal.classList.add("open");setTimeout(()=>textValue.focus(),30)}
 function removePreview(item){if(item.preview){item.preview.remove();item.preview=null}}
+function sampleBackground(data,item){
+  const canvas=data?.canvas;
+  if(!canvas)return {r:255,g:255,b:255};
+  const ctx=canvas.getContext("2d",{willReadFrequently:true});
+  const x=Math.max(0,Math.min(canvas.width-1,Math.round(item.x)));
+  const y=Math.max(0,Math.min(canvas.height-1,Math.round(item.y)));
+  const w=Math.max(1,Math.min(canvas.width-x,Math.round(item.width)));
+  const h=Math.max(1,Math.min(canvas.height-y,Math.round(item.height)));
+  const points=[[x-2,y+Math.floor(h/2)],[x+w+2,y+Math.floor(h/2)],[x+Math.floor(w/2),y-2],[x+Math.floor(w/2),y+h+2],[x-2,y-2],[x+w+2,y-2],[x-2,y+h+2],[x+w+2,y+h+2]];
+  const samples=[];
+  for(const [px,py] of points){
+    if(px<0||py<0||px>=canvas.width||py>=canvas.height)continue;
+    try{const d=ctx.getImageData(px,py,1,1).data;samples.push([d[0],d[1],d[2]])}catch{}
+  }
+  if(!samples.length)return {r:255,g:255,b:255};
+  const median=i=>samples.map(v=>v[i]).sort((a,b)=>a-b)[Math.floor(samples.length/2)];
+  return {r:median(0),g:median(1),b:median(2)};
+}
+function backgroundCss(data,item){const c=sampleBackground(data,item);return `rgb(${c.r}, ${c.g}, ${c.b})`}
+function measureReplacement(item,text){
+  const c=document.createElement("canvas").getContext("2d");
+  c.font=`${item.fontStyle||"normal"} ${item.fontWeight||"400"} ${item.fontSize}px ${guessFont(item)}`;
+  return Math.max(2,c.measureText(text||" ").width+1);
+}
 function guessFont(item){let f=(item.fontFamily||"").toLowerCase();if(/times|serif|roman|cambria|georgia/.test(f))return "Times New Roman";if(/courier|mono/.test(f))return "Courier New";return "Arial"}
 function fitPreview(item){const p=item.preview;if(!p)return;const family=guessFont(item);p.style.fontFamily=family;p.style.fontSize=item.fontSize+"px";p.style.fontWeight=item.fontWeight||"400";p.style.fontStyle=item.fontStyle||"normal";const pageEdge=(item.pageWidthPx||0)-8;const availW=Math.max(item.width,pageEdge-item.x);p.style.width=Math.max(availW,2)+"px";p.style.height=Math.max(item.height,2)+"px";p.style.whiteSpace="pre";p.style.overflow="hidden";p.style.lineHeight="1";p.style.transform="scaleX(1)";const natural=Math.max(p.scrollWidth,p.getBoundingClientRect().width);if(natural>availW&&availW>4){p.style.transform=`scaleX(${Math.max(.35,availW/natural)})`}}
-function showChangedPreview(item){removePreview(item);if(!item.changed||item.deleted)return;const p=document.createElement("div");p.className="preview-text changed";p.style.left=item.x+"px";p.style.top=item.y+"px";p.textContent=item.text;item.preview=p;item.hit.parentElement.appendChild(p);fitPreview(item)}
+function showChangedPreview(item){
+  removePreview(item);if(!item.changed||item.deleted)return;
+  const p=document.createElement("div");p.className="preview-text changed";
+  p.style.left=item.x+"px";p.style.top=item.y+"px";p.textContent=item.text;
+  const data=currentDoc?.pageData.find(d=>d.n===item.n);
+  p.style.backgroundColor=backgroundCss(data,item);
+  p.style.width=Math.max(2,measureReplacement(item,item.text))+"px";
+  p.style.height=Math.max(item.height,2)+"px";
+  item.preview=p;item.hit.parentElement.appendChild(p);fitPreview(item)
+}
 
 async function renderAll(){
   if(!currentDoc)return;pagesEl.innerHTML="";currentDoc.pageData=[];selected=null;
@@ -148,7 +181,7 @@ async function renderPage(n){
   }
   // Restore changed/deleted/new state from previous render/history snapshot.
   const prior=currentDoc._renderRestore?.get(n)||[];for(const rec of items){const old=prior.find(i=>i.n===rec.n&&i.index===rec.index);if(old){Object.assign(rec,{text:old.text,x:old.x,y:old.y,width:old.width,height:old.height,fontSize:old.fontSize,changed:old.changed,newItem:old.newItem,deleted:old.deleted,fontFamily:old.fontFamily||rec.fontFamily,fontWeight:old.fontWeight||rec.fontWeight,fontStyle:old.fontStyle||rec.fontStyle});}}
-  const data={n,wrap,overlay,items};currentDoc.pageData.push(data);
+  const data={n,wrap,overlay,items,canvas};currentDoc.pageData.push(data);
   for(const rec of items){if(rec.changed)showChangedPreview(rec);if(rec.deleted)rec.hit.style.display="none"}
   wrap.addEventListener("click",e=>{if(!adding)return;const rect=wrap.getBoundingClientRect();addNewText(data,e.clientX-rect.left,e.clientY-rect.top)});
   wrap.addEventListener("dblclick",()=>{});
@@ -170,9 +203,55 @@ async function renderThumbs(doc){if(!doc||doc!==currentDoc)return;thumbList.inne
 }
 
 async function buildPdf(doc){
-  const {PDFDocument,rgb,StandardFonts}=PDFLib;const out=await PDFDocument.load(doc.bytes);const pages=out.getPages();
-  for(const data of doc.pageData){const p=pages[data.n-1];const pdfW=p.getWidth(),pdfH=p.getHeight();const sx=data.wrap.clientWidth/pdfW,sy=data.wrap.clientHeight/pdfH;for(const item of data.items){const x=item.x/sx,y=pdfH-(item.y+item.height)/sy,w=item.width/sx,h=item.height/sy;if(item.deleted){p.drawRectangle({x,y,width:w,height:h,color:rgb(1,1,1)});continue}if(item.newItem){p.drawText(item.text||"",{x:item.x/sx,y:pdfH-(item.y+item.fontSize)/sy,size:item.fontSize/sx,font:await out.embedFont(StandardFonts.Helvetica),color:rgb(0,0,0)});continue}if(item.changed){const pageEdgePt=(item.pdfPageWidthPt||pdfW)-4;const availW=Math.max(w,pageEdgePt-x);p.drawRectangle({x,y,width:availW,height:h,color:rgb(1,1,1)});const font=await out.embedFont(StandardFonts.Helvetica);const text=item.text||"";let size=item.fontSize/sx;const maxW=availW*.98;if(text){const widthAt1=font.widthOfTextAtSize(text,1);if(widthAt1>0){const fitSize=maxW/widthAt1;if(fitSize<size)size=fitSize}}size=Math.max(size,3);p.drawText(text,{x,y:y+h-size*.95,size,font,color:rgb(0,0,0)})}}}return new Uint8Array(await out.save())}
-
+  const {PDFDocument,rgb,StandardFonts}=PDFLib;
+  const out=await PDFDocument.load(doc.bytes);const pages=out.getPages();
+  const fontCache=new Map();
+  async function chooseFont(item){
+    const family=guessFont(item).toLowerCase();
+    const key=family+"|"+(item.fontWeight||"400")+"|"+(item.fontStyle||"normal");
+    if(fontCache.has(key))return fontCache.get(key);
+    let name=StandardFonts.Helvetica;
+    if(family.includes("times"))name=(item.fontStyle==="italic"?(item.fontWeight==="700"?StandardFonts.TimesRomanBoldItalic:StandardFonts.TimesRomanItalic):(item.fontWeight==="700"?StandardFonts.TimesRomanBold:StandardFonts.TimesRoman));
+    else if(family.includes("courier"))name=(item.fontStyle==="italic"?(item.fontWeight==="700"?StandardFonts.CourierBoldOblique:StandardFonts.CourierOblique):(item.fontWeight==="700"?StandardFonts.CourierBold:StandardFonts.Courier));
+    else name=(item.fontStyle==="italic"?(item.fontWeight==="700"?StandardFonts.HelveticaBoldOblique:StandardFonts.HelveticaOblique):(item.fontWeight==="700"?StandardFonts.HelveticaBold:StandardFonts.Helvetica));
+    const f=await out.embedFont(name);fontCache.set(key,f);return f;
+  }
+  for(const data of doc.pageData){
+    const p=pages[data.n-1],pdfW=p.getWidth(),pdfH=p.getHeight();
+    const sx=data.wrap.clientWidth/pdfW,sy=data.wrap.clientHeight/pdfH;
+    for(const item of data.items){
+      const x=item.x/sx,y=pdfH-(item.y+item.height)/sy;
+      const w=item.width/sx,h=item.height/sy;
+      if(item.deleted){
+        const c=sampleBackground(data,item);
+        p.drawRectangle({x,y,width:w,height:h,color:rgb(c.r/255,c.g/255,c.b/255)});
+        continue;
+      }
+      if(item.newItem){
+        const font=await chooseFont(item);
+        p.drawText(item.text||"",{x:item.x/sx,y:pdfH-(item.y+item.fontSize)/sy,size:item.fontSize/sx,font,color:rgb(0,0,0)});
+        continue;
+      }
+      if(item.changed){
+        const c=sampleBackground(data,item);
+        const bg=rgb(c.r/255,c.g/255,c.b/255);
+        const font=await chooseFont(item);
+        const text=item.text||"";
+        let size=item.fontSize/sx;
+        const targetW=Math.max(2,measureReplacement(item,text)/sx);
+        const patchW=Math.min(Math.max(w,targetW+1/sx),Math.max(w, pdfW-x));
+        p.drawRectangle({x,y,width:patchW,height:h,color:bg});
+        if(text){
+          const measured=font.widthOfTextAtSize(text,size);
+          if(measured>targetW && measured>0)size*=targetW/measured;
+          size=Math.max(3,Math.min(size,item.fontSize/sx));
+          p.drawText(text,{x,y:y+Math.max(0,(h-size)*.35),size,font,color:rgb(0,0,0)});
+        }
+      }
+    }
+  }
+  return new Uint8Array(await out.save());
+}
 downloadBtn.onclick=async()=>{if(!docs.length)return;try{downloadBtn.disabled=true;if(docs.length===1){status("Gerando PDF…");const bytes=await buildPdf(docs[0]);const blob=new Blob([bytes],{type:"application/pdf"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=docs[0].name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);docs[0].dirty=false;renderDocList();status("PDF baixado com sucesso.")}else{status("Gerando ZIP com os PDFs…");const zip=new JSZip();for(const doc of docs){const bytes=await buildPdf(doc);zip.file(doc.name,bytes)}const blob=await zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:6}});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="pdfs-editados.zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);docs.forEach(d=>d.dirty=false);renderDocList();status("ZIP baixado com sucesso.")}}catch(err){console.error(err);status("Erro ao gerar o download.")}finally{updateDownloadUI()}};
 
 document.getElementById("zoomIn").onclick=async()=>{if(!currentDoc)return;currentDoc.scale=Math.min(3,currentDoc.scale+.15);await renderAll()};document.getElementById("zoomOut").onclick=async()=>{if(!currentDoc)return;currentDoc.scale=Math.max(.5,currentDoc.scale-.15);await renderAll()};document.getElementById("resetZoom").onclick=async()=>{if(!currentDoc)return;currentDoc.scale=1.35;await renderAll()};
