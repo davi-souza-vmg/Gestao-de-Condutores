@@ -583,6 +583,44 @@ tr.certidao-consta td{background:rgba(220,38,38,.075)!important}
   .conf-auto-fix:hover{filter:brightness(.97);transform:translateY(-1px)}
   .conf-auto-fix:disabled{cursor:wait}
 </style>
+
+<style id="interface-polish">
+  :root{--radius:16px;--bg:#f2f5fa;--line:#e1e7f0;--navy-950:#0b1730;--navy-900:#102748;--navy-800:#1a3b68;--green:#168663;--amber:#d99119;}
+  body{background:radial-gradient(ellipse at top right,rgba(30,66,120,.055),transparent 38%),var(--bg);}
+  .road{padding-top:38px;padding-bottom:36px;background:linear-gradient(125deg,#09162d 0%,#10294d 58%,#1c477b 100%);}
+  .road-title h1{font-size:clamp(25px,3vw,34px);letter-spacing:-.6px;}
+  .road-title p{color:#c2ccda;line-height:1.6;}
+  .config-card,.panel,.stat,.table-wrap{box-shadow:0 5px 22px rgba(16,39,72,.045);}
+  .config-card{border:1px solid rgba(225,231,240,.9);}
+  .stat{border-radius:16px;padding:18px 17px 15px;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+  .stat:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(16,39,72,.11);}
+  .stat .k{letter-spacing:.65px;font-size:10px;line-height:1.45;min-height:28px;}
+  .stat .v{font-size:clamp(25px,2vw,32px);}
+  .panel{border-radius:16px;padding:22px;border-color:#e7ebf2;}
+  .panel h3{font-size:16px;letter-spacing:-.2px;}
+  .toolbar{padding:13px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(16,39,72,.035);}
+  .search-wrap input[type="text"],select,.field input{min-height:40px;border-color:#dce3ed;transition:border-color .15s,box-shadow .15s;}
+  .search-wrap input[type="text"]:focus,select:focus,.field input:focus{border-color:#5077aa;box-shadow:0 0 0 3px rgba(30,66,120,.09);}
+  .table-wrap{border-radius:15px;border-color:#e2e8f0;}
+  thead th{padding:14px;background:#102441;color:#d1d9e6;}
+  tbody tr{transition:background .12s;}
+  tbody tr:hover{background:#f1f6fd;}
+  td{padding:13px 14px;}
+  .badge{padding:5px 10px;letter-spacing:.1px;}
+  .btn{min-height:39px;transition:transform .12s,box-shadow .15s,background .15s;}
+  .btn-primary{background:linear-gradient(135deg,#17365f,#102441);}
+  .btn-primary:hover{box-shadow:0 7px 18px rgba(15,37,68,.22);}
+  .mcard{border-radius:15px;box-shadow:0 3px 12px rgba(16,39,72,.035);}
+  .mcard:hover{box-shadow:0 7px 18px rgba(16,39,72,.08);}
+  .modal-card{border:1px solid rgba(255,255,255,.6);border-radius:18px;}
+  .modal-head{background:linear-gradient(120deg,#0b1730,#173b68);}
+  .pagination button{padding:9px 15px;transition:all .15s;}
+  .action-fab{border-radius:20px;background:linear-gradient(145deg,#1b477b,#0b1730);}
+  @media(max-width:1100px){.stats{gap:12px}.stat{padding:15px}}
+  @media(max-width:700px){.road{padding:25px 18px 28px}.road-top{gap:18px}.road-status{flex-wrap:wrap}.toolbar{padding:10px}.panel{padding:16px}}
+  @media(prefers-reduced-motion:reduce){.stat,.mcard,.btn,.pagination button{transition:none!important}}
+</style>
+
 </head>
 <body>
 
@@ -2130,7 +2168,7 @@ function tempoRelativo(data) {
     return [cell.v, cell.f].some(value => {
       if(value === true || value === 1) return true;
       const t = String(value ?? '').trim().toUpperCase();
-      return ['TRUE', 'SIM', 'VERDADEIRO', '1', '☑'].includes(t);
+      return ['TRUE', 'SIM', 'VERDADEIRO', '1', '☑', '✓', 'X', 'ENVIADO', 'ENVIADA', 'ENVIADOS', 'ENVIADAS'].includes(t);
     });
   }
 
@@ -2246,8 +2284,8 @@ function tempoRelativo(data) {
           derVal: derValFinal,
           derValEstimado: derValEstimado,
           derDias: isNaN(derDiasCalc) ? null : derDiasCalc,
-          // Só fica como Aguardando DER se já foi enviado e o DER está vencendo,
-          // vencido ou sem cadastro. Enviado, por si só, não significa aguardando.
+          // Se foi enviado ao DER e a validade está vencendo, vencida ou sem cadastro,
+          // mostrar como Aguardando DER. A validade original continua disponível em derDias/derVal.
           derStatus: (enviadoFlag && ['VENCENDO', 'VENCIDO', 'SEM_CADASTRO'].includes(rawDerStatus))
             ? 'AGUARDANDO'
             : rawDerStatus,
