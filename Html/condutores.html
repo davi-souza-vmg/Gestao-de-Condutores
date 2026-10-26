@@ -1803,10 +1803,49 @@ function tempoRelativo(data) {
         const names=[...new Set(group.map(r=>norm(r.name)).filter(Boolean))];
         if(group.length>1 && names.length>1) duplicateMatriculaGroups.push(group);
       });
+      // Comparação aproximada de nomes: tolera pequenos erros de digitação,
+      // mas considera também a filial e as datas disponíveis para reduzir falsos positivos.
+      const editDistance=(a,b)=>{
+        const prev=Array.from({length:b.length+1},(_,i)=>i);
+        for(let i=1;i<=a.length;i++){
+          let diagonal=prev[0]; prev[0]=i;
+          for(let j=1;j<=b.length;j++){
+            const above=prev[j];
+            prev[j]=Math.min(prev[j]+1,prev[j-1]+1,diagonal+(a[i-1]===b[j-1]?0:1));
+            diagonal=above;
+          }
+        }
+        return prev[b.length];
+      };
+      const nameSimilarity=(a,b)=>{
+        const x=norm(a), y=norm(b);
+        if(!x||!y) return 0;
+        if(x===y) return 1;
+        return 1-editDistance(x,y)/Math.max(x.length,y.length);
+      };
       const identityStatus=(entry)=>{
         const name=norm(entry.name), branch=norm(entry.branch), date=normalizeDate(entry.date);
         if(!name) return 'none';
-        const candidates=sys.filter(r=>norm(r.name)===name && (!branch||norm(r.branch)===branch));
+        const sameBranch=sys.filter(r=>!branch||norm(r.branch)===branch);
+        let candidates=sameBranch.filter(r=>norm(r.name)===name);
+        if(!candidates.length){
+          // Erros pequenos, como uma letra final faltando, viram correspondência provável.
+          // Se as duas datas de admissão estiverem preenchidas, elas precisam coincidir.
+          const fuzzy=sameBranch.map(r=>({record:r,score:nameSimilarity(r.name,entry.name)}))
+            .filter(x=>x.score>=0.94 && (!date||!x.record.date||x.record.date===date))
+            .sort((a,b)=>b.score-a.score);
+          if(fuzzy.length){
+            const top=fuzzy[0].score;
+            const best=fuzzy.filter(x=>Math.abs(x.score-top)<0.000001);
+            if(best.length===1){
+              candidates=[best[0].record];
+              addConflict(`Possível correspondência por nome parecido: no relatório consta “${entry.name}” e no sistema “${best[0].record.name}” (${Math.round(best[0].score*100)}% de semelhança)${date&&best[0].record.date?'; data de admissão coincidente':''}. Foi considerado o mesmo cadastro para evitar duplicidade; confira o nome no documento original.`);
+            }else{
+              addConflict(`O nome “${entry.name}” se parece com mais de um cadastro na filial ${entry.branch||'não informada'} (${best.map(x=>x.record.name).join('; ')}). Conferir manualmente antes de registrar.`);
+              return 'conflict';
+            }
+          }
+        }
         if(!candidates.length) {
           // Matrícula coincidente com outro nome é apenas um alerta, jamais uma correspondência.
           const sameMat=sys.filter(r=>entry.matricula && matriculaKey(r.matricula)===matriculaKey(entry.matricula) && (!branch||norm(r.branch)===branch));
