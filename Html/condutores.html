@@ -1829,10 +1829,10 @@ function tempoRelativo(data) {
         const sameBranch=sys.filter(r=>!branch||norm(r.branch)===branch);
         let candidates=sameBranch.filter(r=>norm(r.name)===name);
         if(!candidates.length){
-          // Erros pequenos, como uma letra final faltando, viram correspondência provável.
-          // Se as duas datas de admissão estiverem preenchidas, elas precisam coincidir.
+          // Nomes com mais de 90% de semelhança são considerados a mesma pessoa.
+          // A comparação continua limitada à mesma filial para reduzir falsos positivos.
           const fuzzy=sameBranch.map(r=>({record:r,score:nameSimilarity(r.name,entry.name)}))
-            .filter(x=>x.score>=0.94 && (!date||!x.record.date||x.record.date===date))
+            .filter(x=>x.score>0.90)
             .sort((a,b)=>b.score-a.score);
           if(fuzzy.length){
             const top=fuzzy[0].score;
