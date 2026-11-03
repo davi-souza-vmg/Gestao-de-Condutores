@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de ATFs · VMG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --navy:#102846;--navy-2:#183b63;--navy-3:#244c79;--ink:#1b2635;--muted:#6d7888;
+      --paper:#f4f6f9;--white:#fff;--line:#e3e8ef;--soft:#edf1f6;
+      --green:#18845d;--green-bg:#e6f5ee;--amber:#a96c12;--amber-bg:#fff4df;
+      --red:#bd3942;--red-bg:#fdebed;--blue:#2b5f9e;--blue-bg:#eaf2fc;
+      --shadow:0 10px 30px rgba(16,40,70,.07);--radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased}
+    button,input,select{font:inherit}
+    button{cursor:pointer}
+    .topbar{background:linear-gradient(118deg,#0c2038,#183c63 70%,#244c79);color:#fff;padding:26px clamp(18px,4vw,54px) 24px;position:relative;overflow:hidden}
+    .topbar:after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:repeating-linear-gradient(90deg,#edaa43 0 34px,transparent 34px 60px)}
+    .top-inner{max-width:1500px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap;position:relative;z-index:1}
+    .brand{display:flex;align-items:center;gap:15px}
+    .brand-mark{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.12);display:grid;place-items:center;border:1px solid rgba(255,255,255,.18)}
+    .brand-mark svg{width:25px;height:25px}
+    .eyebrow{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#efb75f;font-weight:700;margin:0 0 5px}
+    h1{font:800 clamp(22px,3vw,30px)/1.12 'Manrope',sans-serif;margin:0;letter-spacing:-.7px}
+    .subtitle{color:#c2cfdd;font-size:13px;margin:6px 0 0}
+    .top-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .connection{display:flex;align-items:center;gap:8px;color:#d2dce7;font-size:12px;margin-right:6px}
+    .connection .dot{width:8px;height:8px;border-radius:50%;background:#46c18a;box-shadow:0 0 0 4px rgba(70,193,138,.13)}
+    .connection.off .dot{background:#f0b54e;box-shadow:0 0 0 4px rgba(240,181,78,.13)}
+    .connection.err .dot{background:#fa737b;box-shadow:0 0 0 4px rgba(250,115,123,.13)}
+    .top-select{border:1px solid rgba(255,255,255,.24);background:rgba(255,255,255,.09);color:#fff;border-radius:10px;padding:10px 12px;min-width:190px;font-size:12px;outline:none}
+    .top-select option{color:var(--ink);background:#fff}
+    .btn{border:0;border-radius:10px;padding:10px 15px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s ease}
+    .btn svg{width:15px;height:15px}
+    .btn-primary{background:#f0ad49;color:#182d47;box-shadow:0 5px 15px rgba(0,0,0,.12)}
+    .btn-primary:hover{background:#ffc36b;transform:translateY(-1px)}
+    .btn-light{background:#fff;color:var(--navy);border:1px solid var(--line)}
+    .btn-light:hover{border-color:#9aacc0;background:#f9fbfd}
+    .btn-soft{background:var(--blue-bg);color:var(--blue)}
+    .btn-soft:hover{background:#dbe9fb}
+    main{max-width:1500px;margin:0 auto;padding:28px clamp(16px,4vw,54px) 60px}
+    .warning{display:none;background:#fff8e8;border:1px solid #f3d8a4;color:#7c581a;border-radius:12px;padding:12px 15px;font-size:12px;margin-bottom:18px;line-height:1.45}
+    .warning.show{display:block}
+    .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:13px;margin-bottom:22px}
+    .stat{background:var(--white);border:1px solid var(--line);border-radius:15px;padding:16px 17px;box-shadow:var(--shadow);min-width:0}
+    .stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .stat-value{font:800 27px/1.1 'Manrope',sans-serif;margin-top:9px;color:var(--navy);font-variant-numeric:tabular-nums}
+    .stat-foot{font-size:10px;color:#929cab;margin-top:6px}
+    .stat.red .stat-value{color:var(--red)}.stat.amber .stat-value{color:var(--amber)}.stat.green .stat-value{color:var(--green)}.stat.blue .stat-value{color:var(--blue)}.stat.orange .stat-value{color:#a85a17}
+    .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 16px}
+    .search{flex:1;min-width:240px;position:relative}
+    .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#8a95a4}
+    .search input{width:100%;border:1px solid var(--line);border-radius:11px;background:#fff;padding:11px 14px 11px 39px;outline:none;font-size:12px;color:var(--ink)}
+    .search input:focus,.filter:focus{border-color:#7d9bbb;box-shadow:0 0 0 3px rgba(43,95,158,.08)}
+    .filter{border:1px solid var(--line);background:#fff;border-radius:11px;padding:11px 13px;font-size:12px;color:#344154;min-width:160px;outline:none}
+    .count-label{color:var(--muted);font-size:11px;white-space:nowrap;margin-left:auto}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) 305px;gap:17px;align-items:start}
+    .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .panel-head{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .panel-title{font:800 14px 'Manrope',sans-serif;color:var(--navy);margin:0}
+    .panel-sub{font-size:11px;color:#8a95a4;margin:4px 0 0}
+    .branch-list{padding:12px}
+    details.branch{border:1px solid var(--line);border-radius:13px;margin-bottom:10px;overflow:hidden;background:#fff}
+    details.branch:last-child{margin-bottom:0}
+    details.branch>summary{list-style:none;cursor:pointer;padding:14px 15px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fafbfd}
+    details.branch>summary::-webkit-details-marker,details.fleet>summary::-webkit-details-marker{display:none}
+    .branch-name{display:flex;align-items:center;gap:10px;min-width:0}
+    .branch-icon{width:31px;height:31px;border-radius:9px;background:#eaf0f7;color:var(--navy);display:grid;place-items:center;flex:none}
+    .branch-name strong{font:800 12px 'Manrope',sans-serif;color:var(--navy);text-transform:uppercase;letter-spacing:.3px}
+    .branch-meta{font-size:10px;color:#8490a0;white-space:nowrap}
+    .branch-right{display:flex;align-items:center;gap:12px;color:#8490a0;font-size:10px;flex:none}
+    .chev{font-size:15px;transition:transform .15s;color:#738195}
+    details.branch[open]>summary .chev{transform:rotate(90deg)}
+    .branch-content{padding:8px 10px 11px}
+    details.fleet{border:1px solid #edf0f4;border-radius:11px;margin:7px 0;overflow:hidden}
+    details.fleet>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;background:#fff}
+    details.fleet[open]>summary{background:#f8fafc;border-bottom:1px solid #edf0f4}
+    .fleet-title{display:flex;align-items:center;gap:8px;font:700 12px 'Manrope',sans-serif;color:#273950}
+    .fleet-number{background:#eef2f7;border-radius:7px;padding:4px 8px;color:#203d60;font-size:11px}
+    .fleet-meta{font-size:10px;color:#8792a1}
+    .client-list{padding:4px 9px 8px}
+    .client-row{display:grid;grid-template-columns:minmax(180px,1.15fr) minmax(180px,1fr) auto auto;gap:10px;align-items:center;padding:11px 7px;border-bottom:1px solid #f0f2f5}
+    .client-row:last-child{border-bottom:0}
+    .client-name{font-size:12px;font-weight:700;color:#26364a;line-height:1.35;overflow-wrap:anywhere}
+    .client-caption{font-size:10px;color:#8b96a4;margin-top:4px}
+    .badges{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+    .badge{display:inline-flex;align-items:center;border-radius:20px;padding:4px 8px;font-size:9px;font-weight:700;white-space:nowrap}
+    .badge.red{background:var(--red-bg);color:var(--red)}.badge.amber{background:var(--amber-bg);color:var(--amber)}
+    .badge.green{background:var(--green-bg);color:var(--green)}.badge.blue{background:var(--blue-bg);color:var(--blue)}
+    .badge.gray{background:#eef1f5;color:#5f6c7c}.badge.orange{background:#fff0e5;color:#a85a17}
+    .row-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+    .btn-detail{border:1px solid #e1e7ee;background:#fff;color:#46617f;border-radius:8px;padding:7px 9px;font-size:10px;font-weight:700;white-space:nowrap}
+    .btn-detail:hover{background:#f4f7fb;border-color:#a8b9cc}
+    .der-toggle{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:10px;font-weight:700;color:#768294}
+    .der-toggle input{appearance:none;width:34px;height:19px;border-radius:20px;background:#d7dde5;position:relative;outline:none;cursor:pointer;transition:.16s;margin:0}
+    .der-toggle input:before{content:"";position:absolute;width:13px;height:13px;background:#fff;left:3px;top:3px;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.18);transition:.16s}
+    .der-toggle input:checked{background:#2a9b70}.der-toggle input:checked:before{left:18px}
+    .der-toggle input:disabled{opacity:.55;cursor:wait}
+    .conflict{grid-column:1/-1;background:#fff7e9;border:1px solid #f1d69f;border-radius:8px;padding:9px 10px;color:#795719;font-size:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .conflict button{border:0;background:#91610f;color:#fff;border-radius:7px;padding:7px 10px;font-size:10px;font-weight:700}
+    .empty{padding:40px 20px;text-align:center;color:#8792a1;font-size:12px}
+    .side-body{padding:8px 16px 14px;max-height:650px;overflow:auto}
+    .client-summary{display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:10px 2px;border-bottom:1px solid #eff2f5;cursor:pointer}
+    .client-summary:hover .cs-name{color:var(--blue)}
+    .cs-name{font-size:11px;font-weight:700;color:#34445a;line-height:1.35}
+    .cs-count{font:800 11px 'Manrope',sans-serif;color:var(--navy)}
+    .cs-meta{grid-column:1/-1;font-size:9px;color:#929cab}
+    .side-note{font-size:10px;color:#8d98a7;line-height:1.5;padding:12px 17px;border-top:1px solid var(--line);background:#fbfcfd}
+    .loader{padding:50px 20px;text-align:center;color:#7f8b9a;font-size:12px}
+    .spinner{width:25px;height:25px;border:3px solid #e3e9f1;border-top-color:#345d88;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(9,24,42,.58);z-index:20;align-items:center;justify-content:center;padding:18px}
+    .modal-backdrop.open{display:flex}
+    .modal{background:#fff;width:min(760px,100%);max-height:88vh;border-radius:16px;overflow:hidden;box-shadow:0 25px 70px rgba(0,0,0,.25);display:flex;flex-direction:column}
+    .modal-head{padding:17px 20px;background:var(--navy);color:#fff;display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+    .modal-head h2{font:800 16px 'Manrope',sans-serif;margin:0}.modal-head p{font-size:11px;color:#c3d0de;margin:5px 0 0}
+    .modal-close{border:0;background:rgba(255,255,255,.13);color:#fff;border-radius:50%;width:29px;height:29px;font-size:16px;line-height:1}
+    .modal-body{padding:17px 20px;overflow:auto}
+    .atf-item{border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:9px}
+    .atf-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:9px}
+    .atf-number{font:800 12px 'Manrope',sans-serif;color:var(--navy)}
+    .atf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+    .atf-field label{display:block;font-size:9px;color:#8b96a5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+    .atf-field span{font-size:11px;color:#334257;font-weight:600;overflow-wrap:anywhere}
+    .modal-foot{padding:12px 20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;color:#8994a2;font-size:10px}
+    .toast{position:fixed;right:22px;bottom:22px;z-index:40;background:#183b63;color:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.2);font-size:12px;opacity:0;transform:translateY(8px);pointer-events:none;transition:.2s}
+    .toast.show{opacity:1;transform:translateY(0)}
+    @media(max-width:1150px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.layout{grid-template-columns:1fr}.side-body{max-height:320px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}}
+    @media(max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.client-row{grid-template-columns:1fr auto;gap:8px}.badges{grid-column:1/-1;grid-row:2}.row-actions{grid-column:2;grid-row:1}.der-toggle{grid-column:1;grid-row:3}.side-body{display:block}.count-label{width:100%;margin-left:0}.toolbar{align-items:stretch}.filter{flex:1;min-width:130px}.top-actions{width:100%}.top-select{flex:1}.connection{width:100%}}
+    @media(max-width:460px){.stats{gap:8px}.stat{padding:13px}.stat-value{font-size:23px}.branch-right .branch-meta{display:none}.atf-grid{grid-template-columns:1fr}.brand-mark{width:40px;height:40px}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="15" rx="3"/><path d="M3 10h18M7 15h.01M17 15h.01M7 19v2m10-2v2M7 7h.01M12 7h.01M17 7h.01"/></svg>
+        </div>
+        <div>
+          <p class="eyebrow">VMG · Gestão de frota</p>
+          <h1>Controle de ATFs</h1>
+          <p class="subtitle">Validade dos documentos e acompanhamento de solicitações ao DER</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div id="connection" class="connection off"><span class="dot"></span><span id="connectionText">Conectando às planilhas…</span></div>
+        <select id="branchFilter" class="top-select" aria-label="Filtrar filial"><option value="TODOS">Todas as filiais</option></select>
+        <button class="btn btn-primary" id="refreshBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg>
+          Atualizar relação
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="warning" class="warning"></div>
+    <section class="stats" id="stats">
+      <div class="stat"><div class="stat-label">Combinações monitoradas</div><div class="stat-value" id="statTotal">—</div><div class="stat-foot">Filial + frota + cliente</div></div>
+      <div class="stat red"><div class="stat-label">Com ATF vencida</div><div class="stat-value" id="statExpired">—</div><div class="stat-foot">Ao menos uma validade vencida</div></div>
+      <div class="stat amber"><div class="stat-label">Vencendo em até 30 dias</div><div class="stat-value" id="statDue">—</div><div class="stat-foot">Considera cada ATF individualmente</div></div>
+      <div class="stat blue"><div class="stat-label">Aguardando DER</div><div class="stat-value" id="statWaiting">—</div><div class="stat-foot">Marcadas como enviadas</div></div>
+      <div class="stat orange"><div class="stat-label">Sem número de ATF</div><div class="stat-value" id="statNoNumber">—</div><div class="stat-foot">Número não informado na relação oficial</div></div>
+      <div class="stat red"><div class="stat-label">Frota fora da relação</div><div class="stat-value" id="statFleetNotFound">—</div><div class="stat-foot">Combinações que não conferem na aba Frota</div></div>
+    </section>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input id="searchInput" type="search" placeholder="Buscar por frota, cliente, placa, número ATF ou rota…" autocomplete="off">
+      </div>
+      <select id="clientFilter" class="filter"><option value="">Todos os clientes</option></select>
+      <select id="statusFilter" class="filter">
+        <option value="">Todos os status</option>
+        <option value="vencido">ATF vencida</option>
+        <option value="vencendo">Vencendo em 30 dias</option>
+        <option value="der">Aguardando DER</option>
+        <option value="regular">Regulares</option>
+        <option value="semNumero">Sem número de ATF</option>
+        <option value="divergencia">Divergência para confirmar</option>
+        <option value="frotaFora">Frota não localizada na relação oficial</option>
+      </select>
+      <span id="resultCount" class="count-label">Carregando…</span>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2 class="panel-title">Frotas por filial</h2><p class="panel-sub">Abra uma filial e uma frota para consultar os clientes e marcar o envio ao DER.</p></div>
+          <span id="lastSync" class="panel-sub">—</span>
+        </div>
+        <div id="branchList" class="branch-list"><div class="loader"><div class="spinner"></div>Lendo a relação oficial e sincronizando o controle…</div></div>
+      </section>
+
+      <aside class="panel">
+        <div class="panel-head"><div><h2 class="panel-title">Resumo por cliente</h2><p class="panel-sub">Clique em um cliente para filtrar a lista.</p></div></div>
+        <div id="clientSummary" class="side-body"><div class="empty">Aguardando dados…</div></div>
+        <div class="side-note">Os totais contam combinações de filial, frota e cliente. As ATFs e rotas de cada combinação aparecem nos detalhes.</div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="detailModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head"><div><h2 id="modalTitle">Detalhes da combinação</h2><p id="modalSubtitle"></p></div><button id="modalClose" class="modal-close" type="button" aria-label="Fechar">×</button></div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-foot"><span>Dados consultados na aba ATFs da relação oficial.</span><button class="btn btn-light" id="modalCloseBottom" type="button">Fechar</button></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    const state = { data: null, groups: [], selectedKey: null, busy: false };
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const fmtNum = n => new Intl.NumberFormat('pt-BR').format(Number(n || 0));
+
+    function setConnection(kind, text) {
+      $('connection').className = 'connection ' + (kind || '');
+      $('connectionText').textContent = text;
+    }
+    function toast(message) {
+      const el = $('toast'); el.textContent = message; el.classList.add('show');
+      clearTimeout(toast._timer); toast._timer = setTimeout(() => el.classList.remove('show'), 2800);
+    }
+    function callServer(method, args, success, failure) {
+      if (!window.google || !google.script || !google.script.run) {
+        failure(new Error('Esta página precisa ser aberta pelo endereço do Aplicativo da Web do Apps Script.'));
+        return;
+      }
+      let runner = google.script.run.withSuccessHandler(success).withFailureHandler(failure);
+      runner[method].apply(runner, args || []);
+    }
+    function loadData(showLoader) {
+      if (state.busy) return;
+      state.busy = true;
+      $('refreshBtn').disabled = true;
+      $('refreshBtn').innerHTML = '<span class="spinner" style="width:13px;height:13px;border-width:2px;margin:0"></span> Atualizando…';
+      if (showLoader) $('branchList').innerHTML = '<div class="loader"><div class="spinner"></div>Atualizando a relação oficial…</div>';
+      setConnection('', 'Sincronizando planilhas…');
+      callServer('getDashboardData', [], data => {
+        state.busy = false; $('refreshBtn').disabled = false;
+        $('refreshBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/></svg> Atualizar relação';
+        state.data = data; state.groups = data.groups || [];
+        try { localStorage.setItem('atfs_dashboard_cache', JSON.stringify(data)); } catch(e) {}
+        render(data);
+        if (data.sourceStale) setConnection('err', 'Exibindo última leitura válida');
+        else setConnection('', 'Planilhas sincronizadas');
+      }, err => {
+        state.busy = false; $('refreshBtn').disabled = false;
+        $('refreshBtn').textContent = 'Atualizar relação';
+        let cached = null;
+        try { cached = JSON.parse(localStorage.getItem('atfs_dashboard_cache') || 'null'); } catch(e) {}
+        if (cached) {
+          state.data = cached; state.groups = cached.groups || []; render(cached);
+          showWarning('Não foi possível consultar as planilhas agora. Exibindo a última leitura salva neste navegador. ' + (err.message || ''));
+          setConnection('err', 'Dados locais · desatualizados');
+        } else {
+          $('branchList').innerHTML = '<div class="empty">Não foi possível carregar o painel.<br><br>' + esc(err.message || err) + '</div>';
+          setConnection('err', 'Falha na conexão');
+        }
+      });
+    }
+
+    function showWarning(message) { $('warning').textContent = message; $('warning').classList.add('show'); }
+    function clearWarning() { $('warning').textContent = ''; $('warning').classList.remove('show'); }
+
+    function render(data) {
+      if (data.warning) showWarning(data.warning); else clearWarning();
+      $('statTotal').textContent = fmtNum(data.summary?.total);
+      $('statExpired').textContent = fmtNum(data.summary?.expired);
+      $('statDue').textContent = fmtNum(data.summary?.due);
+      $('statWaiting').textContent = fmtNum(data.summary?.waitingDer);
+      $('statNoNumber').textContent = fmtNum(data.summary?.noAtfNumber);
+      $('statFleetNotFound').textContent = fmtNum(data.summary?.fleetNotFound);
+      $('lastSync').textContent = data.lastSync ? 'Última leitura: ' + formatTimestamp(data.lastSync) : 'Aguardando primeira leitura';
+      populateFilters(data);
+      renderBranches();
+      renderClientSummary(data.clients || []);
+      $('resultCount').textContent = fmtNum(filteredGroups().length) + ' combinações';
+    }
+
+    function formatTimestamp(iso) {
+      const d = new Date(iso);
+      return isNaN(d.getTime()) ? iso : d.toLocaleString('pt-BR', {dateStyle:'short',timeStyle:'short'});
+    }
+    function populateFilters(data) {
+      const branch = $('branchFilter');
+      const currentBranch = safeStorageGet('atfs_last_branch') || branch.value || 'TODOS';
+      const branches = (data.branches || []).map(b => b.name);
+      branch.innerHTML = '<option value="TODOS">Todas as filiais</option>' + branches.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('');
+      branch.value = branches.includes(currentBranch) ? currentBranch : 'TODOS';
+      const client = $('clientFilter');
+      const currentClient = client.value;
+      client.innerHTML = '<option value="">Todos os clientes</option>' + (data.clients || []).map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+      if ((data.clients || []).some(c => c.name === currentClient)) client.value = currentClient;
+    }
+    function safeStorageGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+
+    function filteredGroups() {
+      const branch = $('branchFilter').value || 'TODOS';
+      const client = $('clientFilter').value;
+      const status = $('statusFilter').value;
+      const q = $('searchInput').value.trim().toLocaleLowerCase('pt-BR');
+      return state.groups.filter(g => {
+        if (branch !== 'TODOS' && g.branch !== branch) return false;
+        if (client && g.client !== client) return false;
+        const c = g.counts || {};
+        if (status === 'vencido' && !c.expired) return false;
+        if (status === 'vencendo' && !c.due) return false;
+        if (status === 'der' && g.statusDer !== 'Enviado') return false;
+        if (status === 'regular' && (c.expired || c.due || c.unknown || c.noNumber)) return false;
+        if (status === 'semNumero' && !c.noNumber) return false;
+        if (status === 'divergencia' && !g.discrepancy) return false;
+        if (status === 'frotaFora' && g.fleetFound !== false) return false;
+        if (q) {
+          const haystack = [g.branch,g.fleet,g.client,g.plate,(g.atfIds || []).join(' '),(g.atfs || []).map(a => a.route).join(' ')].join(' ').toLocaleLowerCase('pt-BR');
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      }).sort(sortGroups);
+    }
+    function sortGroups(a,b) {
+      const rank = g => (g.counts?.expired ? 0 : g.statusDer === 'Enviado' ? 1 : g.counts?.due ? 2 : 3);
+      const r = rank(a) - rank(b); if (r) return r;
+      const f = String(a.fleet).localeCompare(String(b.fleet),'pt-BR',{numeric:true});
+      return f || String(a.client).localeCompare(String(b.client),'pt-BR');
+    }
+
+    function renderBranches() {
+      const groups = filteredGroups();
+      if (!groups.length) { $('branchList').innerHTML = '<div class="empty">Nenhuma combinação encontrada com os filtros atuais.</div>'; return; }
+      const byBranch = {};
+      groups.forEach(g => { (byBranch[g.branch] ||= []).push(g); });
+      const selected = $('branchFilter').value || 'TODOS';
+      const html = Object.keys(byBranch).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(branch => {
+        const items = byBranch[branch];
+        const fleets = {};
+        items.forEach(g => (fleets[g.fleet] ||= []).push(g));
+        const fleetKeys = Object.keys(fleets).sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+        const expired = items.filter(g=>g.counts?.expired).length;
+        const waiting = items.filter(g=>g.statusDer==='Enviado').length;
+        const branchBody = fleetKeys.map(fleet => {
+          const fleetItems = fleets[fleet].sort(sortGroups);
+          const atfCount = fleetItems.reduce((n,g)=>n+(g.atfs||[]).length,0);
+          return `<details class="fleet"><summary><span class="fleet-title"><span class="fleet-number">Frota ${esc(fleet)}</span></span><span class="fleet-meta">${fleetItems.length} cliente(s) · ${atfCount} registro(s) ATF <span class="chev">›</span></span></summary><div class="client-list">${fleetItems.map(renderClientRow).join('')}</div></details>`;
+        }).join('');
+        return `<details class="branch" ${selected !== 'TODOS' ? 'open' : ''}><summary><span class="branch-name"><span class="branch-icon">⌖</span><span><strong>${esc(branch)}</strong><span class="branch-meta">${items.length} combinação(ões)</span></span></span><span class="branch-right"><span>${fleetKeys.length} frota(s)</span>${expired ? `<span class="badge red">${expired} vencida(s)</span>` : ''}${waiting ? `<span class="badge blue">${waiting} DER</span>` : ''}<span class="chev">›</span></span></summary><div class="branch-content">${branchBody}</div></details>`;
+      }).join('');
+      $('branchList').innerHTML = html;
+    }
+
+    function renderClientRow(g) {
+      const c = g.counts || {};
+      const badges = [];
+      if (c.expired) badges.push(`<span class="badge red">${c.expired} vencida(s)</span>`);
+      if (c.due) badges.push(`<span class="badge amber">${c.due} vencendo</span>`);
+      if (c.regular) badges.push(`<span class="badge green">${c.regular} regular(es)</span>`);
+      if (c.noNumber) badges.push(`<span class="badge orange">${c.noNumber} sem nº ATF</span>`);
+      if (c.unknown) badges.push(`<span class="badge gray">${c.unknown} sem validade</span>`);
+      if (!badges.length) badges.push('<span class="badge gray">Sem dados de validade</span>');
+      if (g.statusDer === 'Enviado') badges.push('<span class="badge blue">Aguardando DER</span>');
+      if (g.fleetFound === false) badges.push('<span class="badge red">Frota fora da relação oficial</span>');
+      if (g.discrepancy) badges.push('<span class="badge orange">Conferir divergência</span>');
+      const summary = `${c.total || 0} ATF(s) na relação oficial`;
+      const conflict = g.discrepancy ? `<div class="conflict"><span>${esc(g.discrepancy.message || 'Existe uma divergência que precisa de confirmação.')}</span><button type="button" data-confirm="${esc(g.key)}">Confirmar alteração</button></div>` : '';
+      return `<div class="client-row"><div><div class="client-name">${esc(g.client)}</div><div class="client-caption">${summary}</div></div><div class="badges">${badges.join('')}</div><div class="row-actions"><button class="btn-detail" type="button" data-detail="${esc(g.key)}">Ver ATFs</button></div><label class="der-toggle"><input type="checkbox" data-der="${esc(g.key)}" ${g.statusDer === 'Enviado' ? 'checked' : ''}><span>${g.statusDer === 'Enviado' ? 'Enviado' : 'Pendente'}</span></label>${conflict}</div>`;
+    }
+
+    function renderClientSummary(clients) {
+      if (!clients.length) { $('clientSummary').innerHTML = '<div class="empty">Nenhum cliente encontrado.</div>'; return; }
+      $('clientSummary').innerHTML = clients.map(c => `<div class="client-summary" data-client="${esc(c.name)}"><span class="cs-name">${esc(c.name)}</span><span class="cs-count">${fmtNum(c.combinations)}</span><span class="cs-meta">${c.expired} combinação(ões) com vencimento · ${c.waiting} aguardando DER</span></div>`).join('');
+    }
+
+    function openDetails(key) {
+      const g = state.groups.find(x => x.key === key); if (!g) return;
+      state.selectedKey = key;
+      $('modalTitle').textContent = `Frota ${g.fleet} · ${g.client}`;
+      $('modalSubtitle').textContent = `${g.branch} · ${g.plate ? 'Placa ' + g.plate + ' · ' : ''}${g.atfs.length} registro(s) na aba ATFs · Status DER: ${g.statusDer}`;
+      const details = (g.atfs || []).map(a => {
+        const stateLabel = ({vencido:'Vencida',vencendo:'Vencendo',regular:'Regular','sem-validade':'Sem validade'})[a.state] || 'Sem classificação';
+        const stateClass = ({vencido:'red',vencendo:'amber',regular:'green','sem-validade':'gray'})[a.state] || 'gray';
+        const number = a.atfNumber ? esc(a.atfNumber) : 'Sem número na relação oficial';
+        const days = a.daysLeft === null || a.daysLeft === undefined ? 'Não informado' : (a.daysLeft < 0 ? `${Math.abs(a.daysLeft)} dia(s) vencida` : `${a.daysLeft} dia(s) restante(s)`);
+        return `<div class="atf-item"><div class="atf-top"><span class="atf-number">ATF ${number}</span><span class="badge ${stateClass}">${stateLabel}</span></div><div class="atf-grid"><div class="atf-field"><label>Tipo de ATF</label><span>${esc(a.type || 'Não informado')}</span></div><div class="atf-field"><label>Data de emissão</label><span>${esc(a.emission || 'Não informada')}</span></div><div class="atf-field"><label>Período de validade</label><span>${esc(a.validity || 'Não informado')}</span></div><div class="atf-field"><label>Prazo</label><span>${esc(days)}</span></div><div class="atf-field" style="grid-column:1/-1"><label>Origem x destino</label><span>${esc(a.route || 'Não informado')}</span></div></div></div>`;
+      }).join('');
+      $('modalBody').innerHTML = details || '<div class="empty">Nenhuma ATF detalhada nesta combinação.</div>';
+      $('detailModal').classList.add('open');
+    }
+
+    function saveDer(key, checked, input) {
+      if (input) input.disabled = true;
+      const status = checked ? 'Enviado' : 'Pendente';
+      callServer('setStatusDer', [key, status], result => {
+        if (input) { input.disabled = false; input.checked = checked; }
+        const g = state.groups.find(x=>x.key===key); if (g) g.statusDer = status;
+        loadData(false); toast(checked ? 'Marcado como enviado ao DER.' : 'Status voltou para Pendente.');
+      }, err => {
+        if (input) { input.disabled = false; input.checked = !checked; }
+        toast('Não foi possível salvar: ' + (err.message || err));
+      });
+    }
+    function confirmConflict(key, button) {
+      if (button) { button.disabled = true; button.textContent = 'Confirmando…'; }
+      callServer('confirmarDivergencia', [key], result => {
+        toast(result.message || 'Divergência confirmada.');
+        loadData(false);
+      }, err => {
+        if (button) { button.disabled = false; button.textContent = 'Confirmar alteração'; }
+        toast('Não foi possível confirmar: ' + (err.message || err));
+      });
+    }
+
+    $('branchFilter').addEventListener('change', () => {
+      try { localStorage.setItem('atfs_last_branch', $('branchFilter').value); } catch(e) {}
+      renderBranches(); $('resultCount').textContent = fmtNum(filteredGroups().length) + ' combinações';
+    });
+    ['clientFilter','statusFilter'].forEach(id => $(id).addEventListener('change', () => {
+      renderBranches(); $('resultCount').textContent = fmtNum(filteredGroups().length) + ' combinações';
+    }));
+    $('searchInput').addEventListener('input', () => {
+      renderBranches(); $('resultCount').textContent = fmtNum(filteredGroups().length) + ' combinações';
+    });
+    $('refreshBtn').addEventListener('click', () => loadData(true));
+    $('branchList').addEventListener('click', event => {
+      const detail = event.target.closest('[data-detail]');
+      const confirm = event.target.closest('[data-confirm]');
+      if (detail) { openDetails(detail.dataset.detail); return; }
+      if (confirm) { confirmConflict(confirm.dataset.confirm, confirm); return; }
+    });
+    $('branchList').addEventListener('change', event => {
+      const input = event.target.closest('[data-der]');
+      if (input) saveDer(input.dataset.der, input.checked, input);
+    });
+    $('clientSummary').addEventListener('click', event => {
+      const item = event.target.closest('[data-client]');
+      if (!item) return;
+      $('clientFilter').value = item.dataset.client;
+      renderBranches(); $('resultCount').textContent = fmtNum(filteredGroups().length) + ' combinações';
+    });
+    function closeModal() { $('detailModal').classList.remove('open'); }
+    $('modalClose').addEventListener('click', closeModal);
+    $('modalCloseBottom').addEventListener('click', closeModal);
+    $('detailModal').addEventListener('click', e => { if (e.target === $('detailModal')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    loadData(true);
+  </script>
+</body>
+</html>
