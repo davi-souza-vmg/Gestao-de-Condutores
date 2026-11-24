@@ -86,31 +86,6 @@
   }
   .card:hover .go{color:var(--amber);}
 
-  /* Ferramentas: linhas compactas, visual mais leve/utilitário */
-  .tools{
-    background:var(--card);border-radius:var(--radius);border:1px solid var(--line);
-    box-shadow:0 8px 22px rgba(15,37,68,.05);
-    overflow:hidden;
-  }
-  .tool-row{
-    display:flex;align-items:center;gap:16px;
-    padding:18px 24px;
-    text-decoration:none;color:inherit;
-    border-top:1px solid var(--line);
-    transition:background .12s ease;
-  }
-  .tool-row:first-child{border-top:none;}
-  .tool-row:hover{background:#f8fafc;}
-  .tool-row .icon{
-    width:38px;height:38px;border-radius:10px;flex:none;
-    display:flex;align-items:center;justify-content:center;font-size:18px;
-    background:#fbe9e4;
-  }
-  .tool-row .text h3{font-family:var(--font-display);font-size:15px;margin:0 0 3px;}
-  .tool-row .text p{margin:0;color:var(--slate-600);font-size:13px;}
-  .tool-row .arrow{margin-left:auto;color:var(--slate-400);font-size:16px;flex:none;transition:transform .12s ease, color .12s ease;}
-  .tool-row:hover .arrow{color:var(--navy-700);transform:translateX(3px);}
-
   .foot{max-width:960px;margin:0 auto 40px;padding:0 40px;text-align:center;color:var(--slate-400);font-size:12.5px;}
 
   @media (max-width:700px){
@@ -118,67 +93,4 @@
     .road-title h1{font-size:27px;}
     main{padding:40px 18px 56px;}
     .cards{grid-template-columns:1fr;}
-    .tool-row{padding:15px 18px;}
   }
-</style>
-</head>
-<body>
-
-<header class="road">
-  <div class="road-title">
-    <span class="eyebrow">Viação Minas Gerais</span>
-    <h1>Painéis de Gestão</h1>
-    <p>Escolha o painel ou a ferramenta que você quer acessar</p>
-  </div>
-</header>
-
-<main>
-  <section class="section">
-    <div class="section-head">
-      <h2>Painéis</h2>
-      <span>Acompanhamento e gestão</span>
-    </div>
-    <div class="cards">
-      <a class="card condutores" href="Html/condutores.html">
-        <div class="icon">🪪</div>
-        <h3>Painel de Condutores</h3>
-        <p>Consulte a situação cadastral dos motoristas no DER, acompanhe o status por filial, monitore pendências de documentos e verifique infrações por condutor.</p>
-        <span class="go">Acessar →</span>
-      </a>
-      <a class="card frota" href="https://script.google.com/macros/s/AKfycbxj_MdUDnqTWcmNE_29tKHVhPkDki_H3fagSf1rly337-DyzLWxAVnOIjIxiPoe2FPK/exec">
-        <div class="icon">🚌</div>
-        <h3>Painel da Frota (ATFs)</h3>
-        <p>Acompanhe a situação de todas as Autorizações de Tráfego (ATFs) emitidas, verifique os períodos de validade e consulte os clientes vinculados a cada frota.</p>
-        <span class="go">Acessar →</span>
-      </a>
-      <a class="card multas" href="Html/frota_multas_contagem.html">
-        <div class="icon">🚨</div>
-        <h3>Conferência de Multas</h3>
-        <p>Consulte e acompanhe o lançamento, relatórios e conferências de multas e infrações da frota em Contagem.</p>
-        <span class="go">Acessar →</span>
-      </a>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="section-head">
-      <h2>Ferramentas</h2>
-      <span>Utilitários avulsos</span>
-    </div>
-    <div class="tools">
-      <a class="tool-row" href="Html/pdfEditor.html">
-        <div class="icon">📄</div>
-        <div class="text">
-          <h3>Editor de PDF</h3>
-          <p>Edite, preencha e ajuste documentos em PDF direto pelo navegador, sem instalar nada.</p>
-        </div>
-        <span class="arrow">→</span>
-      </a>
-    </div>
-  </section>
-</main>
-
-<div class="foot">Gestão de Frota VMG</div>
-
-</body>
-</html>
