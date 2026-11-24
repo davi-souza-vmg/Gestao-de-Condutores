@@ -78,8 +78,8 @@
   #vmg-executivo .ex-filters select{padding:9px 8px;font-size:10px;background:var(--ex-paper);color:var(--ex-ink);border:1px solid var(--ex-line);border-radius:6px;max-width:100%;}
   #vmg-executivo .ex-table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:11px;}
   #vmg-executivo .ex-table th{text-align:left;font-weight:500;color:var(--ex-muted);background:var(--ex-soft);border-top:1px solid var(--ex-line);border-bottom:1px solid var(--ex-line);padding:11px 13px;}
-  #vmg-executivo .ex-table th:nth-child(1){width:42%;}
-  #vmg-executivo .ex-table th:nth-child(2),#vmg-executivo .ex-table th:nth-child(3){width:14%;}
+  #vmg-executivo .ex-table th:nth-child(1){width:64%;}
+  #vmg-executivo .ex-table th:nth-child(2),#vmg-executivo .ex-table th:nth-child(3){width:18%;}
   #vmg-executivo .ex-table th:nth-child(4){width:30%;}
   #vmg-executivo .ex-table td{padding:var(--ex-rowpad,15px) 13px;vertical-align:middle;border-bottom:1px solid var(--ex-line);overflow-wrap:anywhere;}
   #vmg-executivo .ex-name{border:0;padding:0;background:transparent;color:var(--ex-ink);text-align:left;font-size:12px;font-weight:550;line-height:1.45;}
@@ -196,7 +196,7 @@
   #vmg-executivo .ex-donut{background:conic-gradient(var(--ex-green) 0 71.02397%,var(--ex-amber) 71.02397% 79.30283%,var(--ex-red) 79.30283% 84.53159%,var(--ex-blue) 84.53159% 94.98911%,var(--ex-unregistered) 94.98911% 100%);}
   #vmg-executivo .ex-report-header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px;}
   #vmg-executivo .ex-report-header p{font-size:12px;color:var(--ex-muted);margin:9px 0 0;}
-  #vmg-executivo .ex-report-builder{display:grid;grid-template-columns:235px minmax(0,1fr);gap:20px;align-items:start;}
+  #vmg-executivo .ex-report-builder{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start;}
   #vmg-executivo .ex-report-settings{padding:19px 17px;background:var(--ex-paper);border:1px solid var(--ex-line);border-radius:11px;}
   #vmg-executivo .ex-report-settings h2{font-size:12px;margin:0 0 13px;}
   #vmg-executivo .ex-setting-section+.ex-setting-section{margin-top:20px;padding-top:18px;border-top:1px solid var(--ex-line);}
@@ -212,9 +212,9 @@
   #vmg-executivo .ex-check-option input{accent-color:var(--ex-navy);margin:2px 0 0;flex:none;}
   #vmg-executivo .ex-setting-note{font-size:10px;color:var(--ex-muted);margin:10px 0 0;line-height:1.6;}
   #vmg-executivo .ex-report-selection{margin-top:14px;padding-top:12px;border-top:1px solid var(--ex-line);}
-  #vmg-executivo .ex-report-selection label{display:flex;align-items:start;gap:7px;padding:7px 0;font-size:10px;}
-  #vmg-executivo .ex-report-selection small{display:block;font-size:10px;color:var(--ex-muted);margin-top:2px;}
-  #vmg-executivo .ex-report-selection input{accent-color:var(--ex-navy);margin-top:3px;flex:none;}
+  #vmg-executivo .ex-report-manual-list label{display:flex;align-items:start;gap:7px;padding:7px 0;font-size:10px;}
+  #vmg-executivo .ex-report-manual-list small{display:block;font-size:10px;color:var(--ex-muted);margin-top:2px;}
+  #vmg-executivo .ex-report-manual-list input{accent-color:var(--ex-navy);margin-top:3px;flex:none;}
   #vmg-executivo .ex-report-select-actions{display:flex;gap:10px;font-size:10px;}
   #vmg-executivo .ex-text-button{background:none;border:0;color:var(--ex-blue);padding:0;font:inherit;}
   #vmg-executivo .ex-report-preview-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;}
@@ -301,29 +301,42 @@
   @media(max-width:360px){#vmg-executivo .ex-preview-label{font-size:10px;}#vmg-executivo .ex-company{display:none;}#vmg-executivo .ex-der-layout{gap:15px;}#vmg-executivo .ex-donut{width:90px;height:90px;}#vmg-executivo .ex-filters select{flex-basis:45%;}}
   @media(max-width:700px){#vmg-executivo .ex-table td:nth-child(2){display:block;}#vmg-executivo .ex-table td:nth-child(2):before{font-size:10px;color:var(--ex-muted);margin-right:7px;content:'DER';}#vmg-executivo .ex-table td:nth-child(3):before{content:'CNH';}#vmg-executivo .ex-table td:nth-child(4){grid-column:1/-1;border-top:1px solid var(--ex-line);padding-top:11px;}#vmg-executivo .ex-table td:nth-child(4):before{content:none;}#vmg-executivo .ex-row-vacation,#vmg-executivo .ex-row-away{box-shadow:inset 3px 0 var(--ex-gold);}#vmg-executivo .ex-row-away{box-shadow:inset 3px 0 var(--ex-away);}#vmg-executivo .ex-row-vacation td:first-child,#vmg-executivo .ex-row-away td:first-child{box-shadow:none;}#vmg-executivo .ex-person-sub{margin-top:6px;}}
   @media(max-width:700px){#vmg-executivo .ex-filters select{flex-basis:calc(50% - 4px);min-width:calc(50% - 4px);font-size:11px;min-height:38px;}}
+  #vmg-executivo .ex-bar-row{width:100%;border:1px solid transparent;border-radius:6px;padding:8px 7px;background:transparent;text-align:left;cursor:pointer;font-family:inherit;}
+  #vmg-executivo .ex-bar-row:hover,#vmg-executivo .ex-bar-row[aria-pressed="true"]{background:var(--ex-blue-bg);border-color:var(--ex-line);color:var(--ex-ink);}
+  #vmg-executivo .ex-bar-list{gap:4px;}
+  #vmg-executivo .ex-report-statuses{border:0;padding:0;margin:0;min-width:0;}
+  #vmg-executivo .ex-report-statuses legend{font-size:11px;color:var(--ex-muted);margin-bottom:4px;}
+  #vmg-executivo .ex-report-statuses label{display:flex;gap:8px;align-items:center;font-size:11px;padding:5px 0;}
+  #vmg-executivo .ex-report-statuses input{accent-color:var(--ex-navy);}
+  #vmg-executivo .ex-report-settings .ex-setting-fields{margin-top:15px;}
+  #vmg-executivo .ex-report-settings .ex-setting-fields{grid-template-columns:1fr;}
+  #vmg-executivo .ex-report-search-label{margin-bottom:12px;}
+  #vmg-executivo .ex-report-select-actions{justify-content:space-between;}
+  #vmg-executivo .ex-report-manual-list{max-height:340px;overflow:auto;overscroll-behavior:contain;margin-top:10px;scrollbar-width:thin;}
+  #vmg-executivo .ex-report-manual-list label{cursor:pointer;border-radius:4px;padding:8px 4px;}
+  #vmg-executivo .ex-report-manual-list label:has(input:checked){background:var(--ex-blue-bg);}
 </style>
 <div id="vmg-executivo">
   <div class="ex-app" aria-label="Executivo refinado — painel de condutores">
     <header class="ex-header"><div class="ex-brand"><span class="ex-monogram">VMG</span><div class="ex-company">Viação Minas Gerais<span>Gestão de condutores</span></div></div><div class="ex-header-controls"><span class="ex-preview-label" id="dataStatus" role="status">Carregando dados…</span><button type="button" class="ex-button" data-refresh aria-label="Atualizar dados"><i data-lucide="refresh-cw" aria-hidden="true"></i>Atualizar</button><a class="ex-button" href="../index.html" aria-label="Voltar aos painéis">Painéis</a></div></header>
     <div class="ex-layout">
-      <aside class="ex-sidebar" aria-label="Navegação do painel"><div class="ex-nav-label">GESTÃO</div><button type="button" class="ex-nav" data-view="dashboard" aria-pressed="true"><i data-lucide="users-round" aria-hidden="true"></i><span>Condutores</span></button><button type="button" class="ex-nav" data-view="report" aria-pressed="false"><i data-lucide="file-text" aria-hidden="true"></i><span>Relatórios</span></button><button type="button" class="ex-nav" data-quick><i data-lucide="zap" aria-hidden="true"></i><span>Ações rápidas</span></button><div class="ex-sidebar-foot">Gestão de Frota<br>Viação Minas Gerais</div></aside>
       <main class="ex-main"><div class="ex-data-alert" role="status" hidden></div>
         <div class="ex-pagehead"><div><div class="ex-breadcrumb">Gestão / Condutores</div><h1>Condutores</h1></div><div class="ex-actions"><button type="button" class="ex-button" data-quick><i data-lucide="zap" aria-hidden="true"></i>Ações rápidas</button><button type="button" class="ex-button primary" data-view="report"><i data-lucide="download" aria-hidden="true"></i>Exportar relatório</button></div></div>
         <div class="ex-dashboard">
           <div class="ex-metrics"><div class="ex-metric"><div class="ex-metric-label">Total de condutores<i data-lucide="users-round" aria-hidden="true"></i></div><div class="ex-number" id="stTotal">0</div><div class="ex-context">Carregando filiais…</div></div><div class="ex-metric"><div class="ex-metric-label">CNH ativa<i data-lucide="contact-round" aria-hidden="true"></i></div><div class="ex-number" id="stCnhAtivo">0</div><div class="ex-context"></div></div></div>
           <div class="ex-analytics">
-            <section class="ex-panel"><div class="ex-sectionhead"><h2>Condutores por filial</h2><span>Distribuição por unidade</span></div><div class="ex-bar-list" role="img" aria-label="Carregando filiais"><p class="ex-result-note">Carregando filiais…</p></div></section>
+            <section class="ex-panel"><div class="ex-sectionhead"><h2>Condutores por filial</h2><span>Clique para filtrar</span></div><div class="ex-bar-list" role="group" aria-label="Carregando filiais"><p class="ex-result-note">Carregando filiais…</p></div></section>
             <section class="ex-panel"><div class="ex-sectionhead"><h2>Situação DER</h2><span>Filtre pela situação</span></div><div class="ex-der-layout"><div class="ex-donut" style="background:var(--ex-line);" role="img" aria-label="Carregando situação DER"><span>DER</span></div><div class="ex-legend" aria-label="Filtrar por situação DER"><button type="button" data-status="Ativo" aria-pressed="false"><span class="ex-dot" style="color:var(--ex-green)"></span>Ativo<b>0</b></button><button type="button" data-status="Vencendo" aria-pressed="false"><span class="ex-dot" style="color:var(--ex-amber)"></span>Vencendo<b>0</b></button><button type="button" data-status="Vencido" aria-pressed="false"><span class="ex-dot" style="color:var(--ex-red)"></span>Vencido<b>0</b></button><button type="button" data-status="Aguardando" aria-pressed="false"><span class="ex-dot" style="color:var(--ex-blue)"></span>Aguardando<b>0</b></button><button type="button" data-status="Sem cadastro" aria-pressed="false"><span class="ex-dot" style="color:var(--ex-unregistered)"></span>Sem cadastro<b>0</b></button></div></div><p class="ex-panel-note">Motoristas afastados não entram nesta análise do DER.</p></section>
           </div>
-          <section class="ex-register"><div class="ex-registerhead"><h2>Lista de condutores</h2><span class="ex-count" aria-live="polite">Carregando condutores…</span></div><div class="ex-filters"><label class="ex-search-wrap"><i data-lucide="search" aria-hidden="true"></i><input type="search" class="ex-search" aria-label="Buscar por nome, matrícula ou CPF" placeholder="Buscar nome, matrícula ou CPF"></label><select class="ex-branch" aria-label="Filial"><option value="">Todas as filiais</option><option>Araxá</option><option>Contagem</option><option>Lafaiete</option><option>Serra do Salitre</option><option>Sete Lagoas</option></select><select class="ex-status" aria-label="Situação DER"><option value="">DER: todos</option><option>Ativo</option><option>Vencendo</option><option>Vencido</option><option>Aguardando</option><option>Sem cadastro</option></select><select class="ex-operation-filter" aria-label="Situação do motorista na empresa"><option value="">Empresa: todos</option><option value="active">Em atividade</option><option value="vacation">Em férias</option><option value="away">Afastados</option></select><select class="ex-doc-filter" aria-label="Documentação"><option value="">Documentos: todos</option><option value="pending">Com pendências</option><option value="all">Todos pendentes</option><option value="ok">Em dia</option><option value="unknown">Sem informação</option></select></div><table class="ex-table"><thead><tr><th>Condutor</th><th>DER</th><th>CNH</th><th>Documentos</th></tr></thead><tbody></tbody></table><div class="ex-tablefoot"><span>Clique no nome do condutor para abrir sua ficha.</span><span class="ex-table-pager"></span></div></section>
+          <section class="ex-register"><div class="ex-registerhead"><h2>Lista de condutores</h2><span class="ex-count" aria-live="polite">Carregando condutores…</span></div><div class="ex-filters"><label class="ex-search-wrap"><i data-lucide="search" aria-hidden="true"></i><input type="search" class="ex-search" aria-label="Buscar por nome, matrícula ou CPF" placeholder="Buscar nome, matrícula ou CPF"></label><select class="ex-branch" aria-label="Filial"><option value="">Todas as filiais</option><option>Araxá</option><option>Contagem</option><option>Lafaiete</option><option>Serra do Salitre</option><option>Sete Lagoas</option></select><select class="ex-status" aria-label="Situação DER"><option value="">DER: todos</option><option>Ativo</option><option>Vencendo</option><option>Vencido</option><option>Aguardando</option><option>Sem cadastro</option></select><select class="ex-operation-filter" aria-label="Situação do motorista na empresa"><option value="">Empresa: todos</option><option value="active">Em atividade</option><option value="vacation">Em férias</option><option value="away">Afastados</option></select></div><table class="ex-table"><thead><tr><th>Condutor</th><th>DER</th><th>CNH</th></tr></thead><tbody></tbody></table><div class="ex-tablefoot"><span>Clique no nome do condutor para abrir sua ficha.</span><span class="ex-table-pager"></span></div></section>
           <p class="ex-demo-note"></p>
         </div>
         <section class="ex-report" hidden>
           <div class="ex-report-header"><div><div class="ex-breadcrumb">Gestão / Relatórios</div><h1>Relatório de condutores</h1><p>Defina a seleção e confira o conteúdo antes de emitir.</p></div><button type="button" class="ex-button" data-view="dashboard"><i data-lucide="arrow-left" aria-hidden="true"></i>Voltar</button></div>
           <div class="ex-report-builder">
             <aside class="ex-report-settings" aria-label="Configurar relatório">
-              <section class="ex-setting-section"><h2>1. Seleção de condutores</h2><label class="ex-mode-choice"><input type="radio" name="ex-report-mode" value="filtered" checked><span><strong>Usar a lista filtrada</strong><small>Respeita os filtros do painel.</small></span></label><label class="ex-mode-choice"><input type="radio" name="ex-report-mode" value="all"><span><strong>Todos os condutores</strong><small>Monte uma nova seleção abaixo.</small></span></label><label class="ex-mode-choice"><input type="radio" name="ex-report-mode" value="manual"><span><strong>Escolher manualmente</strong><small>Marque quem entra no relatório.</small></span></label><div class="ex-setting-fields"><label class="ex-form-field">Filial<select class="ex-report-branch"><option value="">Todas as filiais</option><option>Araxá</option><option>Contagem</option><option>Lafaiete</option><option>Serra do Salitre</option></select></label><label class="ex-form-field">Situação DER<select class="ex-report-der"><option value="">Todas as situações</option><option>Ativo</option><option>Vencendo</option><option>Vencido</option><option>Aguardando</option><option>Sem cadastro</option></select></label></div><label class="ex-check-option"><input type="checkbox" class="ex-report-away">Incluir motoristas afastados</label><label class="ex-check-option"><input type="checkbox" class="ex-report-criminal">Excluir certidão criminal “CONSTA”</label><div class="ex-report-selection" hidden><div class="ex-report-select-actions"><button type="button" class="ex-text-button" data-report-select-all>Selecionar visíveis</button><button type="button" class="ex-text-button" data-report-clear>Limpar</button></div><div class="ex-report-manual-list"></div></div></section>
-              <section class="ex-setting-section"><h2>2. Conteúdo do relatório</h2><label class="ex-check-option"><input type="checkbox" class="ex-include-docs" checked>Documentação pendente</label><label class="ex-check-option"><input type="checkbox" class="ex-include-info">Observações</label><label class="ex-check-option"><input type="checkbox" class="ex-report-operational" checked>Férias e afastamento</label><p class="ex-setting-note">Documentação e observações: Lafaiete e Contagem.</p></section>
+              <section class="ex-setting-section"><h2>Condutores do relatório</h2><p class="ex-setting-note">Marque os motoristas que deseja incluir.</p><div class="ex-setting-fields"><label class="ex-form-field">Filial<select class="ex-report-branch"><option value="">Todas as filiais</option></select></label><fieldset class="ex-report-statuses"><legend>Situação DER</legend><label><input type="checkbox" class="ex-report-der" value="Ativo">Ativo</label><label><input type="checkbox" class="ex-report-der" value="Vencendo">Vencendo</label><label><input type="checkbox" class="ex-report-der" value="Vencido">Vencido</label><label><input type="checkbox" class="ex-report-der" value="Aguardando">Aguardando</label><label><input type="checkbox" class="ex-report-der" value="Sem cadastro">Sem cadastro</label><p class="ex-setting-note">Marque uma ou mais. Sem marcação, todas.</p></fieldset></div><label class="ex-check-option"><input type="checkbox" class="ex-report-away">Incluir motoristas afastados</label><label class="ex-check-option"><input type="checkbox" class="ex-report-criminal">Excluir certidão criminal “CONSTA”</label><div class="ex-report-selection"><label class="ex-form-field ex-report-search-label">Buscar condutor<input type="search" class="ex-report-search" placeholder="Nome, matrícula ou CPF"></label><div class="ex-report-select-actions"><button type="button" class="ex-text-button" data-report-select-all>Selecionar visíveis</button><button type="button" class="ex-text-button" data-report-clear>Limpar seleção</button></div><div class="ex-report-manual-list" aria-label="Escolher condutores"></div></div></section>
+              <section class="ex-setting-section"><h2>Conteúdo do relatório</h2><label class="ex-check-option"><input type="checkbox" class="ex-include-docs" checked>Documentação pendente</label><label class="ex-check-option"><input type="checkbox" class="ex-include-info">Observações</label><label class="ex-check-option"><input type="checkbox" class="ex-report-operational" checked>Férias e afastamento</label><p class="ex-setting-note">Documentação e observações: Lafaiete e Contagem.</p></section>
             </aside>
             <div class="ex-report-preview"><div class="ex-report-preview-head"><div><strong class="ex-report-count" role="status" aria-live="polite">0 condutores na seleção</strong><span>Prévia do documento</span></div><button type="button" class="ex-text-button" data-report-expand>Expandir prévia</button></div><article class="ex-paper" aria-label="Prévia do relatório"><div class="ex-paper-brand"><div><strong>VMG</strong>Viação Minas Gerais</div><span></span></div><div class="ex-report-heading"><div><h2>Relatório de condutores</h2><p class="ex-report-scope">Todas as filiais</p></div><div class="ex-report-total"><b>00</b><span>CONDUTORES</span></div></div><table class="ex-report-table"><thead><tr><th>Condutor / filial</th><th>Situação DER</th></tr></thead><tbody></tbody></table><div class="ex-report-footer"><span>Viação Minas Gerais · Gestão de condutores</span><span>Prévia</span></div></article><div class="ex-report-pagination" aria-label="Páginas da prévia"></div><div class="ex-report-emit"><span>A4 paisagem · PDF</span><button type="button" class="ex-button primary" data-report-issue disabled><i data-lucide="download" aria-hidden="true"></i>Emitir PDF</button></div></div>
           </div><p class="ex-demo-note"></p>
@@ -926,7 +939,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const app=root.querySelector('.ex-app');
   const SHEET_ID='1q_nCkymzkKm_GMalWr0acEwTGh09pg9AuhlcMGob4Ps';
   const SHEET_ID_DOCS='1ywn1NLRrqC5oj3Ir3mbg9tYwNejHyO5SIHd98hi9t-4';
-  const SHEET_TABS=['CONSELHEIRO LAFAIETE','BELEM','CANAA DOS CARAJAS','CATALAO','ARAXA','CONTAGEM','PARAUAPEBAS','SERRA DO SALITRE','SETE LAGOAS','TUCUMA'];
+  const SHEET_TABS=['CONSELHEIRO LAFAIETE','CONTAGEM','ARAXA','SERRA DO SALITRE','SETE LAGOAS'];
   const DOC_TABS=['CONSELHEIRO LAFAIETE','CONTAGEM'];
   const DOC_HEADERS=['CTPS','CNH','CURSO TRANSP. COLETIVO','CERTIDÃO CRIMINAL','CERTIDÃO BONS ANTECEDENTES','PRONTUARIO CONDUTOR','COMPROVANTE ENDEREÇO'];
   const DOC_KEYS=['ctps','cnh','curso','criminal','antecedentes','prontuario','endereco'];
@@ -1032,10 +1045,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     root.querySelector('#stCnhAtivo').textContent=eligible.filter(r=>r.cnh==='Ativa').length;
     const branchCount=new Set(base.map(r=>r.branch)).size,expiredCnh=eligible.filter(r=>r.cnh==='Vencida').length;
     const contexts=root.querySelectorAll('.ex-metrics .ex-context');contexts[0].textContent=`${branchCount} ${branchCount===1?'filial acompanhada':'filiais acompanhadas'}`;contexts[1].textContent=`${expiredCnh} ${expiredCnh===1?'CNH vencida':'CNHs vencidas'}`;
-    const branches=new Map();base.forEach(r=>branches.set(r.branch,(branches.get(r.branch)||0)+1));
+    const branches=new Map();rows.forEach(r=>branches.set(r.branch,(branches.get(r.branch)||0)+1));
     const groups=[...branches].sort((a,b)=>b[1]-a[1]),max=Math.max(1,...groups.map(g=>g[1]));
     const bars=root.querySelector('.ex-bar-list');bars.setAttribute('aria-label',groups.map(([name,count])=>`${name}: ${count}`).join(', '));
-    bars.innerHTML=groups.map(([name,count])=>`<div class="ex-bar-row"><span>${escape(name)}</span><div class="ex-bar-track"><span style="width:${count/max*100}%"></span></div><b>${count}</b></div>`).join('')||'<p class="ex-result-note">Nenhum condutor carregado.</p>';
+    bars.innerHTML=groups.map(([name,count])=>`<button type="button" class="ex-bar-row" data-branch-filter="${escape(name)}" aria-pressed="${branch.value===name}"><span>${escape(name)}</span><span class="ex-bar-track"><span style="width:${count/max*100}%"></span></span><b>${count}</b></button>`).join('')||'<p class="ex-result-note">Nenhum condutor carregado.</p>';
     const types=['Ativo','Vencendo','Vencido','Aguardando','Sem cadastro'],colors=['--ex-green','--ex-amber','--ex-red','--ex-blue','--ex-unregistered'];
     let position=0;const stops=[],labels=[];
     types.forEach((type,i)=>{const count=eligible.filter(r=>(r.der||'Sem cadastro')===type).length,end=position+(eligible.length?count/eligible.length*100:0);stops.push(`var(${colors[i]}) ${position}% ${end}%`);position=end;root.querySelector(`[data-status="${type}"] b`).textContent=count;labels.push(type+': '+count);});
@@ -1157,7 +1170,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const shortLabel=key=>({ctps:'CTPS',cnh:'CNH',curso:'Curso',criminal:'Criminal',antecedentes:'Antecedentes',prontuario:'Prontuário',endereco:'Endereço'}[key]);
   const badge=s=>({Ativo:'active',Ativa:'active',Vencido:'expired',Vencida:'expired',Vencendo:'soon',Aguardando:'waiting'}[s]||'');
-  const search=root.querySelector('.ex-search'),branch=root.querySelector('.ex-branch'),status=root.querySelector('.ex-status'),docFilter=root.querySelector('.ex-doc-filter'),operationFilter=root.querySelector('.ex-operation-filter');
+  const search=root.querySelector('.ex-search'),branch=root.querySelector('.ex-branch'),status=root.querySelector('.ex-status'),operationFilter=root.querySelector('.ex-operation-filter');
   const dialog=root.querySelector('.ex-dialog');
   const workDialog=root.querySelector('.ex-work-dialog');
 
@@ -1237,43 +1250,42 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(branch.value&&r.branch!==branch.value)return false;
       if(status.value&&(r.der||'Sem cadastro')!==status.value)return false;
       if(operationFilter.value&&(r.operational||'active')!==operationFilter.value)return false;
-      const f=docFilter.value,m=r.missing;
-      if(f&&!hasDocs(r))return false;
-      return !f||(f==='unknown'&&m===null)||(f==='pending'&&m&&m.length>0)||(f==='all'&&m&&m.length===documents.length)||(f==='ok'&&m&&m.length===0);
+      return true;
     });
     visibleRows=list;
     updateOverview();
     const pages=Math.max(1,Math.ceil(list.length/PAGE_SIZE));currentPage=Math.min(currentPage,pages);
     const pageRows=list.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE);
     root.querySelector('.ex-table tbody').innerHTML=pageRows.length?pageRows.map(r=>{
-      const ds=docState(r);
-      const docs=hasDocs(r)?`<button type="button" class="ex-doc-button ${ds.className}" data-doc="${r.id}" aria-haspopup="dialog" aria-label="${escape(r.name)}: ${ds.title}. Ver documentos na ficha"><i data-lucide="${ds.icon}" aria-hidden="true"></i><span class="ex-doc-content"><span class="ex-doc-title">${ds.title}</span><span class="ex-doc-summary">${ds.summary}</span></span><i data-lucide="chevron-right" class="ex-chevron" aria-hidden="true"></i></button>`:'<span class="ex-dash" aria-label="Documentação não acompanhada nesta filial">-</span>';
-      return `<tr class="${r.operational?'ex-row-'+r.operational:''}"><td><div class="ex-name-row"><button type="button" class="ex-name" data-person="${r.id}" aria-haspopup="dialog">${escape(r.name)}</button>${operationBadge(r)}</div><span class="ex-person-sub">${r.branch}</span></td><td>${documentBadge(r.der,'DER')}</td><td>${documentBadge(r.cnh,'CNH')}</td><td>${docs}</td></tr>`;
-    }).join(''):'<tr><td colspan="4">Nenhum condutor encontrado.</td></tr>';
+      return `<tr class="${r.operational?'ex-row-'+r.operational:''}"><td><div class="ex-name-row"><button type="button" class="ex-name" data-person="${r.id}" aria-haspopup="dialog">${escape(r.name)}</button>${operationBadge(r)}</div><span class="ex-person-sub">${r.branch}</span></td><td>${documentBadge(r.der,'DER')}</td><td>${documentBadge(r.cnh,'CNH')}</td></tr>`;
+    }).join(''):'<tr><td colspan="3">Nenhum condutor encontrado.</td></tr>';
     root.querySelector('.ex-count').textContent=`${list.length} condutor${list.length===1?'':'es'}`;
     root.querySelectorAll('[data-status]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.status===status.value)));
     root.querySelector('.ex-tablefoot .ex-table-pager').innerHTML=`<button type="button" class="ex-button" data-table-page="prev" aria-label="Página anterior" ${currentPage===1?'disabled':''}><i data-lucide="chevron-left" aria-hidden="true"></i></button><span>Página ${currentPage} de ${pages}</span><button type="button" class="ex-button" data-table-page="next" aria-label="Próxima página" ${currentPage===pages?'disabled':''}><i data-lucide="chevron-right" aria-hidden="true"></i></button>`;
     icons();
   }
-  function reportMode(){return root.querySelector('[name="ex-report-mode"]:checked').value;}
-  function reportCandidates(){
-    const source=reportMode()==='filtered'?visibleRows:rows;
-    const filial=root.querySelector('.ex-report-branch').value,der=root.querySelector('.ex-report-der').value,away=root.querySelector('.ex-report-away').checked;
-    return source.filter(r=>(!filial||r.branch===filial)&&(!der||(r.der||'Sem cadastro')===der)&&(away||r.operational!=='away'));
+  function selectedDerStatuses(){return [...root.querySelectorAll('.ex-report-der:checked')].map(input=>input.value);}
+  function reportCandidates({search=false}={}){
+    const filial=root.querySelector('.ex-report-branch').value,der=selectedDerStatuses(),away=root.querySelector('.ex-report-away').checked;
+    const query=search?norm(root.querySelector('.ex-report-search').value):'';
+    return rows.filter(r=>(!filial||r.branch===filial)&&(!der.length||der.includes(r.der||'Sem cadastro'))&&(away||r.operational!=='away')&&(!query||norm(r.name+' '+r.mat+' '+r.cpf).includes(query)));
   }
-  function reportRows({includeCriminal=true}={}){return reportCandidates().filter(r=>(reportMode()!=='manual'||reportPicked.has(r.id))&&(!includeCriminal||!root.querySelector('.ex-report-criminal').checked||!r.criminalConsta));}
+  function reportRows({includeCriminal=true}={}){return reportCandidates().filter(r=>reportPicked.has(r.id)&&(!includeCriminal||!root.querySelector('.ex-report-criminal').checked||!r.criminalConsta));}
+  function renderReportManualList(){
+    const candidates=reportCandidates({search:true});
+    root.querySelector('.ex-report-manual-list').innerHTML=candidates.length?candidates.map(r=>`<label><input type="checkbox" data-report-pick="${r.id}" ${reportPicked.has(r.id)?'checked':''}><span>${escape(r.name)}<small>${escape(r.branch)} · ${escape(r.der||'-')}</small></span></label>`).join(''):'<p class="ex-setting-note">Nenhum condutor com estes filtros.</p>';
+  }
   function renderReport(){
     const includeDocs=root.querySelector('.ex-include-docs').checked,includeInfo=root.querySelector('.ex-include-info').checked,includeOperation=root.querySelector('.ex-report-operational').checked;
-    const candidates=reportCandidates(),selected=reportRows(),manual=reportMode()==='manual';
+    const selected=reportRows();
     root.querySelector('.ex-report .ex-paper-brand>span').textContent=new Date().toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'});
-    root.querySelector('.ex-report-selection').hidden=!manual;
-    root.querySelector('.ex-report-manual-list').innerHTML=candidates.length?candidates.map(r=>`<label><input type="checkbox" data-report-pick="${r.id}" ${reportPicked.has(r.id)?'checked':''}><span>${escape(r.name)}<small>${r.branch}</small></span></label>`).join(''):'<p class="ex-setting-note">Nenhum condutor com estes filtros.</p>';
+    renderReportManualList();
     root.querySelector('.ex-report-count').textContent=`${selected.length} condutor${selected.length===1?'':'es'} na seleção`;
     root.querySelector('[data-report-issue]').disabled=!selected.length;
     root.querySelector('[data-report-expand]').disabled=!selected.length;
     root.querySelector('.ex-report-total b').textContent=String(selected.length).padStart(2,'0');
-    const filial=root.querySelector('.ex-report-branch').value,der=root.querySelector('.ex-report-der').value;
-    root.querySelector('.ex-report-scope').textContent=[filial||'Todas as filiais',der?'DER: '+der:'Todas as situações'].join(' · ');
+    const filial=root.querySelector('.ex-report-branch').value,der=selectedDerStatuses();
+    root.querySelector('.ex-report-scope').textContent=[filial||'Todas as filiais',der.length?'DER: '+der.join(', '):'Todas as situações'].join(' · ');
     const pages=Math.max(1,Math.ceil(selected.length/3));reportPage=Math.min(reportPage,pages-1);
     root.querySelector('.ex-report-table tbody').innerHTML=selected.length?selected.slice(reportPage*3,reportPage*3+3).map(r=>{
       const docs=!hasDocs(r)?'-':r.missing===null?'Sem informação':r.missing.length?r.missing.map(key=>documents.find(d=>d.key===key).label).join(', '):'Em dia';
@@ -1338,11 +1350,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   root.addEventListener('click',event=>{
     if(event.target.closest('[data-refresh]')){loadData();return;}
+    const branchButton=event.target.closest('[data-branch-filter]');if(branchButton){branch.value=branch.value===branchButton.dataset.branchFilter?'':branchButton.dataset.branchFilter;currentPage=1;render();return;}
     const tablePage=event.target.closest('[data-table-page]');if(tablePage){currentPage+=tablePage.dataset.tablePage==='next'?1:-1;render();return;}
     const nav=event.target.closest('[data-view]');if(nav){show(nav.dataset.view);return;}
     if(event.target.closest('[data-report-expand]')){previewEmission(false);return;}
     if(event.target.closest('[data-report-issue]')){previewEmission(true);return;}
-    if(event.target.closest('[data-report-select-all]')){reportCandidates().forEach(r=>reportPicked.add(r.id));renderReport();return;}
+    if(event.target.closest('[data-report-select-all]')){reportCandidates({search:true}).forEach(r=>reportPicked.add(r.id));renderReport();return;}
     if(event.target.closest('[data-report-clear]')){reportPicked.clear();renderReport();return;}
     const pageButton=event.target.closest('[data-report-page]');if(pageButton){reportPage+=pageButton.dataset.reportPage==='next'?1:-1;reportPage=Math.max(0,reportPage);renderReport();if(workDialog.open&&['report','issue'].includes(workType))previewEmission(workType==='issue');return;}
     if(event.target.closest('[data-work-close]')){if(!pet.saving&&!generating&&!conferenceBusy)workDialog.close();return;}
@@ -1376,6 +1389,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   workDialog.addEventListener('close',()=>{workType='';});
   dialog.addEventListener('click',event=>{if(event.target===dialog){const box=dialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)dialog.close();}});
   workDialog.addEventListener('click',event=>{if(event.target===workDialog&&!pet.saving&&!generating&&!conferenceBusy){const box=workDialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)workDialog.close();}});
+  root.querySelector('.ex-report-search').addEventListener('input',renderReportManualList);
   root.querySelector('.ex-report').addEventListener('change',event=>{
     if(event.target.matches('[data-report-pick]'))event.target.checked?reportPicked.add(event.target.dataset.reportPick):reportPicked.delete(event.target.dataset.reportPick);
     reportPage=0;renderReport();
@@ -1397,7 +1411,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     setModalTab(keys[index]);root.querySelector('[data-modal-tab="'+keys[index]+'"]').focus();
   });
   search.addEventListener('input',()=>{currentPage=1;render();});
-  [branch,status,docFilter,operationFilter].forEach(el=>el.addEventListener('change',()=>{currentPage=1;render();}));
+  [branch,status,operationFilter].forEach(el=>el.addEventListener('change',()=>{currentPage=1;render();}));
   render();renderReport();loadData();
   setInterval(()=>{if(!pet.saving&&!generating)loadData();},5*60*1000);
 })();
